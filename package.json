@@ -1,0 +1,35 @@
+{
+  "name": "zapstore",
+  "version": "1.0.0",
+  "description": "This is my ecommerce platfom project",
+  "main": "app.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node --watch app.js",
+    "dev": "nodemon app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Sarathjithu89/Zapstore.git"
+  },
+  "keywords": [
+    "nodejs",
+    "mongodb",
+    "express",
+    "html",
+    "css",
+    "bootstrap"
+  ],
+  "author": "sarath A",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Sarathjithu89/Zapstore/issues"
+  },
+  "homepage": "https://github.com/Sarathjithu89/Zapstore#readme",
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "mongodb": "^6.14.2",
+    "mongoose": "^8.12.1"
+  }
+}
