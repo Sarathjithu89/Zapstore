@@ -8,10 +8,7 @@
     "start": "node --watch app.js",
     "dev": "nodemon app.js"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Sarathjithu89/Zapstore.git"
-  },
+  "repository": {},
   "keywords": [
     "nodejs",
     "mongodb",
