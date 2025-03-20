@@ -1,120 +1,122 @@
 <%-include('../partials/header.ejs') %>
-<!-- Begin Li's Breadcrumb Area -->
-<div class="breadcrumb-area">
-  <div class="container">
-    <div class="breadcrumb-content">
-      <ul>
-        <li><a href="/">Home</a></li>
-        <li class="active">Register</li>
-      </ul>
-    </div>
-  </div>
-</div>
-<!-- Li's Breadcrumb Area End Here -->
-<div
-  class="container d-flex justify-content-center align-items-center flex-column"
->
-  <div class="col-sm-12 col-md-12 col-lg-6 col-xs-12 d-flex register mt-30">
-    <form id="signform" action="/register" method="post">
-      <div class="login-form">
-        <h4 class="login-title">Register</h4>
-        <div class="row">
-          <div class="col-md-6 col-12 mb-20">
-            <label>Full Name</label>
-            <input
-              class="mb-0"
-              type="text"
-              name="name"
-              placeholder="Full Name"
-            />
-            <div id="error1" class="error-message"></div>
-          </div>
-
-          <div class="col-md-12 mb-20">
-            <label>Email Address*</label>
-            <input
-              class="mb-0"
-              name="email"
-              type="email"
-              placeholder="Email Address"
-              required
-            />
-            <div id="error2" class="error-message"></div>
-          </div>
-
-          <div class="col-md-12 mb-20">
-            <label>Phone</label>
-            <input
-              class="mb-0"
-              name="phone"
-              type="text"
-              placeholder="Phone"
-              required
-            />
-            <div id="error3" class="error-message"></div>
-          </div>
-
-          <div class="col-md-6 mb-20">
-            <label>Password</label>
-            <input
-              class="mb-0"
-              type="password"
-              name="password"
-              placeholder="Password"
-            />
-            <div id="error4" class="error-message"></div>
-          </div>
-
-          <div class="col-md-6 mb-20">
-            <label>Confirm Password</label>
-            <input
-              class="mb-0"
-              name="cpassword"
-              type="password"
-              placeholder="Confirm Password"
-            />
-            <div id="error5" class="error-message"></div>
-          </div>
-          <div class="col-12">
-            <div class="check-box d-inline-block ml-0 ml-md-2 mt-10">
-              <input type="checkbox" id="remember_me" />
-              <label for="remember_me"
-                >I agree to the terms and conditions</label
-              >
-            </div>
-          </div>
-          <div
-            class="container d-flex justify-content-center align-items-center google-sign-in flex-column"
-          >
-            <button class="register-button mt-0">Register</button>
-            <p class="text-center d-inline-block">or sign in with</p>
-            <div class="form-choice d-block">
-              <div class="row">
-                <button class="google-button">
-                  <a href="#" class="btn-login btn-g">
-                    <i class="fa-brands fa-google"></i>
-                    <span>Login With Google</span>
-                  </a>
-                </button>
-              </div>
-            </div>
-
-            <!-- Google Sign-In Handler -->
-          </div>
-          <!-- Google Sign-In Handler end -->
-        </div>
-      </div>
-    </form>
-    <!-- End form-choice -->
-  </div>
-</div>
-
 <style>
   .error-message {
     color: red;
     font-size: 12px;
   }
+  .regi {
+    height: 100%;
+    background-color: rgb(185, 185, 185);
+  }
 </style>
+<div class="regi">
+  <!-- Begin Li's Breadcrumb Area -->
+  <div class="breadcrumb-area">
+    <div class="container">
+      <div class="breadcrumb-content">
+        <ul>
+          <li><a href="/">Home</a></li>
+          <li class="active">Register</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <!-- Li's Breadcrumb Area End Here -->
+  <div
+    class="container d-flex justify-content-center align-items-center flex-column"
+  >
+    <div
+      class="col-sm-12 col-md-12 col-lg-6 col-xs-12 d-flex flex-column register mt-30"
+    >
+      <form id="signform" action="/register" method="post">
+        <div class="login-form">
+          <h4 class="login-title">Register</h4>
+          <div class="row">
+            <div class="col-md-6 col-12 mb-20">
+              <label>Full Name</label>
+              <input
+                class="mb-0"
+                type="text"
+                name="name"
+                placeholder="Full Name"
+              />
+              <div id="error1" class="error-message"></div>
+            </div>
+
+            <div class="col-md-12 mb-20">
+              <label>Email Address*</label>
+              <input
+                class="mb-0"
+                name="email"
+                type="email"
+                placeholder="Email Address"
+                required
+              />
+              <div id="error2" class="error-message"></div>
+            </div>
+
+            <div class="col-md-12 mb-20">
+              <label>Phone</label>
+              <input
+                class="mb-0"
+                name="phone"
+                type="text"
+                placeholder="Phone"
+                required
+              />
+              <div id="error3" class="error-message"></div>
+            </div>
+
+            <div class="col-md-6 mb-20">
+              <label>Password</label>
+              <input
+                class="mb-0"
+                type="password"
+                name="password"
+                placeholder="Password"
+              />
+              <div id="error4" class="error-message"></div>
+            </div>
+
+            <div class="col-md-6 mb-20">
+              <label>Confirm Password</label>
+              <input
+                class="mb-0"
+                name="cpassword"
+                type="password"
+                placeholder="Confirm Password"
+              />
+              <div id="error5" class="error-message"></div>
+            </div>
+            <div class="col-12">
+              <div class="check-box d-inline-block ml-0 ml-md-2 mt-10">
+                <input type="checkbox" id="remember_me" />
+                <label for="remember_me"
+                  >I agree to the terms and conditions</label
+                >
+              </div>
+            </div>
+            <div
+              class="container d-flex justify-content-center align-items-center google-sign-in flex-column"
+            >
+              <button class="register-button mt-0">Register</button>
+              <p class="text-center d-block">or sign in with</p>
+              <div class="form-choice d-block"></div>
+              <a href="/auth/google" class="google-button d-block">
+                <i class="fa-brands fa-google"></i>
+                <span>Login With Google</span>
+              </a>
+              <!-- Google Sign-In Handler -->
+            </div>
+            <!-- Google Sign-In Handler end -->
+          </div>
+        </div>
+      </form>
+      <!-- End form-choice -->
+    </div>
+  </div>
+</div>
+
 <%-include('../partials/footer.ejs') %>
 <script>
   document.addEventListener("DOMContentLoaded", () => {

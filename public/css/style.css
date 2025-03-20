@@ -18,7 +18,7 @@ body {
   overflow-x: hidden;
 }
 a {
-  color: #a4a4a4;
+  color: #898888;
   transition: 0.3s ease-in-out;
 }
 a:hover {
@@ -5633,6 +5633,7 @@ span.required {
 }
 .google-button {
   background-color: #363f4d;
+  color: white;
   border-radius: 5px;
   cursor: pointer;
   display: inline-block;
@@ -5650,6 +5651,10 @@ span.required {
 }
 .google-button > a > span {
   color: #ffffff;
+}
+.google-button:hover {
+  background: #737373;
+  color: #fff;
 }
 
 /*----------------------------------------------------------------------------------------------------*/

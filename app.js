@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const dotenv = require("dotenv").config();
 const session = require("express-session");
+const passport = require("./config/passport.js");
 const flash = require("express-flash");
 const connectDb = require("./config/database.js");
 const path = require("path");
@@ -19,6 +20,10 @@ app.use(
     cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000, httpOnly: true },
   })
 );
+
+app.use(passport.initialize());
+app.use(passport.session());
+
 app.use(flash());
 app.use((req, res, next) => {
   res.set("Cache-Control", "no-store");
