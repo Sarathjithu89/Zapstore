@@ -15,7 +15,7 @@
   class="container d-flex justify-content-center align-items-center flex-column"
 >
   <div class="col-sm-12 col-md-12 col-lg-6 col-xs-12 d-flex register mt-30">
-    <form action="/register" method="post">
+    <form id="signform" action="/register" method="post">
       <div class="login-form">
         <h4 class="login-title">Register</h4>
         <div class="row">
@@ -26,9 +26,10 @@
               type="text"
               name="name"
               placeholder="Full Name"
-              required
             />
+            <div id="error1" class="error-message"></div>
           </div>
+
           <div class="col-md-12 mb-20">
             <label>Email Address*</label>
             <input
@@ -38,7 +39,9 @@
               placeholder="Email Address"
               required
             />
+            <div id="error2" class="error-message"></div>
           </div>
+
           <div class="col-md-12 mb-20">
             <label>Phone</label>
             <input
@@ -48,7 +51,9 @@
               placeholder="Phone"
               required
             />
+            <div id="error3" class="error-message"></div>
           </div>
+
           <div class="col-md-6 mb-20">
             <label>Password</label>
             <input
@@ -57,7 +62,9 @@
               name="password"
               placeholder="Password"
             />
+            <div id="error4" class="error-message"></div>
           </div>
+
           <div class="col-md-6 mb-20">
             <label>Confirm Password</label>
             <input
@@ -66,6 +73,7 @@
               type="password"
               placeholder="Confirm Password"
             />
+            <div id="error5" class="error-message"></div>
           </div>
           <div class="col-12">
             <div class="check-box d-inline-block ml-0 ml-md-2 mt-10">
@@ -101,4 +109,80 @@
   </div>
 </div>
 
+<style>
+  .error-message {
+    color: red;
+    font-size: 12px;
+  }
+</style>
 <%-include('../partials/footer.ejs') %>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    if (typeof message !== "undefined") {
+      alert(message);
+    }
+
+    const signform = document.getElementById("signform");
+    const nameid = document.querySelector('input[name="name"]');
+    const emailid = document.querySelector('input[name="email"]');
+    const phoneid = document.querySelector('input[name="phone"]');
+    const passwordid = document.querySelector('input[name="password"]');
+    const cpasswordid = document.querySelector('input[name="cpassword"]');
+    const error1 = document.getElementById("error1");
+    const error2 = document.getElementById("error2");
+    const error3 = document.getElementById("error3");
+    const error4 = document.getElementById("error4");
+    const error5 = document.getElementById("error5");
+
+    signform.addEventListener("submit", () => {
+      let isValid = true;
+      const namepattern = /^[A-Za-z\s ]+$/;
+      const emailpattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+      const phonepattern = /^[0-9]{10}$/;
+      const passwordpattern = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,10}$/;
+
+      [error1, error2, error3, error4, error5].forEach((error) => {
+        error.textContent = "";
+      });
+      if (nameid.value.trim() === "") {
+        error1.textContent = "Name is required";
+        isValid = false;
+      } else if (!namepattern.test(nameid.value.trim())) {
+        error1.textContent = "Name should contain only alphabets";
+        isValid = false;
+      }
+      if (emailid.value.trim() === "") {
+        error2.textContent = "Email is required";
+        isValid = false;
+      } else if (!emailpattern.test(emailid.value.trim())) {
+        error2.textContent = "Invalid Email";
+        isValid = false;
+      }
+      if (phoneid.value.trim() === "") {
+        error3.textContent = "Phone is required";
+        isValid = false;
+      } else if (!phonepattern.test(phoneid.value.trim())) {
+        error3.textContent = "Invalid Phone";
+        isValid = false;
+      }
+      if (passwordid.value.trim() === "") {
+        error4.textContent = "Password is required";
+        isValid = false;
+      } else if (!passwordpattern.test(passwordid.value.trim())) {
+        error4.textContent =
+          "Password should contain atleast one digit, one lowercase and one uppercase letter and should be between 6 to 10 characters";
+        isValid = false;
+      }
+      if (cpasswordid.value.trim() === "") {
+        error5.textContent = "Confirm Password is required";
+        isValid = false;
+      } else if (passwordid.value.trim() !== cpasswordid.value.trim()) {
+        error5.textContent = "Passwords do not match";
+        isValid = false;
+      }
+      if (!isValid) {
+        event.preventDefault();
+      }
+    });
+  });
+</script>

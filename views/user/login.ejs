@@ -12,9 +12,9 @@
   </div>
 </div>
 <!-- Li's Breadcrumb Area End Here -->
-<!-- <div ><%= message %></div> -->
-<% if(typeof message !== "undefined"){ %>
-<h4 style="color: rgb(38, 255, 0)"><%= message %></h4>
+
+<% if(message.error){ %>
+<div class="alert alert-danger"><%= message.error %></div>
 <% } %>
 <!-- Begin Login Content Area -->
 <div

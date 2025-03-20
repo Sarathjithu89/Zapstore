@@ -1,6 +1,8 @@
 const express = require("express");
 const app = express();
-const env = require("dotenv").config();
+const dotenv = require("dotenv").config();
+const session = require("express-session");
+const flash = require("express-flash");
 const connectDb = require("./config/database.js");
 const path = require("path");
 const userRouter = require("./routes/userRouter.js");
@@ -9,6 +11,20 @@ connectDb();
 const PORT = 3000 || process.env.PORT;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000, httpOnly: true },
+  })
+);
+app.use(flash());
+app.use((req, res, next) => {
+  res.set("Cache-Control", "no-store");
+  next();
+});
+
 app.use(express.static(path.join(__dirname, "public")));
 
 app.set("view engine", "ejs");
