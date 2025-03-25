@@ -1,38 +1,63 @@
-<%-include('../partials/header.ejs') %>
-<!-- Begin Li's Breadcrumb Area -->
+<%- include('../partials/header.ejs') %>
+
+<!-- Begin Breadcrumb Area -->
 <div class="breadcrumb-area">
   <div class="container">
     <div class="breadcrumb-content">
       <ul>
         <li><a href="/">Home</a></li>
-
         <li class="active">Login</li>
       </ul>
     </div>
   </div>
 </div>
-<!-- Li's Breadcrumb Area End Here -->
+<!-- Breadcrumb Area End -->
+<style>
+  .alert-box {
+    position: absolute;
+    display: flex;
+    width: 30%;
+    z-index: auto;
+    left: 35%;
+    align-items: center;
+    justify-content: center;
+  }
+</style>
 
-<% if(message.error){ %>
-<div class="alert alert-danger"><%= message.error %></div>
-<% } %>
 <!-- Begin Login Content Area -->
 <div
   class="container d-flex justify-content-center align-items-center flex-column"
 >
   <div class="col-sm-12 col-md-12 col-xs-12 col-lg-6 mb-30 mt-30">
-    <!-- Login Form s-->
-    <form action="#">
+    <!-- Display Login Error Message -->
+    <!-- Display Login Error Message -->
+    <% if (typeof message !== "undefined" && message) { %>
+    <div class="alert alert-danger text-center alert-box"><%= message %></div>
+    <% } %>
+    <!-- Login Form -->
+    <form action="/login" method="post">
       <div class="login-form">
         <h4 class="login-title">Login</h4>
         <div class="row">
           <div class="col-md-12 col-12 mb-20">
             <label>Email Address*</label>
-            <input class="mb-0" type="email" placeholder="Email Address" />
+            <input
+              class="mb-0"
+              type="email"
+              name="email"
+              placeholder="Email Address"
+              required
+            />
           </div>
           <div class="col-12 mb-20">
             <label>Password</label>
-            <input class="mb-0" type="password" placeholder="Password" />
+            <input
+              class="mb-0"
+              type="password"
+              name="password"
+              placeholder="Password"
+              required
+            />
           </div>
           <div class="col-md-8">
             <div class="check-box d-inline-block ml-0 ml-md-2 mt-10">
@@ -40,20 +65,25 @@
               <label for="remember_me">Remember me</label>
             </div>
           </div>
-          <div class="col-md-4 mt-10 mb-20 text-left text-md-right">
-            <a href="#"> Forgotten pasward?</a>
+          <div class="col-md-4 mt-10 mb-20 text-left text-md-right ">
+            <a href="/forgotPassword">Forgotten password?</a>
           </div>
           <div class="col-md-4 mt-10 mb-20 text-left text-md-right">
-            <a href="/register">Don't have account? Register</a>
+            <a href="/register">Don't have an account? Register</a>
           </div>
           <div class="col-md-12">
-            <button class="register-button mt-0">Login</button>
+            <button class="register-button mt-0" type="submit">Login</button>
           </div>
         </div>
       </div>
     </form>
   </div>
 </div>
-<!-- Login Content Area End Here -->
+<style>
+  a{
+    text-decoration: none;
+  }
+</style>
+<!-- Login Content Area End -->
 
-<%-include('../partials/footer.ejs') %>
+<%- include('../partials/footer.ejs') %>

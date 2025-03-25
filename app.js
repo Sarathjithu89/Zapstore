@@ -7,6 +7,9 @@ const flash = require("express-flash");
 const connectDb = require("./config/database.js");
 const path = require("path");
 const userRouter = require("./routes/userRouter.js");
+const adminRouter = require("./routes/adminRouter.js");
+const cookieParser = require("cookie-parser");
+const bodyParser = require("body-parser");
 
 connectDb();
 const PORT = 3000 || process.env.PORT;
@@ -20,10 +23,10 @@ app.use(
     cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000, httpOnly: true },
   })
 );
-
+app.use(bodyParser.json());
+app.use(cookieParser());
 app.use(passport.initialize());
 app.use(passport.session());
-
 app.use(flash());
 app.use((req, res, next) => {
   res.set("Cache-Control", "no-store");
@@ -40,6 +43,8 @@ app.set("views", [
 ]);
 
 app.use("/", userRouter);
+app.use("/admin", adminRouter);
+
 
 app.listen(PORT, () => {
   console.log("server is running");

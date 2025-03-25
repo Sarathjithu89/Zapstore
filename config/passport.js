@@ -2,6 +2,7 @@ const passport = require("passport");
 const googleStrategy = require("passport-google-oauth20").Strategy;
 const User = require("../models/User");
 const env = require("dotenv").config();
+const jwt = require("jsonwebtoken");
 
 passport.use(
   new googleStrategy(
@@ -12,36 +13,29 @@ passport.use(
     },
     async (accessToken, refreshtoken, profile, done) => {
       try {
-        let user = await User.findOne({ googleId: profile.id });
-        if (user) {
-          return done(null, user);
-        } else {
+        let user = await User.findOne({ email: profile.emails[0].value });
+
+        if (!user) {
           user = new User({
             name: profile.displayName,
             email: profile.emails[0].value,
             googleId: profile.id,
           });
           await user.save();
-          return done(null, user);
+        } else if (!user.googleId) {
+          (user.googleId = profile.id), await user.save();
         }
+        const token = jwt.sign(
+          { userId: user._id, userName: user.name, email: user.email },
+          process.env.JWT_SECRET_KEY,
+          { expiresIn: "30m" }
+        );
+        return done(null, { user, token });
       } catch (error) {
         return done(error, null);
       }
     }
   )
 );
-
-passport.serializeUser((user, done) => {
-  done(null, user.id);
-});
-passport.deserializeUser((id, done) => {
-  User.findById(id)
-    .then((user) => {
-      done(null, user);
-    })
-    .catch((err) => {
-      done(err, null);
-    });
-});
 
 module.exports = passport;

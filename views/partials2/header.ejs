@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+  <!-- Head -->
+  <head>
+    <!-- Page Meta Tags-->
+    <meta charset="utf-8" />
+    <meta http-equiv="x-ua-compatible" content="ie=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="" />
+    <meta name="author" content="" />
+    <meta name="keywords" content="" />
+
+    <!-- Favicon -->
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="/assets/images/favicon/apple-touch-icon.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="/assets/images/favicon/favicon-32x32.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="16x16"
+      href="/assets/images/favicon/favicon-16x16.png"
+    />
+    <link
+      rel="mask-icon"
+      href="/assets/images/favicon/safari-pinned-tab.svg"
+      color="#5bbad5"
+    />
+    <meta name="msapplication-TileColor" content="#da532c" />
+    <meta name="theme-color" content="#ffffff" />
+
+    <!-- Google Font-->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Vendor CSS -->
+    <link rel="stylesheet" href="/assets/css/libs.bundle.css" />
+
+    <!-- Main CSS -->
+    <link rel="stylesheet" href="/assets/css/theme.bundle.css" />
+
+    <!-- Fix for custom scrollbar if JS is disabled-->
+    <noscript>
+      <style>
+        /**
+          * Reinstate scrolling for non-JS clients
+          */
+        .simplebar-content-wrapper {
+          overflow: auto;
+        }
+      </style>
+    </noscript>
+
+    <!-- Page Title -->
+    <title>Zapstore</title>
+  </head>
+  <body class="">
+    <!-- Navbar-->
+    <nav
+      class="navbar navbar-expand-lg navbar-light border-bottom py-0 fixed-top bg-white"
+    >
+      <div class="container-fluid">
+        <a
+          class="navbar-brand d-flex justify-content-start align-items-center border-end"
+          href="./index.html"
+        >
+          <div class="d-flex align-items-center">
+            <span class="fw-black text-uppercase tracking-wide fs-6 lh-1"
+              >Zapstore</span
+            >
+          </div>
+        </a>
+        <div
+          class="d-flex justify-content-between align-items-center flex-grow-1 navbar-actions"
+        >
+          <!-- Search Bar and Menu Toggle-->
+          <div class="d-flex align-items-center">
+            <!-- Menu Toggle-->
+            <div
+              class="menu-toggle cursor-pointer me-4 text-primary-hover transition-color disable-child-pointer"
+            >
+              <i
+                class="ri-skip-back-mini-line ri-lg fold align-middle"
+                data-bs-toggle="tooltip"
+                data-bs-placement="right"
+                title="Close menu"
+              ></i>
+              <i
+                class="ri-skip-forward-mini-line ri-lg unfold align-middle"
+                data-bs-toggle="tooltip"
+                data-bs-placement="right"
+                title="Open Menu"
+              ></i>
+            </div>
+            <!-- / Menu Toggle-->
+
+            <!-- Search Bar-->
+            <!-- <form class="d-none d-md-flex bg-light rounded px-3 py-1">
+              <input
+                class="form-control border-0 bg-transparent px-0 py-2 me-5 fw-bolder"
+                type="search"
+                placeholder="Search"
+                aria-label="Search"
+              />
+              <button class="btn btn-link p-0 text-muted" type="submit">
+                <i class="ri-search-2-line"></i>
+              </button>
+            </form> -->
+            <!-- / Search Bar-->
+          </div>
+          <!-- / Search Bar and Menu Toggle-->
+
+          <!-- Right Side Widgets-->
+          <div class="d-flex align-items-center">
+            <!-- Profile Menu-->
+            <div class="dropdown ms-1">
+              <button
+                class="btn btn-link p-0 position-relative"
+                type="button"
+                id="profileDropdown"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+              >
+                <picture>
+                  <img
+                    class="f-w-10 rounded-circle"
+                    src="/assets/images/profile-small.jpeg"
+                    alt="HTML Bootstrap Admin Template by Pixel Rocket"
+                  />
+                </picture>
+                <span
+                  class="position-absolute bottom-0 start-75 p-1 bg-success border border-3 border-white rounded-circle"
+                >
+                  <span class="visually-hidden">New alerts</span>
+                </span>
+              </button>
+              <ul
+                class="dropdown-menu dropdown-md dropdown-menu-end"
+                aria-labelledby="profileDropdown"
+              >
+                <li class="d-flex py-2 align-items-start">
+                  <button
+                    class="btn-icon bg-primary-faded text-primary fw-bolder me-3"
+                  >
+                    J
+                  </button>
+                  <div
+                    class="d-flex align-items-start justify-content-between flex-grow-1"
+                  >
+                    <div>
+                      <p class="lh-1 mb-2 fw-semibold text-body">Admin</p>
+                      <p class="text-muted lh-1 mb-2 small">
+                        Admin@zapstore.com
+                      </p>
+                    </div>
+                    <!-- <small
+                      class="badge bg-success-faded text-success rounded-pill"
+                      >Pro</small
+                    > -->
+                  </div>
+                </li>
+
+                <li>
+                  <a class="dropdown-item d-flex align-items-center" href="#"
+                    >Edit Profile</a
+                  >
+                </li>
+                <li>
+                  <a class="dropdown-item d-flex align-items-center" href="#"
+                    >Edit Settings</a
+                  >
+                </li>
+
+                <li>
+                  <a class="dropdown-item d-flex align-items-center" href="#"
+                    >Account Settings</a
+                  >
+                </li>
+                <li>
+                  <a
+                    class="dropdown-item d-flex align-items-center"
+                    href="/admin/logout"
+                    >Logout</a
+                  >
+                </li>
+              </ul>
+            </div>
+            <!-- / Profile Menu-->
+          </div>
+          <!-- / Notifications & Profile-->
+        </div>
+      </div>
+    </nav>
+    <!-- / Navbar-->
