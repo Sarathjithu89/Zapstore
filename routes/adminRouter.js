@@ -39,6 +39,12 @@ adminRouter.post(
   adminAuth,
   categoryController.removecategoryOffer
 );
+adminRouter.get("/listCategory", adminAuth, categoryController.getListCategory);
+adminRouter.get(
+  "/unListCategory",
+  adminAuth,
+  categoryController.getUnListCategory
+);
 
 module.exports = adminRouter;
 

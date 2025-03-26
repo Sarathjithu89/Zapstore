@@ -122,9 +122,31 @@ const removecategoryOffer = async (req, res) => {
   }
 };
 
+const getListCategory = async (req, res) => {
+  try {
+    let id = req.query.id;
+    await Category.updateOne({ _id: id }, { $set: { isListed: false } });
+    res.redirect("/admin/category");
+  } catch (error) {
+    res.redirect("/pageerror");
+  }
+};
+const getUnListCategory = async (req, res) => {
+  try {
+    let id = req.query.id;
+    await Category.updateOne({ _id: id }, { $set: { isListed: true } });
+    res.redirect("/admin/category");
+  } catch (error) {
+    console.log(error);
+    res.redirect("/pageerror");
+  }
+};
+
 module.exports = {
   categoryInfo,
   addcategory,
   addcategoryOffer,
   removecategoryOffer,
+  getListCategory,
+  getUnListCategory,
 };

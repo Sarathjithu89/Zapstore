@@ -5,7 +5,7 @@ const userSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true },
     password: { type: String, required: false },
     phone: { type: String, required: false, sparse: true, default: null },
-    googleId: { type: String, unique: true, required: false },
+    googleId: { type: String, unique: true, sparse: true, default: null },
     address_id: { type: mongoose.Schema.Types.ObjectId, ref: "Address" },
     is_blocked: { type: Boolean, default: false },
     isAdmin: { type: Boolean, default: false },

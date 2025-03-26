@@ -34,10 +34,73 @@
     font-weight: bold;
     border: 1px solid #28a745;
   }
+  /* Base styles for larger screens */
+.table th,
+.table td {
+  padding: 12px;
+  font-size: 12.5px;
+}
+.table button{
+  padding: .5rem;
+}
+
+
+/* Medium devices (tablets, 768px and up) */
+@media (max-width: 768px) {
+  .table th,
+  .table td {
+    padding: 10px;
+    font-size: 12px;
+  }
+}
+
+/* Small devices (landscape phones, 576px and up) */
+@media (max-width: 576px) {
+  .table th,
+  .table td {
+    padding: 8px;
+    font-size: 11.5px;
+  }
+
+  /* Stack table headers and data vertically */
+  .table thead {
+    display: none;
+  }
+
+  .table,
+  .table tbody,
+  .table tr,
+  .table td {
+    display: block;
+    width: 100%;
+  }
+
+  .table tr {
+    margin-bottom: 15px;
+  }
+
+  .table td {
+    text-align: right;
+    padding-left: 50%;
+    position: relative;
+  }
+
+  .table td::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 0;
+    width: 50%;
+    padding-left: 15px;
+    font-weight: bold;
+    text-align: left;
+  }
+}
+
+
 </style>
 
 <main id="main">
-  <div class="bg-white border-bottom py-3 mb-5">
+  <div class="bg-white border-bottom py-3 mb-1">
     <div
       class="container-fluid d-flex justify-content-between align-items-start align-items-md-center flex-column flex-md-row"
     >
@@ -89,12 +152,13 @@
 
           <div class="col-md-8 ml-10">
             <div class="table-responsive">
-              <table class="table table-hover">
+              <table class="table table-hover table-bordered">
                 <thead>
                   <tr>
                     <th>Name</th>
                     <th>Description</th>
                     <th>Offer</th>
+                    <th>Add/remove</th>
                     <th>Status</th>
                     <th>List/unlist</th>
                     <th>Actions</th>
@@ -102,58 +166,48 @@
                 </thead>
                 <tbody>
                   <% cat.reverse().forEach((category) => { %>
-                  <tr>
-                    <td class="text-start"><%= category.name %></td>
-                    <td class="text-start"><%= category.description %></td>
-                    <td class="text-start">
-                      <% if(category.categoryOffer) { %> <%=
-                      category.categoryOffer %> <% }else{ %> 0% <% } %>
-                    </td>
-                    <td class="text-start">
-                      <% if(category.categoryOffer===0) { %>
-                      <button class="btn btn-info">
-                        <a
-                          class="text-white"
-                          onclick="addOffer('<%= category._id %>')"
-                          >Add Offer</a
-                        >
-                      </button>
-                      <% }else { %>
-                      <button class="btn btn-danger">
-                        <a
-                          class="text-white"
-                          onclick="removeOffer('<%= category._id %>')"
-                          >Remove</a
-                        >
-                      </button>
-                      <% } %>
-                    </td>
-                    <td class="text-start">
-                      <% if(category.isListed) { %>
-                      <span class="badge rounded-pill alert-success"
-                        >Listed</span
-                      >
-                      <% } else { %>
-                      <span class="badge rounded-pill alert-danger"
-                        >Unlisted</span
-                      >
-                      <% } %>
-                    </td>
-                    <td class="text-start">
-                      <% if(category.isListed) { %>
-                      <button class="btn btn-danger">
-                        <a href="#" class="text-white">Unlist</a>
-                      </button>
-                      <% } else { %>
-                      <button class="btn btn-danger">
-                        <a href="#" class="text-white">List</a>
-                      </button>
-                      <% } %>
-                    </td>
-                    <td class="text-start">
-                      <a href="" class="btn btn-info text-white">Edit</a>
-                    </td>
-                  </tr>
+                    <tr>
+                      <td data-label="Name" class="text-start"><%= category.name %></td>
+                      <td data-label="Description" class="text-start"><%= category.description %></td>
+                      <td data-label="Offer" class="text-start">
+                        <% if(category.categoryOffer) { %> <%= category.categoryOffer %> <% } else { %> 0% <% } %>
+                      </td>
+                      <td data-label="Add/remove Offer" class="text-start">
+                        <% if(category.categoryOffer === 0) { %>
+                          <button class="btn btn-info">
+                            <a class="text-white" onclick="addOffer('<%= category._id %>')">Add Offer</a>
+                          </button>
+                        <% } else { %>
+                          <button class="btn btn-danger">
+                            <a class="text-white" onclick="removeOffer('<%= category._id %>')">Remove</a>
+                          </button>
+                        <% } %>
+                      </td>
+                      <td data-label="Status" class="text-start">
+                        <% if(category.isListed) { %>
+                          <span class="badge rounded-pill alert-success">Listed</span>
+                        <% } else { %>
+                          <span class="badge rounded-pill alert-danger">Unlisted</span>
+                        <% } %>
+                      </td>
+                      <td data-label="List/unlist" class="text-start">
+                        <% if(category.isListed) { %>
+                          <button class="btn btn-danger">
+                            <a href="/admin/listCategory?id=<%= category._id %>" class="text-white">Unlist</a>
+                          </button>
+                        <% } else { %>
+                          <button class="btn btn-success">
+                            <a href="/admin/unListCategory?id=<%= category._id %>" class="text-white">List</a>
+                          </button>
+                        <% } %>
+                      </td>
+                      <td data-label="Actions" class="text-start">
+                        <button class="btn btn-info">
+                          <a href="" class="text-white">Edit</a>
+                        </button>
+                      </td>
+                    </tr>
+                    
                   <% }); %>
                 </tbody>
               </table>
