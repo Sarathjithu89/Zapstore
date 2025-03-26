@@ -1,36 +1,58 @@
 const mongoose = require("mongoose");
 const productSchema = new mongoose.Schema(
   {
-    title: { type: String, required: true, unique: true },
-    description: { type: String, required: true },
-    image: { type: String, required: true },
-    brand: { type: String },
-    categories: { type: Array },
-    size: { type: String },
-    color: { type: String },
-    price: { type: Number, required: true },
-  },
-  { timestamps: true }
-);
-
-module.exports = mongoose.model("user", productSchema);
-
-//real model
-/*
-const mongoose = require("mongoose");
-
-const productSchema = new mongoose.Schema(
-  {
-    name: { type: String, required: true },
-    description: { type: String },
-    price: { type: Number, required: true },
-    category_id: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
-    brand: { type: String },
-    stock_quantity: { type: Number, required: true },
-    image_url: { type: String },
+    productName: {
+      type: String,
+      required: true,
+    },
+    description: {
+      type: String,
+      required: true,
+    },
+    brand: {
+      type: String,
+      required: true,
+    },
+    category: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Category",
+      required: true,
+    },
+    regularPrice: {
+      type: Number,
+      required: true,
+    },
+    salePrice: {
+      type: Number,
+      required: true,
+    },
+    productOffer: {
+      type: Number,
+      default: 0,
+    },
+    quantity: {
+      type: Number,
+      default: true,
+    },
+    color: {
+      type: String,
+      required: true,
+    },
+    productImage: {
+      type: [String],
+      required: true,
+    },
+    isBlocked: {
+      type: Boolean,
+      default: false,
+    },
+    status: {
+      type: String,
+      enum: ["Available", "Out of Stock", "Discontinued"],
+      default: "Available",
+    },
   },
   { timestamps: true }
 );
 
 module.exports = mongoose.model("Product", productSchema);
-*/

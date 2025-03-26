@@ -1,43 +1,68 @@
 const mongoose = require("mongoose");
+const { v4: uuidv4 } = require("uuid");
 const orderSchema = new mongoose.Schema(
   {
-    userId: { type: String, required: true },
-    product: [
+    orderId: {
+      type: String,
+      default: () => uuidv4(),
+      unique: true,
+    },
+    orderedItems: [
       {
-        productId: {
-          type: String,
+        product: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Product",
+          required: true,
         },
         quantity: {
           type: Number,
-          default: 1,
+          required: true,
+        },
+        price: {
+          type: Number,
+          default: 0,
         },
       },
     ],
-    amoundt: { type: Number, required: true },
-    address: { type: Object, required: true },
-    status: { type: String, default: "pending" },
-  },
-  { timestamps: true }
-);
-
-module.exports = mongoose.model("user", orderSchema);
-
-//real model
-/*
-const mongoose = require("mongoose");
-
-const orderSchema = new mongoose.Schema(
-  {
-    user_id: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-    order_date: { type: Date, default: Date.now },
-    shipping_address_id: { type: mongoose.Schema.Types.ObjectId, ref: "Address" },
-    total_amount: { type: Number, required: true },
-    status: { type: String, enum: ["Pending", "Shipped", "Delivered", "Canceled"], default: "Pending" },
-    payment_method_id: { type: mongoose.Schema.Types.ObjectId, ref: "PaymentMethod" },
+    totalPrice: {
+      type: Number,
+      required: true,
+    },
+    discount: {
+      type: Number,
+      default: 0,
+    },
+    finalAmount: {
+      type: Number,
+      required: true,
+    },
+    address: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "user",
+      required: true,
+    },
+    invoiceDate: {
+      type: Date,
+    },
+    status: {
+      type: String,
+      required: true,
+      enum: [
+        "Pending",
+        "Processing",
+        "Shipped",
+        "Delivered",
+        "Cancelled",
+        "Return Request",
+        "Returned",
+      ],
+    },
+    couponApplied: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );
 
 module.exports = mongoose.model("Order", orderSchema);
-
-*/

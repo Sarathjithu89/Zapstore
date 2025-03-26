@@ -9,6 +9,45 @@ const userSchema = new mongoose.Schema(
     address_id: { type: mongoose.Schema.Types.ObjectId, ref: "Address" },
     is_blocked: { type: Boolean, default: false },
     isAdmin: { type: Boolean, default: false },
+    cart: [{ type: mongoose.Schema.Types.ObjectId, ref: "Cart" }],
+    wallet: {
+      type: Number,
+      default: 0,
+    },
+    wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: "Wishlist" }],
+    OrderHistory: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Order",
+      },
+    ],
+    referalCode: {
+      type: String,
+    },
+    redeemed: {
+      type: Boolean,
+    },
+    redeemedUsers: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "user",
+      },
+    ],
+    searchHistory: [
+      {
+        category: {
+          type: mongoose.Types.ObjectId,
+          ref: "Category",
+        },
+        brand: {
+          type: String,
+        },
+        SearchOn: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
   },
   { timestamps: true }
 );

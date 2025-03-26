@@ -3,8 +3,9 @@ const adminRouter = express.Router();
 const adminController = require("../controllers/admin/adminController.js");
 const { adminAuth } = require("../middleware/adminAuth.js");
 const customerContorller = require("../controllers/admin/customerContorller.js");
+const categoryController = require("../controllers/admin/categoryController.js");
 
-//admin routes
+//admin login routes
 adminRouter.get("/", adminController.loadLogin);
 adminRouter.post("/login", adminController.adminLogin);
 adminRouter.get("/logout", adminController.adminLogout);
@@ -12,7 +13,32 @@ adminRouter.get("/dashboard", adminAuth, adminController.loadDashboard);
 adminRouter.get("/pageerror", adminController.pageError);
 //list users
 adminRouter.get("/users", adminAuth, customerContorller.customerInfo);
-adminRouter
+adminRouter;
+//block |unblock users
+adminRouter.get(
+  "/blockCustomer",
+  adminAuth,
+  customerContorller.custormerBlocked
+);
+adminRouter.get(
+  "/unBlockCustomer",
+  adminAuth,
+  customerContorller.custormerUnblocked
+);
+
+//category Mangment
+adminRouter.get("/category", adminAuth, categoryController.categoryInfo);
+adminRouter.post("/addcategory", adminAuth, categoryController.addcategory);
+adminRouter.post(
+  "/addCategoryOffer",
+  adminAuth,
+  categoryController.addcategoryOffer
+);
+adminRouter.post(
+  "/removeCategoryOffer",
+  adminAuth,
+  categoryController.removecategoryOffer
+);
 
 module.exports = adminRouter;
 
