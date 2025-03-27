@@ -4,6 +4,10 @@ const adminController = require("../controllers/admin/adminController.js");
 const { adminAuth } = require("../middleware/adminAuth.js");
 const customerContorller = require("../controllers/admin/customerContorller.js");
 const categoryController = require("../controllers/admin/categoryController.js");
+const brandController = require("../controllers/admin/brandController.js");
+const productContorller = require("../controllers/admin/productContorller.js");
+
+const { uploads } = require("../uility/multer.js");
 
 //admin login routes
 adminRouter.get("/", adminController.loadLogin);
@@ -45,6 +49,23 @@ adminRouter.get(
   adminAuth,
   categoryController.getUnListCategory
 );
+adminRouter.get("/editCategory", adminAuth, categoryController.getEditCategory);
+adminRouter.post("/editCategory", adminAuth, categoryController.editCategory);
+
+//Brand Managment
+adminRouter.get("/brands", adminAuth, brandController.getBrandPage);
+adminRouter.post(
+  "/addBrand",
+  adminAuth,
+  uploads.single("image"),
+  brandController.addBrand
+);
+adminRouter.get("/blockBrand", adminAuth, brandController.blockBrand);
+adminRouter.get("/unBlockBrand", adminAuth, brandController.unBlockBrand);
+adminRouter.get("/deleteBrand", adminAuth, brandController.deleteBrand);
+
+//products management
+adminRouter.get("/addProducts", adminAuth, productContorller.getProductAddPage);
 
 module.exports = adminRouter;
 

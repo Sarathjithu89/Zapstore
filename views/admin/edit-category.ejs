@@ -1,0 +1,120 @@
+<%-include('../partials2/header.ejs') %>
+
+<style>
+  /* Form Container */
+  .container {
+    margin-top: 80px;
+  }
+
+  .col-md-6 {
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Labels */
+  .form-label {
+    font-weight: bold;
+    color: #333;
+  }
+
+  /* Input Fields */
+  .form-control {
+    border-radius: 5px;
+    border: 1px solid #ced4da;
+    padding: 10px;
+    font-size: 16px;
+    transition: all 0.3s ease-in-out;
+  }
+
+  .form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 8px rgba(0, 123, 255, 0.2);
+  }
+
+  /* Button */
+  .btn-primary {
+    background-color: #007bff;
+    border: none;
+    padding: 12px;
+    font-size: 16px;
+    border-radius: 5px;
+    transition: background 0.3s ease-in-out;
+  }
+
+  .btn-primary:hover {
+    background-color: #0056b3;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .col-md-6 {
+      width: 90%;
+      padding: 20px;
+    }
+  }
+  .btn-primary {
+    width: 100%;
+  }
+
+  @media (min-width: 768px) {
+    .btn-primary {
+      width: auto;
+    }
+  }
+</style>
+
+<div class="container">
+  <div class="row justify-content-center">
+    <% if (messages.success) { %>
+    <div class="alert alert-success"><%= messages.success %></div>
+    <% } %> <% if (messages.error) { %>
+    <div class="alert alert-danger"><%= messages.error %></div>
+    <% } %>
+
+    <div class="col-md-6 mt-60">
+      <form method="post" action="/admin/editCategory?id=<%= category._id  %>">
+        <div class="mb-4 mt-30">
+          <label for="categoryName" class="form-label">Name</label>
+          <input
+            type="text"
+            id="categoryName"
+            name="categoryName"
+            class="form-control border"
+            required
+            value="<%= category.name %>"
+          />
+        </div>
+
+        <div class="mb-4">
+          <label for="description" class="form-label">Description</label>
+          <textarea
+            id="description"
+            name="description"
+            class="form-control border"
+            required
+            placeholder="Enter category description"
+          >
+<%= category.description %></textarea
+          >
+        </div>
+
+        <div class="d-grid text-end mt-30">
+          <button class="btn btn-primary" type="submit" id="submitButton">
+            Update Category
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<script>
+  document.querySelector("form").addEventListener("submit", function () {
+    let btn = document.getElementById("submitButton");
+    btn.innerHTML =
+      'Updating... <span class="spinner-border spinner-border-sm"></span>';
+    btn.disabled = true;
+  });
+</script>
+<%-include('../partials2/footer.ejs') %>

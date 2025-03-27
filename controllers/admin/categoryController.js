@@ -142,6 +142,45 @@ const getUnListCategory = async (req, res) => {
   }
 };
 
+const getEditCategory = async (req, res) => {
+  try {
+    const id = req.query.id;
+    const category = await Category.findById(id);
+    return res.render("edit-category.ejs", { category: category });
+  } catch (error) {
+    console.log(error);
+    res.redirect("/pageerror");
+  }
+};
+
+//Edit category
+const editCategory = async (req, res) => {
+  try {
+    const id = req.query.id;
+    const { categoryName, description } = req.body;
+    const existingCategory = await Category.findOne({
+      name: categoryName,
+    });
+    if (existingCategory) {
+      return res
+        .status(400)
+        .json({ error: "Category already Exists,please choose another name" });
+    }
+    const updateCategory = await Category.findByIdAndUpdate(
+      id,
+      { name: categoryName, description: description },
+      { new: true }
+    );
+    if (updateCategory) {
+      res.redirect("/admin/category");
+    } else {
+      res.status(404).json({ error: "Category not found" });
+    }
+  } catch (error) {
+    res.status(500).json({ error: "Internal server Error" });
+  }
+};
+
 module.exports = {
   categoryInfo,
   addcategory,
@@ -149,4 +188,6 @@ module.exports = {
   removecategoryOffer,
   getListCategory,
   getUnListCategory,
+  getEditCategory,
+  editCategory,
 };
