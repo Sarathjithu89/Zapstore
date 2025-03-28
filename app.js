@@ -45,7 +45,6 @@ app.set("views", [
 app.use("/", userRouter);
 app.use("/admin", adminRouter);
 
-
 app.listen(PORT, () => {
   console.log("server is running");
 });

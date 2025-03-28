@@ -18,5 +18,13 @@ const getProductAddPage = async (req, res) => {
     res.redirect("/pageerror");
   }
 };
+const addProducts = async (req, res) => {
+  try {
+    // const products=req.body;
+    // const productExits=await Product.findOne({
+    //   productName:
+    // })
+  } catch (error) {}
+};
 
-module.exports = { getProductAddPage };
+module.exports = { getProductAddPage, addProducts };
