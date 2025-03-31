@@ -96,6 +96,34 @@
   }
 }
 
+/* Error message styling */
+.alert-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1050;
+        max-width: 350px;
+      }
+
+      .alert-toast {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        border-radius: 8px;
+        margin-bottom: 10px;
+        animation: fadeInRight 0.5s;
+      }
+
+      @keyframes fadeInRight {
+        from {
+          opacity: 0;
+          transform: translateX(50px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+
 
 </style>
 
@@ -202,12 +230,12 @@
                         <% } %>
                       </td>
                       <td data-label="Actions" class="text-start">
-                        <button class="btn btn-info">
-                          <a href="/admin/editCategory?id=<%= category._id %>" class="text-white">Edit</a>
+                        <button class="btn btn-info" onclick="prepareEditModal('<%= category._id %>', '<%= category.name %>', '<%= category.description %>')"
+                        data-bs-toggle="modal" data-bs-target="#editCatogory">
+                          Edit
                         </button>
                       </td>
                     </tr>
-                    
                   <% }); %>
                 </tbody>
               </table>
@@ -229,8 +257,111 @@
       <% }; %>
     </div>
   </section>
+  <!-- category update flash messgages -->
+  <div class="alert-container">
+    <% if (messages && messages.success) { %>
+    <div class="alert alert-success alert-toast" role="alert">
+      <div class="d-flex align-items-center">
+        <div><%= messages.success %></div>
+      </div>
+    </div>
+    <% } %> <% if (messages && messages.error) { %>
+    <div class="alert alert-danger alert-toast" role="alert">
+      <div class="d-flex align-items-center">
+        <div><%= messages.error %></div>
+      </div>
+    </div>
+    <% } %>
+  </div>
+
+  <!-- /category update flash messgages -->
+   
+  <!-- Edit Category Modal -->
+  <div
+    class="modal fade"
+    id="editCatogory"
+    tabindex="-1"
+    aria-labelledby="editCategoryModalLabel"
+    aria-hidden="true"
+    
+  >
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <!-- Modal header -->
+        <div class="modal-header">
+          <h1 class="modal-title fs-5" id="editCategoryModalLabel">Edit Category</h1>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="Close"
+          ></button>
+        </div>
+        
+        <!-- Modal body -->
+        <div class="modal-body">
+         
+
+          <form id="editCategoryForm" method="post" action="/admin/editCategory">
+            <input type="hidden" id="editCategoryId" name="id" value="">
+            
+            <div class="mb-4">
+              <label for="categoryName" class="form-label">Name</label>
+              <input
+                type="text"
+                id="categoryName"
+                name="categoryName"
+                class="form-control"
+                required
+              />
+              <div id="edit-name-error" class="error-message"></div>
+            </div>
+
+            <div class="mb-4">
+              <label for="description" class="form-label">Description</label>
+              <textarea
+                id="categoryDescription"
+                name="description"
+                class="form-control"
+                required
+              ></textarea>
+              <div id="edit-description-error" class="error-message"></div>
+            </div>
+
+            <div class="d-grid">
+              <button class="btn btn-primary" type="submit" id="updateButton">
+                Update Category
+              </button>
+            </div>
+          </form>
+        </div>
+        <!-- Modal footer -->
+        <!-- <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            data-bs-dismiss="modal"
+          >
+            Cancel
+          </button>
+        </div> -->
+      </div>
+    </div>
+  </div>
+  <!-- /Edit Category Modal -->
 
   <script>
+    // Function to prepare the edit modal with category data
+    function prepareEditModal(categoryId, categoryName, categoryDescription) {
+      document.getElementById('editCategoryId').value = categoryId;
+      document.getElementById('categoryName').value = categoryName;
+      document.getElementById('categoryDescription').value = categoryDescription;
+      
+      // Update the form action with the category ID
+      document.getElementById('editCategoryForm').action = `/admin/editCategory?id=${categoryId}`;
+    }
+    
+    // Add Category Form Validation
     document.addEventListener("DOMContentLoaded", function () {
       document
         .getElementById("categoryForm")
@@ -275,6 +406,21 @@
             });
         });
 
+      // Edit Category Form Validation
+      document
+        .getElementById("editCategoryForm")
+        .addEventListener("submit", function (event) {
+          if (!validateEditForm()) {
+            event.preventDefault();
+            return false;
+          }
+          
+          document.getElementById("updateButton").innerHTML = 
+            'Updating... <span class="spinner-border spinner-border-sm"></span>';
+          document.getElementById("updateButton").disabled = true;
+          return true;
+        });
+
       function validateForm() {
         clearErrorMessages();
         let isValid = true;
@@ -306,7 +452,42 @@
         return isValid;
       }
 
+      function validateEditForm() {
+        clearEditErrorMessages();
+        let isValid = true;
+
+        const name = document.getElementById("categoryName").value.trim();
+        const description = document.getElementById("categoryDescription").value.trim();
+
+        if (name === "") {
+          displayEditErrorMessage("edit-name-error", "Please enter a category name");
+          isValid = false;
+        } else if (!/^[a-zA-Z\s]+$/.test(name)) {
+          displayEditErrorMessage(
+            "edit-name-error",
+            "Category name should contain only alphabetic characters"
+          );
+          isValid = false;
+        }
+
+        if (description === "") {
+          displayEditErrorMessage(
+            "edit-description-error",
+            "Please enter a description"
+          );
+          isValid = false;
+        }
+
+        return isValid;
+      }
+
       function displayErrorMessage(elementId, message) {
+        const errorElement = document.getElementById(elementId);
+        errorElement.innerText = message;
+        errorElement.style.color = "red";
+      }
+
+      function displayEditErrorMessage(elementId, message) {
         const errorElement = document.getElementById(elementId);
         errorElement.innerText = message;
         errorElement.style.color = "red";
@@ -317,7 +498,14 @@
           ele.innerText = "";
         });
       }
+      
+      function clearEditErrorMessages() {
+        document.querySelectorAll(".error-message").forEach((ele) => {
+          ele.innerText = "";
+        });
+      }
     });
+    
     //add offer function
     async function addOffer(categoryId) {
       const { value: amount } = await Swal.fire({
@@ -404,6 +592,24 @@
         console.log("Error Removing Offer", error);
       }
     }
+    //error messages
+    document.addEventListener("DOMContentLoaded", function () {
+        const alerts = document.querySelectorAll(".alert-toast");
+        // Auto-dismiss alerts after 5 seconds
+        if (alerts.length > 0) {
+          setTimeout(function () {
+            alerts.forEach(dismissAlert);
+          }, 5000);
+        }
+        // Function to dismiss alert
+        function dismissAlert(alert) {
+          alert.style.opacity = "0";
+          alert.style.transform = "translateX(50px)";
+          alert.style.transition = "opacity 0.5s, transform 0.5s";
+          setTimeout(() => alert.remove(), 500);
+        }
+      });
+
   </script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.js"></script>

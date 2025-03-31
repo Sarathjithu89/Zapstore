@@ -12,7 +12,7 @@ const getBrandPage = async (req, res) => {
       .limit(limit);
     const totalBrands = await Brand.countDocuments();
     const totalPages = Math.ceil(totalBrands / limit);
-    const reverseBrand = brandData.reverse();
+    const reverseBrand = brandData;
     res.render("brand.ejs", {
       data: reverseBrand,
       currentPage: page,
@@ -27,23 +27,33 @@ const getBrandPage = async (req, res) => {
 const addBrand = async (req, res) => {
   try {
     const brand = req.body.name;
-    const findBrand = await Brand.findOne({ brandName: brand });
-    if (!findBrand) {
-      if (!req.file) {
-        return res.status(400).json({ error: "Brand image is required." });
-      }
-      const image = req.file.filename;
+    const findBrand = await Brand.findOne({
+      brandName: { $regex: new RegExp(`^${brand}$`, "i") },
+    });
 
-      const newBrand = new Brand({
-        brandName: brand,
-        brandImage: image,
-      });
-      await newBrand.save();
-      res.redirect("/admin/brands");
+    if (findBrand) {
+      req.flash("error", "This Brand already exists");
+      return res.redirect("/admin/brands");
     }
+
+    if (!req.file) {
+      req.flash("error", "Brand image is required.");
+      return res.redirect("/admin/brands");
+    }
+
+    const image = req.file.filename;
+    const newBrand = new Brand({
+      brandName: brand,
+      brandImage: image,
+    });
+
+    await newBrand.save();
+    req.flash("success", "Brand added successfully");
+    res.redirect("/admin/brands");
   } catch (error) {
-    res.redirect("/pageerror");
     console.log("Adding brand Error", error);
+    req.flash("error", "An error occurred while adding the brand");
+    res.redirect("/admin/brands");
   }
 };
 
@@ -52,6 +62,7 @@ const blockBrand = async (req, res) => {
   try {
     const id = req.query.id;
     await Brand.updateOne({ _id: id }, { $set: { isBlocked: true } });
+    req.flash("success", "Brand Blocked successfully");
     res.redirect("/admin/brands");
   } catch (error) {
     res.redirect("/pageerror");
@@ -61,6 +72,7 @@ const unBlockBrand = async (req, res) => {
   try {
     const id = req.query.id;
     await Brand.updateOne({ _id: id }, { $set: { isBlocked: false } });
+    req.flash("success", "Brand Unblocked successfully");
     res.redirect("/admin/brands");
   } catch (error) {
     res.redirect("/pageerror");
@@ -73,6 +85,7 @@ const deleteBrand = async (req, res) => {
       return re.status(400).redirect("/pageerror");
     }
     await Brand.deleteOne({ _id: id });
+    req.flash("success", "Brand Deleted Successfully");
     res.redirect("/admin/brands");
   } catch (error) {
     console.log("Error Deleting Brand", error);

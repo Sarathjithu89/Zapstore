@@ -76,89 +76,203 @@
     </div>
     <!-- Header Top Area End Here -->
     <!-- Begin Header Middle Area -->
-    <div class="header-middle pl-sm-0 pr-sm-0 pl-xs-0 pr-xs-0">
+    <div class="header-middle pl-sm-0 pr-sm-0 pl-xs-0 pr-xs-15">
       <div class="container">
-        <div class="row">
+        <div class="row align-items-center">
           <!-- Begin Header Logo Area -->
-          <div class="col-lg-3">
-            <div class="logo-main pb-sm-30 pb-xs-30">
-              <a href="/">
-                <!-- <img src="images/menu/logo/1.jpg" alt=""> -->
-                <h1 class="logo-main">Zapstore</h1>
+          <div class="col-lg-3 col-md-4 col-sm-12">
+            <div class="logo-main pb-sm-30 pb-xs-30 text-center text-md-start">
+              <a href="/" class="d-inline-block">
+                <h1 class="logo-main m-0">Zapstore</h1>
               </a>
             </div>
           </div>
           <!-- Header Logo Area End Here -->
-          <!-- Begin Header Middle Right Area -->
-          <div class="col-lg-9 pl-0 ml-sm-15 ml-xs-15">
-            <!-- Begin Header Middle Searchbox Area -->
-            <form action="#" class="hm-searchbox">
-              <input type="text" placeholder="Enter your search key ..." />
-              <button class="li-btn" type="submit">
-                <i class="fa fa-search"></i>
-              </button>
-            </form>
-            <!-- Header Middle Searchbox Area End Here -->
-            <!-- Begin Header Middle Right Area -->
-            <style>
-              .dropdown-menu {
-                z-index: 1100 !important; /* Ensure dropdown appears above everything */
-                position: absolute !important;
-                top: 100%;
-                left: 0;
-              }
 
-              .mobile-menu {
-                z-index: 1000; /* Ensure mobile menu is below the dropdown */
-              }
-            </style>
-            <div class="header-middle-right">
-              <% if (locals.user) { %>
-              <div class="dropdown">
-                <button
-                  class="btn dropdown-toggle"
-                  type="button"
-                  data-bs-toggle="dropdown"
-                >
-                  <%= locals.user.name %>
-                </button>
-                <ul class="dropdown-menu">
-                  <li>
-                    <a href="/userProfile" class="dropdown-item">Profile</a>
-                  </li>
-                  <li><a href="/logout" class="dropdown-item">Logout</a></li>
-                </ul>
-              </div>
-              <ul class="hm-menu">
+          <!-- Begin Header Middle Right Area -->
+          <div class="col-lg-9 col-md-8 col-sm-12 pl-0 ml-sm-15 ml-xs-15">
+            <div
+              class="header-middle-content d-flex flex-column flex-md-row align-items-center justify-content-between"
+            >
+              <!-- Begin Header Middle Searchbox Area -->
+              <form
+                action="/search"
+                method="GET"
+                class="hm-searchbox flex-grow-1 mb-3 mb-md-0 me-md-3 position-relative"
+              >
+                <div class="input-group">
+                  <input
+                    type="text"
+                    name="query"
+                    class="form-control search-input"
+                    placeholder="Search products..."
+                    aria-label="Search"
+                    aria-describedby="search-button"
+                  />
+                  <button
+                    class="btn btn-outline-secondary"
+                    type="submit"
+                    id="search-button"
+                  >
+                    <i class="fa fa-search"></i>
+                  </button>
+                </div>
+              </form>
+              <!-- Header Middle Searchbox Area End Here -->
+
+              <!-- Begin Header Middle Right Area -->
+              <div class="header-middle-right d-flex align-items-center">
+                <% if (locals.user) { %>
+                <div class="dropdown me-3">
+                  <button
+                    class="btn btn-outline-primary dropdown-toggle"
+                    type="button"
+                    data-bs-toggle="dropdown"
+                  >
+                    <%= locals.user.name %>
+                  </button>
+                  <ul class="dropdown-menu">
+                    <li>
+                      <a href="/userProfile" class="dropdown-item">Profile</a>
+                    </li>
+                    <li><a href="/logout" class="dropdown-item">Logout</a></li>
+                  </ul>
+                </div>
                 <% } else { %>
-                <li class="hm-wishlist">
-                  <a href="/login">
-                    <i class="fa fa-user"></i>
-                  </a>
-                </li>
+                <a href="/login" class="me-3 text-dark">
+                  <i class="fa fa-user"></i>
+                </a>
                 <% } %>
 
-                <li class="hm-wishlist">
-                  <a href="cart.ejs">
-                    <i class="fa fa-shopping-cart"></i>
-                  </a>
-                </li>
-                <li class="hm-wishlist">
-                  <a href="wishlist.ejs">
-                    <span class="cart-item-count wishlist-item-count">0</span>
-                    <i class="fa fa-heart-o"></i>
-                  </a>
-                </li>
-              </ul>
+                <!-- Cart and Wishlist Icons -->
+                <div class="header-icons d-flex align-items-center m-3">
+                  <div class="cart-icon position-relative me-3">
+                    <a href="/cart" class="text-dark">
+                      <i class="fa fa-shopping-cart"></i>
+                      <% var cartItemCount = locals.cartItems ?
+                      locals.cartItems.length : 0; %>
+                      <span
+                        class="badge bg-danger rounded-circle position-absolute top-0 start-100 translate-middle"
+                      >
+                        <%= cartItemCount %>
+                      </span>
+                    </a>
+                  </div>
+                  <div class="wishlist-icon position-relative m-3">
+                    <a href="/wishlist" class="text-dark">
+                      <i class="fa fa-heart-o"></i>
+                      <% var wishlistItemCount = locals.wishlistItems ?
+                      locals.wishlistItems.length : 0; %>
+                      <span
+                        class="badge bg-danger rounded-circle position-absolute top-0 start-100 translate-middle"
+                      >
+                        <%= wishlistItemCount %>
+                      </span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+              <!-- Header Middle Right Area End Here -->
             </div>
-
-            <!-- Header Middle Right Area End Here -->
           </div>
-          <!-- Header Middle Right Area End Here -->
         </div>
       </div>
+
+      <style>
+        /* Search Box Styling */
+        .hm-searchbox .input-group {
+          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+          border-radius: 25px;
+          overflow: hidden;
+        }
+
+        .hm-searchbox .form-control {
+          border: none;
+          padding: 10px 15px;
+        }
+
+        .hm-searchbox .btn {
+          border: none;
+          background-color: transparent;
+          color: #6c757d;
+          padding: 10px 15px;
+        }
+
+        .hm-searchbox .btn:hover {
+          background-color: #f8f9fa;
+          color: #007bff;
+        }
+
+        /* Cart and Wishlist Icons Styling */
+        .header-icons .cart-icon,
+        .header-icons .wishlist-icon {
+          position: relative;
+          transition: transform 0.3s ease;
+        }
+
+        .header-icons a {
+          font-size: 1.2rem;
+          position: relative;
+          display: inline-block;
+        }
+
+        .header-icons .badge {
+          position: absolute;
+          top: -8px;
+          right: -8px;
+          font-size: 0.6rem;
+          padding: 2px 5px;
+          min-width: 20px;
+          text-align: center;
+        }
+
+        .header-icons a:hover {
+          color: #007bff;
+          transform: scale(1.1);
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 767px) {
+          .header-middle-content {
+            flex-direction: column;
+            align-items: stretch;
+          }
+
+          .hm-searchbox,
+          .header-middle-right {
+            width: 100%;
+          }
+
+          .header-icons {
+            justify-content: center;
+            margin-top: 15px;
+          }
+
+          .header-icons a {
+            margin: 0 10px;
+          }
+        }
+
+        /* Dropdown Adjustments */
+        .dropdown-menu {
+          z-index: 1100 !important;
+          position: absolute !important;
+          top: 100%;
+          left: 0;
+        }
+        .dropdown-menu {
+          z-index: 1100 !important; /* Ensure dropdown appears above everything */
+          position: absolute !important;
+          top: 100%;
+          left: 0;
+        }
+
+        .mobile-menu {
+          z-index: 1000; /* Ensure mobile menu is below the dropdown */
+        }
+      </style>
     </div>
-    <!-- Header Middle Area End Here -->
+
     <!-- Begin Header Bottom Area -->
     <div class="header-bottom header-sticky d-none d-lg-block d-xl-block">
       <div class="container">
@@ -4210,4 +4324,4 @@
   <!-- Begin Footer Area -->
 </div>
 
-<%-include('../partials/footer.ejs') %>
+<%-include('../partials/alerts.ejs') %> <%-include('../partials/footer.ejs') %>

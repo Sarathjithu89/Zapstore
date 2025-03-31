@@ -1,19 +1,197 @@
 <%-include('../partials/header.ejs') %>
 <style>
+  /* Main Container Styling */
+  .registration-container {
+    min-height: 100vh;
+    background-color: #f8f9fa;
+  }
+
+  /* Form Card Styling */
+  .registration-card {
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    padding: 35px;
+    margin-bottom: 30px;
+    max-width: 600px;
+    width: 100%;
+  }
+
+  /* Header Styling */
+  .registration-header {
+    text-align: center;
+    margin-bottom: 30px;
+  }
+
+  .registration-title {
+    color: #333;
+    font-size: 28px;
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+
+  .registration-subtitle {
+    color: #777;
+    font-size: 14px;
+  }
+
+  /* Form Group Styling */
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-label {
+    font-weight: 500;
+    color: #555;
+    margin-bottom: 8px;
+    display: block;
+    font-size: 14px;
+  }
+
+  .form-control {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    transition: all 0.3s;
+    font-size: 14px;
+  }
+
+  .form-control:focus {
+    border-color: #4e73df;
+    box-shadow: 0 0 0 3px rgba(78, 115, 223, 0.15);
+    outline: none;
+  }
+
+  /* Error Message Styling */
   .error-message {
-    color: red;
+    color: #e74a3b;
     font-size: 12px;
+    margin-top: 5px;
+    font-weight: 500;
   }
-  .regi {
-    height: 100%;
-    background-color: rgb(185, 185, 185);
+
+  /* Button Styling */
+  .btn {
+    display: inline-block;
+    font-weight: 500;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    user-select: none;
+    border: 1px solid transparent;
+    padding: 12px 20px;
+    font-size: 14px;
+    line-height: 1.5;
+    border-radius: 6px;
+    transition: all 0.15s ease-in-out;
+    cursor: pointer;
+    width: 100%;
   }
-  a {
+
+  .btn-primary {
+    color: #fff;
+    background-color: #4e73df;
+    border-color: #4e73df;
+  }
+
+  .btn-primary:hover {
+    background-color: #3a5cce;
+    border-color: #3a5cce;
+  }
+
+  /* Social Login Styling */
+  .social-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 25px 0;
+  }
+
+  .social-divider::before,
+  .social-divider::after {
+    content: "";
+    flex: 1;
+    border-bottom: 1px solid #e0e0e0;
+  }
+
+  .social-divider-text {
+    padding: 0 10px;
+    color: #777;
+    font-size: 13px;
+  }
+
+  .btn-google {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    color: #555;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  .btn-google:hover {
+    background-color: #f8f9fa;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.09);
+  }
+
+  .btn-google i {
+    margin-right: 10px;
+    font-size: 18px;
+    color: #db4437;
+  }
+
+  /* Form Footer */
+  .form-footer {
+    margin-top: 20px;
+    text-align: center;
+    font-size: 14px;
+    color: #777;
+  }
+
+  .form-footer a {
+    color: #4e73df;
     text-decoration: none;
   }
+
+  .form-footer a:hover {
+    text-decoration: underline;
+  }
+
+  /* Custom Checkbox */
+  .custom-checkbox {
+    display: flex;
+    align-items: flex-start;
+    margin-top: 15px;
+    margin-bottom: 20px;
+  }
+
+  .custom-checkbox input {
+    margin-right: 8px;
+    margin-top: 3px;
+  }
+
+  .custom-checkbox label {
+    font-size: 13px;
+    color: #555;
+    cursor: pointer;
+  }
+
+  /* Responsiveness */
+  @media (max-width: 768px) {
+    .registration-card {
+      padding: 25px;
+    }
+
+    .registration-title {
+      font-size: 24px;
+    }
+  }
 </style>
-<div class="regi">
-  <!-- Begin Li's Breadcrumb Area -->
+
+<div class="registration-container">
+  <!-- Begin Breadcrumb Area -->
   <div class="breadcrumb-area">
     <div class="container">
       <div class="breadcrumb-content">
@@ -24,103 +202,131 @@
       </div>
     </div>
   </div>
-  <!-- Li's Breadcrumb Area End Here -->
-  <div
-    class="container d-flex justify-content-center align-items-center flex-column"
-  >
-    <div
-      class="col-sm-12 col-md-12 col-lg-6 col-xs-12 d-flex flex-column register mt-30"
-    >
+  <!-- Breadcrumb Area End -->
+
+  <div class="container d-flex justify-content-center align-items-center">
+    <div class="registration-card">
+      <!-- Registration Header -->
+      <div class="registration-header">
+        <h2 class="registration-title">Create an Account</h2>
+      </div>
+
+      <!-- Registration Form -->
       <form id="signform" action="/register" method="post">
-        <div class="login-form">
-          <h4 class="login-title">Register</h4>
-          <div class="row">
-            <div class="col-md-6 col-12 mb-20">
-              <label>Full Name</label>
+        <div class="row">
+          <!-- Full Name -->
+          <div class="col-md-12">
+            <div class="form-group">
+              <label class="form-label" for="name">Full Name</label>
               <input
-                class="mb-0"
+                class="form-control"
                 type="text"
                 name="name"
-                placeholder="Full Name"
+                id="name"
+                placeholder="Enter your full name"
               />
               <div id="error1" class="error-message"></div>
             </div>
+          </div>
 
-            <div class="col-md-12 mb-20">
-              <label>Email Address*</label>
+          <!-- Email Address -->
+          <div class="col-md-12">
+            <div class="form-group">
+              <label class="form-label" for="email">Email Address *</label>
               <input
-                class="mb-0"
+                class="form-control"
                 name="email"
                 type="email"
-                placeholder="Email Address"
-                required
+                id="email"
+                placeholder="Enter your email address"
               />
               <div id="error2" class="error-message"></div>
             </div>
+          </div>
 
-            <div class="col-md-12 mb-20">
-              <label>Phone</label>
+          <!-- Phone Number -->
+          <div class="col-md-12">
+            <div class="form-group">
+              <label class="form-label" for="phone">Phone Number *</label>
               <input
-                class="mb-0"
+                class="form-control"
                 name="phone"
                 type="text"
-                placeholder="Phone"
-                required
+                id="phone"
+                placeholder="Enter your phone number"
               />
               <div id="error3" class="error-message"></div>
             </div>
+          </div>
 
-            <div class="col-md-6 mb-20">
-              <label>Password</label>
+          <!-- Password -->
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="form-label" for="password">Password</label>
               <input
-                class="mb-0"
+                class="form-control"
                 type="password"
                 name="password"
-                placeholder="Password"
+                id="password"
+                placeholder="Create a password"
               />
               <div id="error4" class="error-message"></div>
             </div>
+          </div>
 
-            <div class="col-md-6 mb-20">
-              <label>Confirm Password</label>
+          <!-- Confirm Password -->
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="form-label" for="cpassword">Confirm Password</label>
               <input
-                class="mb-0"
+                class="form-control"
                 name="cpassword"
                 type="password"
-                placeholder="Confirm Password"
+                id="cpassword"
+                placeholder="Confirm your password"
               />
               <div id="error5" class="error-message"></div>
             </div>
-            <div class="col-12">
-              <div class="check-box d-inline-block ml-0 ml-md-2 mt-10">
-                <input type="checkbox" id="remember_me" />
-                <label for="remember_me"
-                  >I agree to the terms and conditions</label
-                >
-              </div>
+          </div>
+
+          <!-- Register Button -->
+          <div class="col-md-12">
+            <button type="submit" class="btn btn-primary">
+              Create Account
+            </button>
+          </div>
+
+          <!-- Social Login Divider -->
+          <div class="col-md-12">
+            <div class="social-divider">
+              <span class="social-divider-text">Or continue with</span>
             </div>
-            <div
-              class="container d-flex justify-content-center align-items-center google-sign-in flex-column"
-            >
-              <button class="register-button mt-0">Register</button>
-              <p class="text-center d-block">or sign in with</p>
-              <div class="form-choice d-block"></div>
-              <a href="/auth/google" class="google-button d-block">
-                <i class="fa-brands fa-google"></i>
-                <span>Login With Google</span>
-              </a>
-              <!-- Google Sign-In Handler -->
-            </div>
-            <!-- Google Sign-In Handler end -->
+          </div>
+
+          <!-- Google Sign In -->
+          <div class="col-md-12">
+            <a href="/auth/google" class="btn btn-google">
+              <img
+                src="https://cdn.cdnlogo.com/logos/g/35/google-icon.svg"
+                alt="Google"
+                width="18"
+                height="18"
+                class="google-icon mr-2"
+              />
+              <span>Continue with Google</span>
+            </a>
           </div>
         </div>
       </form>
-      <!-- End form-choice -->
+
+      <!-- Form Footer -->
+      <div class="form-footer">
+        Already have an account? <a href="/login">Sign in</a>
+      </div>
     </div>
   </div>
 </div>
 
-<%-include('../partials/footer.ejs') %>
 <script>
   document.addEventListener("DOMContentLoaded", () => {
     if (typeof message !== "undefined") {
@@ -139,7 +345,7 @@
     const error4 = document.getElementById("error4");
     const error5 = document.getElementById("error5");
 
-    signform.addEventListener("submit", () => {
+    signform.addEventListener("submit", (event) => {
       let isValid = true;
       const namepattern = /^[A-Za-z\s ]+$/;
       const emailpattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
@@ -149,6 +355,7 @@
       [error1, error2, error3, error4, error5].forEach((error) => {
         error.textContent = "";
       });
+
       if (nameid.value.trim() === "") {
         error1.textContent = "Name is required";
         isValid = false;
@@ -156,28 +363,32 @@
         error1.textContent = "Name should contain only alphabets";
         isValid = false;
       }
+
       if (emailid.value.trim() === "") {
         error2.textContent = "Email is required";
         isValid = false;
       } else if (!emailpattern.test(emailid.value.trim())) {
-        error2.textContent = "Invalid Email";
+        error2.textContent = "Please enter a valid email address";
         isValid = false;
       }
+
       if (phoneid.value.trim() === "") {
-        error3.textContent = "Phone is required";
+        error3.textContent = "Phone number is required";
         isValid = false;
       } else if (!phonepattern.test(phoneid.value.trim())) {
-        error3.textContent = "Invalid Phone";
+        error3.textContent = "Please enter a valid 10-digit phone number";
         isValid = false;
       }
+
       if (passwordid.value.trim() === "") {
         error4.textContent = "Password is required";
         isValid = false;
       } else if (!passwordpattern.test(passwordid.value.trim())) {
         error4.textContent =
-          "Password should contain atleast one digit, one lowercase and one uppercase letter and should be between 6 to 10 characters";
+          "Password must contain at least one digit, one lowercase letter, one uppercase letter, and be 6-10 characters long";
         isValid = false;
       }
+
       if (cpasswordid.value.trim() === "") {
         error5.textContent = "Confirm Password is required";
         isValid = false;
@@ -185,9 +396,11 @@
         error5.textContent = "Passwords do not match";
         isValid = false;
       }
+
       if (!isValid) {
         event.preventDefault();
       }
     });
   });
 </script>
+<%-include('../partials/alerts.ejs') %>

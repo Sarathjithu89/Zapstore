@@ -122,6 +122,7 @@ const removecategoryOffer = async (req, res) => {
   }
 };
 
+//load category list
 const getListCategory = async (req, res) => {
   try {
     let id = req.query.id;
@@ -131,6 +132,7 @@ const getListCategory = async (req, res) => {
     res.redirect("/pageerror");
   }
 };
+//unlist category
 const getUnListCategory = async (req, res) => {
   try {
     let id = req.query.id;
@@ -142,6 +144,7 @@ const getUnListCategory = async (req, res) => {
   }
 };
 
+//Load Edit category
 const getEditCategory = async (req, res) => {
   try {
     const id = req.query.id;
@@ -158,26 +161,35 @@ const editCategory = async (req, res) => {
   try {
     const id = req.query.id;
     const { categoryName, description } = req.body;
+
+    // Check if the category name already exists
     const existingCategory = await Category.findOne({
       name: categoryName,
+      // _id: { $ne: id }, // Exclude the current category being edited
     });
+
     if (existingCategory) {
-      return res
-        .status(400)
-        .json({ error: "Category already Exists,please choose another name" });
+      req.flash("error", "Category already exists, please choose another name");
+      return res.redirect(`/admin/category`);
     }
+
     const updateCategory = await Category.findByIdAndUpdate(
       id,
       { name: categoryName, description: description },
       { new: true }
     );
+
     if (updateCategory) {
-      res.redirect("/admin/category");
+      req.flash("success", "Category updated successfully");
+      return res.redirect("/admin/category");
     } else {
-      res.status(404).json({ error: "Category not found" });
+      req.flash("error", "Category not found");
+      return res.redirect("/admin/category");
     }
   } catch (error) {
-    res.status(500).json({ error: "Internal server Error" });
+    console.error("Error updating category:", error);
+    req.flash("error", "Internal server error");
+    return res.redirect("/admin/category");
   }
 };
 

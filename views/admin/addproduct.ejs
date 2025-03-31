@@ -1,5 +1,6 @@
 
 <%- include('../partials2/header.ejs') %>
+<%- include('../partials/alerts.ejs') %>
 <head>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
   <style>
@@ -83,7 +84,7 @@
           <h2 class="mb-0">Add New Product</h2>
         </div>
         
-        <form id="productForm" method="POST" action="/admin/addProduct" enctype="multipart/form-data">
+        <form id="productForm" method="POST" action="/admin/addProducts" enctype="multipart/form-data">
           <div class="row">
             <div class="col-md-6">
               <div class="mb-3">
@@ -160,6 +161,11 @@
                 <div class="col-md-6 mb-3">
                   <label for="warranty" class="form-label">Warranty (Months)</label>
                   <input type="number" min="0" class="form-control" id="warranty" name="warranty" placeholder="Warranty period" required>
+                  <div id="warranty-error" class="error-message"></div>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label for="color" class="form-label">color</label>
+                  <input type="string" min="0" class="form-control" id="color" name="color" placeholder="Enter color" required>
                   <div id="warranty-error" class="error-message"></div>
                 </div>
               </div>
@@ -362,34 +368,34 @@ function validateAndSubmit() {
         });
     }
 }
-// Thumbnail 
-// function updateThumbnails() {
-//     const addedImagesContainer = document.getElementById('addedImagesContainer');
-//     const imageInputs = document.querySelectorAll('input[name="images"]');
+Thumbnail 
+function updateThumbnails() {
+    const addedImagesContainer = document.getElementById('addedImagesContainer');
+    const imageInputs = document.querySelectorAll('input[name="images"]');
     
-//     addedImagesContainer.innerHTML = ''; // Clear existing thumbnails
+    addedImagesContainer.innerHTML = ''; // Clear existing thumbnails
 
-//     imageInputs.forEach((input, index) => {
-//         if (input.files.length > 0) {
-//             const reader = new FileReader();
-//             reader.onload = function(e) {
-//                 const thumbnail = document.createElement('img');
-//                 thumbnail.src = e.target.result;
-//                 thumbnail.classList.add('thumbnail');
-//                 thumbnail.onclick = () => {
+    imageInputs.forEach((input, index) => {
+        if (input.files.length > 0) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const thumbnail = document.createElement('img');
+                thumbnail.src = e.target.result;
+                thumbnail.classList.add('thumbnail');
+                thumbnail.onclick = () => {
                     
-//                     Swal.fire({
-//                         imageUrl: e.target.result,
-//                         imageAlt: `Product Image ${index + 1}`,
-//                         showConfirmButton: false
-//                     });
-//                 };
-//                 addedImagesContainer.appendChild(thumbnail);
-//             };
-//             reader.readAsDataURL(input.files[0]);
-//         }
-//     });
-// }
+                    Swal.fire({
+                        imageUrl: e.target.result,
+                        imageAlt: `Product Image ${index + 1}`,
+                        showConfirmButton: false
+                    });
+                };
+                addedImagesContainer.appendChild(thumbnail);
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    });
+}
 // Add event listeners
 document.addEventListener('DOMContentLoaded', () => {
     const imageInputs = document.querySelectorAll('input[name="images"]');

@@ -7,7 +7,7 @@ const categoryController = require("../controllers/admin/categoryController.js")
 const brandController = require("../controllers/admin/brandController.js");
 const productContorller = require("../controllers/admin/productContorller.js");
 
-const { uploads } = require("../uility/multer.js");
+const { BrandUploads, ProductUploads } = require("../uility/multer.js");
 
 //admin login routes
 adminRouter.get("/", adminController.loadLogin);
@@ -57,7 +57,7 @@ adminRouter.get("/brands", adminAuth, brandController.getBrandPage);
 adminRouter.post(
   "/addBrand",
   adminAuth,
-  uploads.single("image"),
+  BrandUploads.single("image"),
   brandController.addBrand
 );
 adminRouter.get("/blockBrand", adminAuth, brandController.blockBrand);
@@ -69,7 +69,7 @@ adminRouter.get("/addProducts", adminAuth, productContorller.getProductAddPage);
 adminRouter.post(
   "/addProducts",
   adminAuth,
-  uploads.array("images", 4),
+  ProductUploads.array("images", 4),
   productContorller.addProducts
 );
 

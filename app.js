@@ -11,8 +11,18 @@ const adminRouter = require("./routes/adminRouter.js");
 const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
 
-connectDb();
+connectDb(); //connect db function
 const PORT = 3000 || process.env.PORT;
+
+//view engin ,static files
+app.set("view engine", "ejs");
+app.set("views", [
+  path.join(__dirname, "views/user"),
+  path.join(__dirname, "views"),
+  path.join(__dirname, "views/admin"),
+]);
+
+//middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(
@@ -32,16 +42,9 @@ app.use((req, res, next) => {
   res.set("Cache-Control", "no-store");
   next();
 });
-
 app.use(express.static(path.join(__dirname, "public")));
 
-app.set("view engine", "ejs");
-app.set("views", [
-  path.join(__dirname, "views/user"),
-  path.join(__dirname, "views"),
-  path.join(__dirname, "views/admin"),
-]);
-
+//user and admin routes
 app.use("/", userRouter);
 app.use("/admin", adminRouter);
 

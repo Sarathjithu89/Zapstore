@@ -18,6 +18,7 @@ const customerInfo = async (req, res) => {
         { email: { $regex: ".*" + search + ".*" } },
       ],
     })
+      .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit)
       .exec();
@@ -43,6 +44,7 @@ const custormerBlocked = async (req, res) => {
   try {
     let id = req.query.userid;
     await User.updateOne({ _id: id }, { $set: { is_blocked: true } });
+    req.flash("success", "User Blocked Successfully");
     return res.redirect("/admin/users");
   } catch (error) {
     console.log("Customer Block error", error);
@@ -54,6 +56,7 @@ const custormerUnblocked = async (req, res) => {
     let id = req.query.userid;
 
     await User.updateOne({ _id: id }, { $set: { is_blocked: false } });
+    req.flash("success", "User Unblocked Successfully");
     return res.redirect("/admin/users");
   } catch (error) {
     console.log("unblock error", error);

@@ -16,16 +16,23 @@ const adminLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
     const admin = await User.findOne({ email: email, isAdmin: true });
-    if (admin) {
-      const passwordMatch = await bcrypt.compare(password, admin.password);
-      if (passwordMatch) {
-        req.session.admin = true;
-        return res.redirect("/admin/dashboard");
-      }
+
+    if (!admin) {
+      req.flash("error", "Please Enter Valid Admin Email");
+      return res.redirect("/admin");
     }
-    return res.redirect("/admin");
+
+    const passwordMatch = await bcrypt.compare(password, admin.password);
+    if (passwordMatch) {
+      req.session.admin = true;
+      req.flash("success", "Login successful");
+      return res.redirect("/admin/dashboard");
+    } else {
+      req.flash("error", "Incorrect password");
+      return res.redirect("/admin");
+    }
   } catch (error) {
-    console.log("login Error", error);
+    console.log("Login Error", error);
     return res.redirect("/pageerror");
   }
 };

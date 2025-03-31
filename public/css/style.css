@@ -1599,7 +1599,7 @@ textarea:focus {
   position: relative;
   background: #fff;
   border-radius: 5px;
-  border: 1px solid #e1e1e1;
+  /* border: 1px solid #e1e1e1; */
   min-width: 300px;
   max-width: 600px;
   height: 45px;
@@ -1897,7 +1897,7 @@ textarea:focus {
 }
 /*Header Bottom Menu*/
 .header-bottom {
-  background: #5c5b58;
+  background: #eaeaea;
   margin-bottom: 20px;
 }
 .hb-menu > nav > ul {
@@ -1912,7 +1912,7 @@ textarea:focus {
 }
 .hb-menu nav > ul > li > a {
   display: flex;
-  color: #b6b6b6;
+  color: #565656;
   text-transform: uppercase;
   font-size: 14px;
   line-height: 35px;
@@ -1930,18 +1930,9 @@ textarea:focus {
 }
 .hb-menu nav > ul > li:hover > a,
 .hb-menu nav > ul > li:hover > a::after {
-  color: #ffffff;
+  color: #b2b2b2;
 }
-.hb-menu nav > ul > li > a::after {
-  content: "\f107";
-  position: absolute;
-  top: 8px;
-  right: 15px;
-  font-family: fontawesome;
-  font-size: 18px;
-  transition: all 0.3s ease-in-out;
-  color: #242424;
-}
+
 .hb-menu nav > ul > li:nth-child(n + 5) > a::after {
   content: none;
 }
@@ -2101,8 +2092,7 @@ textarea:focus {
 /*Sticky*/
 .header-sticky.sticky {
   text-align: center;
-
-  background: rgb(43, 43, 43);
+  background: #eaeaea;
   left: 0;
   position: fixed;
   right: 0;
