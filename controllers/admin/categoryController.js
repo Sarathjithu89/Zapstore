@@ -3,6 +3,8 @@ const Product = require("../../models/Products.js");
 
 const categoryInfo = async (req, res) => {
   try {
+
+    const admin=req.session.admin;
     const page = parseInt(req.query.page) || 1;
     const limit = 4;
     const skip = (page - 1) * limit;
@@ -15,6 +17,7 @@ const categoryInfo = async (req, res) => {
     const totalCategories = await Category.countDocuments();
     const totalPages = Math.ceil(totalCategories / limit);
     res.render("category.ejs", {
+      admin:admin,
       cat: categoryData,
       currentPage: page,
       totalPages: totalPages,

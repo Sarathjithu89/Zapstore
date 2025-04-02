@@ -1,74 +1,745 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
-      crossorigin="anonymous"
-    />
-  </head>
-  <body>
-    <!--  -->
-    <!-- Button trigger modal -->
-    <button
-      type="button"
-      class="btn btn-primary"
-      data-bs-toggle="modal"
-      data-bs-target="#editCatogory"
-    >
-      Launch demo modal
-    </button>
+<%- include('../partials2/header.ejs') %>
 
-    <!-- Modal -->
-    <div
-      class="modal fade"
-      id="editCatogory"
-      tabindex="-1"
-      aria-labelledby="exampleModalLabel"
-      aria-hidden="true"
-    >
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <!-- modal header -->
-          <div class="modal-header">
-            <h1 class="modal-title fs-5" id="exampleModalLabel">Modal title</h1>
-            <button
-              type="button"
-              class="btn-close"
-              data-bs-dismiss="modal"
-              aria-label="Close"
-            ></button>
-          </div>
-          <!-- /modal header end -->
-          <div class="modal-body">
-            <!-- modal body -->
-            <!-- .......... -->
-            <!-- /modal body -->
-          </div>
-          <!-- modal footer -->
-          <div class="modal-footer">
-            <button
-              type="button"
-              class="btn btn-secondary"
-              data-bs-dismiss="modal"
-            >
-              Close
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --primary-dark: #3a56d4;
+            --secondary-color: #2b2d42;
+            --success-color: #2ecc71;
+            --danger-color: #e63946;
+            --warning-color: #f9c74f;
+            --info-color: #4cc9f0;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+            --gray-100: #f8f9fa;
+            --gray-200: #e9ecef;
+            --gray-300: #dee2e6;
+            --gray-400: #ced4da;
+            --gray-500: #adb5bd;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition-speed: 0.3s;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f7f7f9;
+            color: var(--dark-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+
+        /* Content Header Styles */
+        .content-header {
+            padding: 2rem 0;
+            background-color: white;
+            border-bottom: 1px solid var(--gray-300);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            margin-bottom: 2rem;
+        }
+
+        .content-title {
+            font-size: 1.75rem;
+            color: var(--secondary-color);
+            margin: 0;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        /* Search Form Styles */
+        .search-form {
+            margin: 20px auto 30px;
+            max-width: 600px;
+        }
+
+        .input-group {
+            display: flex;
+            justify-content: center;
+        }
+
+        .search-input {
+            padding: 12px 16px;
+            font-size: 16px;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--border-radius) 0 0 var(--border-radius);
+            width: 70%;
+            transition: all var(--transition-speed);
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.075);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.25);
+        }
+
+        .search-button {
+            padding: 12px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 0 var(--border-radius) var(--border-radius) 0;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color var(--transition-speed);
+        }
+
+        .search-button:hover {
+            background-color: var(--primary-dark);
+        }
+
+        /* Table Styles */
+        .table-container {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            padding: 0.5rem;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 0.9rem;
+        }
+
+        .table thead tr {
+            background-color: var(--primary-color);
+            color: white;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .table thead th {
+            padding: 14px 15px;
+            vertical-align: middle;
+            border: none;
+            white-space: nowrap;
+            font-size: 0.95rem;
+            position: sticky;
+            top: 0;
+        }
+
+        .table thead th:first-child {
+            border-top-left-radius: var(--border-radius);
+        }
+
+        .table thead th:last-child {
+            border-top-right-radius: var(--border-radius);
+        }
+
+        .table tbody tr {
+            transition: background-color var(--transition-speed);
+        }
+
+        .table tbody tr:hover {
+            background-color: rgba(67, 97, 238, 0.05);
+        }
+
+        .table tbody tr:nth-of-type(even) {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+
+        .table tbody tr:nth-of-type(even):hover {
+            background-color: rgba(67, 97, 238, 0.05);
+        }
+
+        .table tbody td {
+            padding: 12px 15px;
+            text-align: center;
+            border-top: 1px solid var(--gray-300);
+            vertical-align: middle;
+        }
+
+        /* Button Styles */
+        .btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-block;
+            margin: 2px;
+            transition: all var(--transition-speed);
+            font-size: 0.85rem;
+        }
+
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 0.8rem;
+        }
+
+        .btn-info {
+            background-color: var(--info-color);
+            color: white;
+        }
+
+        .btn-info:hover {
+            background-color: #3ab7db;
+            transform: translateY(-1px);
+        }
+
+        .btn-warning {
+            background-color: var(--warning-color);
+            color: var(--dark-color);
+        }
+
+        .btn-warning:hover {
+            background-color: #f0b429;
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #d62b39;
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #27ae60;
+            transform: translateY(-1px);
+        }
+
+        /* Image Styles */
+        .product-image-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .product-image {
+            border-radius: var(--border-radius);
+            object-fit: cover;
+            transition: transform 0.2s;
+            border: 1px solid var(--gray-300);
+        }
+
+        .product-image:hover {
+            transform: scale(1.1);
+        }
+
+        /* Pagination Styles */
+        .pagination-container {
+            margin: 25px 0;
+        }
+
+        .pagination {
+            display: flex;
+            padding-left: 0;
+            list-style: none;
+            justify-content: center;
+            margin: 0;
+        }
+
+        .page-item {
+            margin: 0 3px;
+        }
+
+        .page-link {
+            padding: 8px 16px;
+            border: 1px solid var(--gray-300);
+            color: var(--primary-color);
+            text-decoration: none;
+            background-color: white;
+            border-radius: var(--border-radius);
+            transition: all var(--transition-speed);
+            font-weight: 500;
+        }
+
+        .page-item.active .page-link {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .page-link:hover {
+            background-color: var(--gray-200);
+            transform: translateY(-2px);
+        }
+
+        .page-item.disabled .page-link {
+            color: var(--gray-500);
+            background-color: var(--gray-100);
+            cursor: not-allowed;
+        }
+
+        /* Action Icons */
+        .action-icons {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .icon-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            transition: all var(--transition-speed);
+        }
+
+        .icon-button:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .bi-trash-fill {
+            color: var(--danger-color);
+            transition: color var(--transition-speed);
+        }
+
+        .bi-trash-fill:hover {
+            color: #c82333;
+        }
+
+        .bi-pencil-fill {
+            color: var(--info-color);
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 0.35em 0.65em;
+            font-size: 0.75em;
+            font-weight: 700;
+            line-height: 1;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: baseline;
+            border-radius: 50rem;
+        }
+
+        .badge-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .badge-danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .offer-percentage {
+            font-weight: 600;
+            color: var(--danger-color);
+        }
+
+        /* Responsive Design */
+        @media screen and (max-width: 992px) {
+            .table thead th,
+            .table tbody td {
+                padding: 10px;
+            }
+        }
+
+        @media screen and (max-width: 768px) {
+            .table {
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+            
+            .search-input {
+                width: 60%;
+            }
+            
+            .btn {
+                padding: 6px 12px;
+            }
+        }
+
+        @media screen and (max-width: 576px) {
+            .content-title {
+                font-size: 1.5rem;
+            }
+            
+            .search-input {
+                width: 100%;
+                border-radius: var(--border-radius);
+            }
+            
+            .search-button {
+                width: 100%;
+                margin-top: 10px;
+                border-radius: var(--border-radius);
+            }
+            
+            .input-group {
+                flex-direction: column;
+            }
+        }
+
+        /* Links */
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .text-white {
+            color: white !important;
+        }
+
+        /* Status indicator */
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        .status-active {
+            background-color: var(--success-color);
+        }
+
+        .status-blocked {
+            background-color: var(--danger-color);
+        }
+    </style>
+
+
+<div class="content-header">
+    <h2 class="content-title">Products Management</h2>
+</div>
+
+<div class="container">
+    <form action="" method="get" class="search-form">
+        <div class="input-group">
+            <input type="text" class="search-input" placeholder="Search products or brands" name="search" aria-label="Search products">
+            <button class="search-button" type="submit">
+                <i class="bi bi-search"></i> Search
             </button>
-            <button type="button" class="btn btn-primary">Save changes</button>
-          </div>
-          <!-- /modal footer -->
         </div>
-      </div>
+    </form>
+
+    <div class="table-container">
+        <div class="table-responsive">
+            <table class="table" aria-label="Products table">
+                <thead>
+                    <tr>
+                        <th scope="col">Image</th>
+                        <th scope="col">Product Name</th>
+                        <th scope="col">Brand</th>
+                        <th scope="col">Category</th>
+                        <th scope="col">Sale Price</th>
+                        <th scope="col">Regular Price</th>
+                        <th scope="col">Offer</th>
+                        <th scope="col">Quantity</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% for(let i=data.length-1; i>=0; i--) { %>
+                    <tr>
+                        <td>
+                            <div class="product-image-container">
+                                <% if(data[i].productImage && data[i].productImage.length > 0) { %>
+                                    <% data[i].productImage.forEach(image => { %>
+                                        <img src="/uploads/product-images/<%= image %>" alt="<%= data[i].productName %>" class="product-image" style="width: 50px; height: 50px;">
+                                    <% }); %>
+                                <% } else { %>
+                                    <img src="/placeholder.svg" alt="No image available" class="product-image" style="width: 50px; height: 50px;">
+                                <% } %>
+                            </div>
+                        </td>
+                        
+                        <td><%= data[i].productName %></td>
+                        <td><%= data[i].brand %></td>
+                        <td><%= data[i].category ? data[i].category.name : 'N/A' %></td>
+                        <td>₹<%= data[i].salePrice.toLocaleString() %></td>
+                        <td>₹<%= data[i].regularPrice.toLocaleString() %></td>
+                        <td>
+                            <% if(data[i].productOffer) { %>
+                                <span class="offer-percentage"><%= data[i].productOffer %>%</span>
+                                <div class="mt-2">
+                                    <button class="btn btn-sm btn-warning" onclick="editOffer('<%= data[i]._id %>',' <%= data[i].productOffer %>')" title="Edit offer">
+                                        <i class="bi bi-pencil"></i> Edit
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" onclick="removeOffer('<%= data[i]._id %>')" title="Remove offer">
+                                        <i class="bi bi-x-circle"></i> Remove
+                                    </button>
+                                </div>
+                            <% } else { %>
+                                <span>0%</span>
+                                <div class="mt-2">
+                                    <button class="btn btn-sm btn-info" onclick="addOffer('<%= data[i]._id %>')" title="Add offer">
+                                        <i class="bi bi-plus-circle"></i> Add Offer
+                                    </button>
+                                </div>
+                            <% } %>
+                        </td>
+                        <td><%= data[i].quantity %></td>
+                        <td>
+                            <% if(data[i].isBlocked === false) { %>
+                                <span class="badge badge-success">
+                                    <i class="bi bi-check-circle"></i> Active
+                                </span>
+                            <% } else { %>
+                                <span class="badge badge-danger">
+                                    <i class="bi bi-x-circle"></i> Blocked
+                                </span>
+                            <% } %>
+                        </td>
+                        <td>
+                            <div class="action-icons">
+                                <% if(data[i].isBlocked === false) { %>
+                                    <button class="btn btn-sm btn-danger" title="Block product" onclick="confirmBlockProduct(event, '<%= data[i]._id %>')">
+                                        <i class="bi bi-slash-circle"></i> Block
+                                    </button>
+                                <% } else { %>
+                                    <button class="btn btn-sm btn-success" title="Unblock product" onclick="confirmUnblockProduct(event, '<%= data[i]._id %>')">
+                                        <i class="bi bi-check-circle"></i> Unblock
+                                    </button>
+                                <% } %>
+                                
+                                <button class="btn btn-sm btn-info" title="Edit product" onclick="window.location.href='/admin/editProduct?id=<%= data[i]._id %>'">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </button>
+                                
+                                <button class="btn btn-sm btn-danger" title="Delete product" onclick="confirmDelete('<%= data[i]._id %>')">
+                                    <i class="bi bi-trash"></i> Delete
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
     </div>
-    <!--  -->
-    <script
-      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-      integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
-      crossorigin="anonymous"
-    ></script>
-  </body>
-</html>
+
+    <div class="pagination-container">
+        <nav aria-label="Product pagination">
+            <ul class="pagination">
+                <!-- Previous Button -->
+                <% if (currentPage > 1) { %>
+                    <li class="page-item">
+                        <a class="page-link" href="?page=<%= currentPage - 1 %>" aria-label="Previous page">
+                            <i class="bi bi-chevron-left"></i> Previous
+                        </a>
+                    </li>
+                <% } else { %>
+                    <li class="page-item disabled">
+                        <span class="page-link">
+                            <i class="bi bi-chevron-left"></i> Previous
+                        </span>
+                    </li>
+                <% } %>
+        
+                <!-- Page Numbers -->
+                <% for (let i = 1; i <= totalPages; i++) { %>
+                    <li class="page-item <%= (i === currentPage) ? 'active' : '' %>">
+                        <a class="page-link" href="?page=<%= i %>" aria-label="Page <%= i %>"><%= i %></a>
+                    </li>
+                <% } %>
+        
+                <!-- Next Button -->
+                <% if (currentPage < totalPages) { %>
+                    <li class="page-item">
+                        <a class="page-link" href="?page=<%= currentPage + 1 %>" aria-label="Next page">
+                            Next <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                <% } else { %>
+                    <li class="page-item disabled">
+                        <span class="page-link">
+                            Next <i class="bi bi-chevron-right"></i>
+                        </span>
+                    </li>
+                <% } %>
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+
+<script>
+   async function addOffer(productId) {
+    const { value: percentage } = await Swal.fire({
+        title: "Add Offer",
+        input: "number",
+        inputLabel: "Offer Percentage",
+        inputPlaceholder: "Enter offer percentage",
+        inputAttributes: {
+            min: 1,
+            max: 99,
+            step: 1
+        },
+        showCancelButton: true,
+        inputValidator: (value) => {
+            if (!value || value < 1 || value > 99) {
+                return "Please enter a valid percentage between 1 and 99";
+            }
+        }
+    });
+
+    if (percentage) {
+        updateOffer(productId, percentage);
+    }
+}
+
+async function editOffer(productId, currentOffer) {
+    const { value: percentage } = await Swal.fire({
+        title: "Edit Offer",
+        input: "number",
+        inputLabel: "Offer Percentage",
+        inputPlaceholder: "Enter offer percentage",
+        inputValue: currentOffer,
+        inputAttributes: {
+            min: 1,
+            max: 99,
+            step: 1
+        },
+        showCancelButton: true,
+        inputValidator: (value) => {
+            if (!value || value < 1 || value > 99) {
+                return "Please enter a valid percentage between 1 and 99";
+            }
+        }
+    });
+
+    if (percentage) {
+        updateOffer(productId, percentage);
+    }
+}
+
+function updateOffer(productId, percentage) {
+    $.ajax({
+        url: "/admin/addProductOffer",
+        method: "post",
+        data: {
+            productId: productId,
+            percentage: percentage
+        },
+        success: (response) => {
+            if (response.status) {
+                Swal.fire('Success', 'Offer updated successfully', 'success').then(() => {
+                    location.reload();
+                });
+            } else {
+                Swal.fire('Error', response.message || 'Failed to update offer', 'error');
+            }
+        },
+        error: (error) => {
+            console.error('Error:', error);
+            Swal.fire('Error', 'An unexpected error occurred', 'error');
+        }
+    });
+}
+
+function removeOffer(productId) {
+    Swal.fire({
+        title: "Remove offer",
+        text: "Are you sure you want to remove this offer?",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+        confirmButtonText: "Yes, remove it"
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: "/admin/removeProductOffer",
+                method: 'post',
+                data: {
+                    productId: productId
+                },
+                success: (response) => {
+                    if (response.status) {
+                        Swal.fire("Removed!", "The offer has been removed", "success").then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire('Error', response.message || 'Failed to remove offer', 'error');
+                    }
+                },
+                error: (error) => {
+                    console.error('Error:', error);
+                    Swal.fire('Error', 'An unexpected error occurred', 'error');
+                }
+            });
+        }
+    });
+}
+
+function confirmBlockProduct(event, productId) {
+    event.preventDefault();
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You are about to block this product!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, Block!",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        window.location.href = "/admin/blockProduct?id=" + productId;
+      }
+    });
+  }
+
+  function confirmUnblockProduct(event, productId) {
+    event.preventDefault();
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You are about to unblock this product!",
+      icon: "info",
+      showCancelButton: true,
+      confirmButtonColor: "#28a745",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, Unblock!",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        window.location.href = "/admin/unblockProduct?id=" + productId;
+      }
+    });
+  }
+
+function confirmDelete(productId) {
+    Swal.fire({
+        title: "Are you sure?",
+        text: "You will not be able to undo this action!",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+        confirmButtonText: "Yes, delete it!"
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Proceed with the deletion
+            window.location.href = `/admin/deleteProduct?id=${productId}`;
+        }
+    });
+}
+</script>
+
+<%- include('../partials2/footer.ejs') %>

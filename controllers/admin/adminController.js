@@ -24,7 +24,7 @@ const adminLogin = async (req, res) => {
 
     const passwordMatch = await bcrypt.compare(password, admin.password);
     if (passwordMatch) {
-      req.session.admin = true;
+      req.session.admin = { name: admin.name, email: admin.email };
       req.flash("success", "Login successful");
       return res.redirect("/admin/dashboard");
     } else {
@@ -41,7 +41,8 @@ const adminLogin = async (req, res) => {
 const loadDashboard = async (req, res) => {
   if (req.session.admin) {
     try {
-      res.render("dashboard.ejs");
+      const admin = req.session.admin;
+      res.render("dashboard.ejs", { admin });
     } catch (error) {
       console.log(error);
       res.redirect("/pageerror");

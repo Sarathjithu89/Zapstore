@@ -1,0 +1,923 @@
+<%- include('../partials2/header.ejs') %>
+
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css"
+/>
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.css"
+/>
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"
+/>
+
+<main id="main">
+  <!-- Breadcrumbs-->
+  <div class="bg-light border-bottom py-3 mb-4">
+    <div class="container-fluid">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb m-0">
+          <li class="breadcrumb-item"><a href="/admin/dashboard">Home</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Products</li>
+        </ol>
+      </nav>
+    </div>
+  </div>
+  <!-- / Breadcrumbs-->
+  <style>
+    :root {
+      --primary-color: #4361ee;
+      --primary-light: #e6ecff;
+      --primary-dark: #3a56d4;
+      --secondary-color: #2b2d42;
+      --success-color: #2ecc71;
+      --danger-color: #e63946;
+      --warning-color: #f9c74f;
+      --info-color: #4cc9f0;
+      --light-color: #f8f9fa;
+      --dark-color: #212529;
+      --gray-100: #f8f9fa;
+      --gray-200: #e9ecef;
+      --gray-300: #dee2e6;
+      --gray-400: #ced4da;
+      --gray-500: #adb5bd;
+      --border-radius: 8px;
+      --box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+      --transition-speed: 0.3s;
+    }
+
+    body {
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+        Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background-color: #f7f9fc;
+      color: var(--dark-color);
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 0 15px;
+    }
+
+    /* Content Header Styles */
+    .content-header {
+      padding: 1.5rem 0;
+      background-color: white;
+      margin-bottom: 2rem;
+    }
+
+    .content-title {
+      font-size: 1.75rem;
+      color: var(--secondary-color);
+      margin: 0;
+      font-weight: 600;
+    }
+
+    /* Search Form Styles */
+    .search-form {
+      margin: 20px auto 30px;
+      max-width: 600px;
+      transition: all 0.3s ease;
+    }
+
+    /* .search-form:focus-within {
+      transform: translateY(-2px);
+    } */
+
+    .input-group {
+      /* display: flex;
+      justify-content: center;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+      border-radius: var(--border-radius); */
+    }
+
+    .search-input {
+      padding: 14px 18px;
+      font-size: 16px;
+      border: 1px solid var(--gray-300);
+      border-radius: var(--border-radius) 0 0 var(--border-radius);
+      width: 70%;
+      transition: all var(--transition-speed);
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
+    }
+
+    .search-button {
+      padding: 12px 24px;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 0 var(--border-radius) var(--border-radius) 0;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all var(--transition-speed);
+    }
+
+    .search-button:hover {
+      background-color: var(--primary-dark);
+      /* transform: translateX(1px); */
+    }
+
+    /* Table Styles */
+    .table-container {
+      background-color: white;
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      overflow: hidden;
+      margin-bottom: 2rem;
+      transition: all 0.3s ease;
+    }
+
+    .table-container:hover {
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+    }
+
+    .table-responsive {
+      overflow-x: auto;
+      padding: 0.5rem;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 0.95rem;
+    }
+
+    .table thead tr {
+      background-color: var(--primary-color);
+      color: white;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .table thead th {
+      color: white;
+      padding: 16px 15px;
+      vertical-align: middle;
+      border: none;
+      white-space: nowrap;
+      font-size: 0.9rem;
+      letter-spacing: 0.3px;
+      position: sticky;
+      top: 0;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+
+    .table thead th:first-child {
+      border-top-left-radius: var(--border-radius);
+    }
+
+    .table thead th:last-child {
+      border-top-right-radius: var(--border-radius);
+    }
+
+    /* .table tbody tr {
+      transition: all var(--transition-speed);
+    } */
+
+    .table tbody tr:hover {
+      background-color: rgba(67, 97, 238, 0.05);
+      /* transform: translateY(-1px); */
+    }
+
+    .table tbody tr:nth-of-type(even) {
+      background-color: rgba(0, 0, 0, 0.02);
+    }
+
+    .table tbody tr:nth-of-type(even):hover {
+      background-color: rgba(67, 97, 238, 0.05);
+    }
+
+    .table tbody td {
+      padding: 14px 15px;
+      text-align: center;
+      border-top: 1px solid var(--gray-200);
+      vertical-align: middle;
+    }
+
+    /* Button Styles */
+    .btn {
+      padding: 8px 15px;
+      border: none;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      font-weight: 500;
+      text-decoration: none;
+      display: inline-block;
+      margin: 2px;
+      transition: all var(--transition-speed);
+      font-size: 0.85rem;
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 0.8rem;
+      border-radius: 6px;
+    }
+
+    .btn-info {
+      background-color: var(--info-color);
+      color: white;
+    }
+
+    .btn-info:hover {
+      background-color: #3ab7db;
+      /* transform: translateY(-2px); */
+      box-shadow: 0 3px 8px rgba(76, 201, 240, 0.3);
+    }
+
+    .btn-warning {
+      background-color: var(--warning-color);
+      color: var(--dark-color);
+    }
+
+    .btn-warning:hover {
+      background-color: #f0b429;
+      /* transform: translateY(-2px); */
+      box-shadow: 0 3px 8px rgba(249, 199, 79, 0.3);
+    }
+
+    .btn-danger {
+      background-color: var(--danger-color);
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background-color: #d62b39;
+      /* transform: translateY(-2px); */
+      box-shadow: 0 3px 8px rgba(230, 57, 70, 0.3);
+    }
+
+    .btn-success {
+      background-color: var(--success-color);
+      color: white;
+    }
+
+    .btn-success:hover {
+      background-color: #27ae60;
+      /* transform: translateY(-2px); */
+      box-shadow: 0 3px 8px rgba(46, 204, 113, 0.3);
+    }
+
+    /* Image Styles */
+    .product-image-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .product-image {
+      border-radius: var(--border-radius);
+      object-fit: cover;
+      transition: transform 0.3s, box-shadow 0.3s;
+      border: 1px solid var(--gray-300);
+    }
+
+    .product-image:hover {
+      transform: scale(1.15);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      z-index: 10;
+      position: relative;
+    }
+
+    /* Pagination Styles */
+    .pagination-container {
+      margin: 30px 0;
+    }
+
+    .pagination {
+      display: flex;
+      padding-left: 0;
+      list-style: none;
+      justify-content: center;
+      margin: 0;
+      gap: 5px;
+    }
+
+    .page-item {
+      margin: 0;
+    }
+
+    .page-link {
+      padding: 10px 16px;
+      border: 1px solid var(--gray-300);
+      color: var(--primary-color);
+      text-decoration: none;
+      background-color: white;
+      border-radius: var(--border-radius);
+      transition: all var(--transition-speed);
+      font-weight: 500;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    }
+
+    .page-item.active .page-link {
+      background-color: var(--primary-color);
+      color: white;
+      border-color: var(--primary-color);
+      box-shadow: 0 4px 10px rgba(67, 97, 238, 0.3);
+    }
+
+    .page-link:hover {
+      background-color: var(--primary-light);
+      transform: translateY(-3px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .page-item.disabled .page-link {
+      color: var(--gray-500);
+      background-color: var(--gray-100);
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+
+    /* Action Icons */
+    .action-icons {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .icon-button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 5px;
+      border-radius: 50%;
+      transition: all var(--transition-speed);
+    }
+
+    .icon-button:hover {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    .bi-trash-fill {
+      color: var(--danger-color);
+      transition: color var(--transition-speed);
+    }
+
+    .bi-trash-fill:hover {
+      color: #c82333;
+    }
+
+    .bi-pencil-fill {
+      color: var(--info-color);
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-block;
+      padding: 0.5em 0.75em;
+      font-size: 0.75em;
+      font-weight: 600;
+      line-height: 1;
+      text-align: center;
+      white-space: nowrap;
+      vertical-align: baseline;
+      border-radius: 50rem;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .badge-success {
+      background-color: var(--success-color);
+      color: white;
+    }
+
+    .badge-danger {
+      background-color: var(--danger-color);
+      color: white;
+    }
+
+    .offer-percentage {
+      font-weight: 700;
+      color: var(--danger-color);
+      font-size: 1.05rem;
+    }
+
+    /* Responsive Design */
+    @media screen and (max-width: 992px) {
+      .table thead th,
+      .table tbody td {
+        padding: 10px;
+      }
+    }
+
+    @media screen and (max-width: 768px) {
+      .table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+      }
+
+      .search-input {
+        width: 60%;
+      }
+
+      .btn {
+        padding: 6px 12px;
+      }
+    }
+
+    @media screen and (max-width: 576px) {
+      .content-title {
+        font-size: 1.5rem;
+      }
+
+      .search-input {
+        width: 100%;
+        border-radius: var(--border-radius);
+      }
+
+      .search-button {
+        width: 100%;
+        margin-top: 10px;
+        border-radius: var(--border-radius);
+      }
+
+      .input-group {
+        flex-direction: column;
+      }
+    }
+
+    /* Links */
+    a {
+      text-decoration: none;
+      color: inherit;
+      transition: color 0.2s;
+    }
+
+    a:hover {
+      color: var(--primary-color);
+    }
+
+    .text-white {
+      color: white !important;
+    }
+
+    /* Status indicator */
+    .status-indicator {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 5px;
+    }
+
+    .status-active {
+      background-color: var(--success-color);
+    }
+
+    .status-blocked {
+      background-color: var(--danger-color);
+    }
+
+    /* New card-style elements */
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.25rem;
+      background-color: #f8f9fa;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .data-count {
+      font-size: 1rem;
+      color: var(--gray-600);
+      margin-top: 0.5rem;
+      text-align: center;
+    }
+
+    /* Table row transitions and effects */
+    .table tbody tr {
+      position: relative;
+      z-index: 1;
+    }
+
+    .table tbody tr::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 3px;
+      background-color: var(--primary-color);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .table tbody tr:hover::after {
+      opacity: 1;
+    }
+
+    /* Price formatter */
+    .price-value {
+      font-weight: 600;
+    }
+
+    /* Smooth page transitions */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* .container {
+      animation: fadeIn 0.4s ease-out;
+    } */
+  </style>
+
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="container">
+        <!-- Search Form -->
+        <form action="" method="get" class="search-form">
+          <div class="input-group">
+            <input
+              type="text"
+              class="search-input"
+              placeholder="Search products or brands"
+              name="search"
+              aria-label="Search products"
+            />
+            <button class="search-button" type="submit">
+              <i class="bi bi-search"></i> Search
+            </button>
+          </div>
+        </form>
+
+        <!-- Table Container -->
+        <div class="table-container">
+          <div class="card-header">
+            <h5 class="mb-0">Products List</h5>
+            <!-- <a href="/admin/addProducts" class="btn btn-success">
+              <i class="bi bi-plus-circle"></i> Add New Product
+            </a> -->
+          </div>
+          <div class="table-responsive">
+            <table class="table" aria-label="Products table">
+              <thead>
+                <tr>
+                  <th scope="col">Image</th>
+                  <th scope="col">Product Name</th>
+                  <th scope="col">Brand</th>
+                  <th scope="col">Category</th>
+                  <th scope="col">Sale Price</th>
+                  <th scope="col">Regular Price</th>
+                  <th scope="col">Offer</th>
+                  <th scope="col">Quantity</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% for(let i=data.length-1; i>=0; i--) { %>
+                <tr>
+                  <td>
+                    <div class="product-image-container">
+                      <% if(data[i].productImage && data[i].productImage.length
+                      > 0) { %> <% data[i].productImage.forEach(image => { %>
+                      <img
+                        src="/uploads/product-images/<%= image %>"
+                        alt="<%= data[i].productName %>"
+                        class="product-image"
+                        style="width: 50px; height: 50px"
+                      />
+                      <% }); %> <% } else { %>
+                      <img
+                        src="/placeholder.svg"
+                        alt="No image available"
+                        class="product-image"
+                        style="width: 50px; height: 50px"
+                      />
+                      <% } %>
+                    </div>
+                  </td>
+                  <td><%= data[i].productName %></td>
+                  <td><%= data[i].brand %></td>
+                  <!-- <td>
+                    <% const matchingCategory = cat.find((ele) => ele._id.toString() === data[i].category.toString()); %>
+                    <%= matchingCategory ? matchingCategory.name : 'N/A' %>
+                  </td> -->
+                  <td>
+                    <%= data[i].category ? data[i].category.name : 'N/A' %>
+                  </td>
+                  <td>
+                    <span class="price-value"
+                      >₹<%= data[i].salePrice.toLocaleString() %></span
+                    >
+                  </td>
+                  <td>
+                    <span class="price-value"
+                      >₹<%= data[i].regularPrice.toLocaleString() %></span
+                    >
+                  </td>
+                  <td>
+                    <% if(data[i].productOffer) { %>
+                    <span class="offer-percentage"
+                      ><%= data[i].productOffer %>%</span
+                    >
+                    <div class="mt-2">
+                      <button
+                        class="btn btn-sm btn-warning"
+                        onclick="editOffer('<%= data[i]._id %>', '<%= data[i].productOffer %>')"
+                        title="Edit offer"
+                      >
+                        <i class="bi bi-pencil"></i> Edit
+                      </button>
+                      <button
+                        class="btn btn-sm btn-danger"
+                        onclick="removeOffer('<%= data[i]._id %>')"
+                        title="Remove offer"
+                      >
+                        <i class="bi bi-x-circle"></i> Remove
+                      </button>
+                    </div>
+                    <% } else { %>
+                    <span>0%</span>
+                    <div class="mt-2">
+                      <button
+                        class="btn btn-sm btn-info"
+                        onclick="addOffer('<%= data[i]._id %>')"
+                        title="Add offer"
+                      >
+                        <i class="bi bi-plus-circle"></i> Add Offer
+                      </button>
+                    </div>
+                    <% } %>
+                  </td>
+                  <td><%= data[i].quantity %></td>
+                  <td>
+                    <% if(data[i].isBlocked === false) { %>
+                    <span class="badge badge-success">
+                      <i class="bi bi-check-circle"></i> Active
+                    </span>
+                    <% } else { %>
+                    <span class="badge badge-danger">
+                      <i class="bi bi-x-circle"></i> Blocked
+                    </span>
+                    <% } %>
+                  </td>
+                  <td>
+                    <div class="action-icons">
+                      <% if(data[i].isBlocked === false) { %>
+                      <button
+                        class="btn btn-sm btn-danger"
+                        title="Block product"
+                        onclick="confirmBlockProduct(event, '<%= data[i]._id %>')"
+                      >
+                        <i class="bi bi-slash-circle"></i> Block
+                      </button>
+                      <% } else { %>
+                      <button
+                        class="btn btn-sm btn-success"
+                        title="Unblock product"
+                        onclick="confirmUnblockProduct(event, '<%= data[i]._id %>')"
+                      >
+                        <i class="bi bi-check-circle"></i> Unblock
+                      </button>
+                      <% } %>
+
+                      <button
+                        class="btn btn-sm btn-info"
+                        title="Edit product"
+                        onclick="window.location.href='/admin/editProduct?id=<%= data[i]._id %>'"
+                      >
+                        <i class="bi bi-pencil"></i> Edit
+                      </button>
+
+                      <button
+                        class="btn btn-sm btn-danger"
+                        title="Delete product"
+                        onclick="confirmDelete('<%= data[i]._id %>')"
+                      >
+                        <i class="bi bi-trash"></i> Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Pagination -->
+
+        <div class="pagination-container">
+          <nav aria-label="Product pagination">
+            <ul class="pagination">
+              <!-- Page Numbers -->
+              <% for (let i = 1; i <= totalPages; i++) { %>
+              <li class="page-item <%= (i === currentPage) ? 'active' : '' %>">
+                <a
+                  class="page-link"
+                  href="?page=<%= i %>"
+                  aria-label="Page <%= i %>"
+                  ><%= i %></a
+                >
+              </li>
+              <% } %>
+            </ul>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+
+<script>
+  async function addOffer(productId) {
+    const { value: percentage } = await Swal.fire({
+      title: "Add Offer",
+      input: "number",
+      inputLabel: "Offer Percentage",
+      inputPlaceholder: "Enter offer percentage",
+      inputAttributes: {
+        min: 1,
+        max: 99,
+        step: 1,
+      },
+      showCancelButton: true,
+      inputValidator: (value) => {
+        if (!value || value < 1 || value > 99) {
+          return "Please enter a valid percentage between 1 and 99";
+        }
+      },
+    });
+
+    if (percentage) {
+      updateOffer(productId, percentage);
+    }
+  }
+
+  async function editOffer(productId, currentOffer) {
+    const { value: percentage } = await Swal.fire({
+      title: "Edit Offer",
+      input: "number",
+      inputLabel: "Offer Percentage",
+      inputPlaceholder: "Enter offer percentage",
+      inputValue: currentOffer,
+      inputAttributes: {
+        min: 1,
+        max: 99,
+        step: 1,
+      },
+      showCancelButton: true,
+      inputValidator: (value) => {
+        if (!value || value < 1 || value > 99) {
+          return "Please enter a valid percentage between 1 and 99";
+        }
+      },
+    });
+
+    if (percentage) {
+      updateOffer(productId, percentage);
+    }
+  }
+
+  function updateOffer(productId, percentage) {
+    $.ajax({
+      url: "/admin/addProductOffer",
+      method: "post",
+      data: {
+        productId: productId,
+        percentage: percentage,
+      },
+      success: (response) => {
+        if (response.status) {
+          Swal.fire("Success", "Offer updated successfully", "success").then(
+            () => {
+              location.reload();
+            }
+          );
+        } else {
+          Swal.fire(
+            "Error",
+            response.message || "Failed to update offer",
+            "error"
+          );
+        }
+      },
+      error: (error) => {
+        console.error("Error:", error);
+        Swal.fire("Error", "An unexpected error occurred", "error");
+      },
+    });
+  }
+
+  function removeOffer(productId) {
+    Swal.fire({
+      title: "Remove offer",
+      text: "Are you sure you want to remove this offer?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, remove it",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        $.ajax({
+          url: "/admin/removeProductOffer",
+          method: "post",
+          data: {
+            productId: productId,
+          },
+          success: (response) => {
+            if (response.status) {
+              Swal.fire(
+                "Removed!",
+                "The offer has been removed",
+                "success"
+              ).then(() => {
+                location.reload();
+              });
+            } else {
+              Swal.fire(
+                "Error",
+                response.message || "Failed to remove offer",
+                "error"
+              );
+            }
+          },
+          error: (error) => {
+            console.error("Error:", error);
+            Swal.fire("Error", "An unexpected error occurred", "error");
+          },
+        });
+      }
+    });
+  }
+
+  function confirmBlockProduct(event, productId) {
+    event.preventDefault();
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You are about to block this product!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, Block!",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        window.location.href = "/admin/blockProduct?id=" + productId;
+      }
+    });
+  }
+
+  function confirmUnblockProduct(event, productId) {
+    event.preventDefault();
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You are about to unblock this product!",
+      icon: "info",
+      showCancelButton: true,
+      confirmButtonColor: "#28a745",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, Unblock!",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        window.location.href = "/admin/unblockProduct?id=" + productId;
+      }
+    });
+  }
+
+  function confirmDelete(productId) {
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You will not be able to undo this action!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, delete it!",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Proceed with the deletion
+        window.location.href = `/admin/deleteProduct?id=${productId}`;
+      }
+    });
+  }
+</script>
+<%- include('../partials/alerts.ejs') %> <%- include('../partials2/footer.ejs')
+%>

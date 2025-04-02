@@ -72,5 +72,18 @@ adminRouter.post(
   ProductUploads.array("images", 4),
   productContorller.addProducts
 );
+adminRouter.get("/products", adminAuth, productContorller.getProducts);
+adminRouter.post(
+  "/addProductOffer",
+  adminAuth,
+  productContorller.addProductOffer
+);
+adminRouter.post(
+  "/removeProductOffer",
+  adminAuth,
+  productContorller.removeProductOffer
+);
+adminRouter.get("/blockProduct", adminAuth, productContorller.blockProduct);
+adminRouter.get("/unblockProduct", adminAuth, productContorller.unblockProduct);
 
 module.exports = adminRouter;

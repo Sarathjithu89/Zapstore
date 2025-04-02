@@ -3,6 +3,7 @@ const Product = require("../../models/Products.js");
 
 const getBrandPage = async (req, res) => {
   try {
+    const admin=req.session.admin;
     const page = parseInt(req.query.page) || 1;
     const limit = 4;
     const skip = (page - 1) * limit;
@@ -14,6 +15,7 @@ const getBrandPage = async (req, res) => {
     const totalPages = Math.ceil(totalBrands / limit);
     const reverseBrand = brandData;
     res.render("brand.ejs", {
+      admin,
       data: reverseBrand,
       currentPage: page,
       totalPages: totalPages,

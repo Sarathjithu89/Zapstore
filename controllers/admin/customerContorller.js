@@ -2,6 +2,7 @@ const User = require("../../models/User");
 
 const customerInfo = async (req, res) => {
   try {
+    const admin=req.session.admin;
     let search = [];
     if (req.query.search) {
       search = req.query.search ? req.query.search.trim() : "";
@@ -30,7 +31,9 @@ const customerInfo = async (req, res) => {
         { email: { $regex: ".*" + search + ".*" } },
       ],
     }).countDocuments();
+   
     res.render("userlisting.ejs", {
+      admin:admin,
       data: userData,
       totalPages: Math.ceil(count / limit),
       currentPage: page,
