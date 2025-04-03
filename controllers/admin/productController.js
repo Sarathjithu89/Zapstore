@@ -25,6 +25,7 @@ const addProducts = async (req, res) => {
     const products = req.body;
     const productExists = await Product.findOne({
       productName: products.productName,
+      isDeleted: false,
     });
 
     if (!productExists) {
@@ -57,6 +58,7 @@ const addProducts = async (req, res) => {
         regularPrice: products.regularPrice,
         salePrice: products.salePrice, // Fixed typo here
         quantity: products.quantity,
+        productNumber: products.productNumber,
         color: products.color,
         productImage: images,
         status: "Available",
@@ -87,11 +89,13 @@ const getProducts = async (req, res) => {
     const limit = 4;
 
     const productData = await Product.find({
+      isDeleted: false,
       $or: [
         { productName: { $regex: new RegExp(".*" + search + ".*", "i") } },
         { brand: { $regex: new RegExp(".*" + search + ".*", "i") } },
       ],
     })
+      .sort({ updatedAt: 1 })
       .limit(limit * 1)
       .skip((page - 1) * limit)
       .populate("category")
@@ -101,6 +105,7 @@ const getProducts = async (req, res) => {
       $or: [
         { productName: { $regex: new RegExp(".*" + search + ".*", "i") } },
         { brand: { $regex: new RegExp(".*" + search + ".*", "i") } },
+        { isDeleted: false },
       ],
     }).countDocuments();
 
@@ -137,7 +142,10 @@ const getProducts = async (req, res) => {
 const addProductOffer = async (req, res) => {
   try {
     const { productId, percentage } = req.body;
-    const findProduct = await Product.findOne({ _id: productId });
+    const findProduct = await Product.findOne({
+      _id: productId,
+      isDeleted: false,
+    });
     if (!findProduct) {
       return res.status(404).json({
         status: false,
@@ -186,7 +194,10 @@ const addProductOffer = async (req, res) => {
 const removeProductOffer = async (req, res) => {
   try {
     const { productId } = req.body;
-    const findProduct = await Product.findOne({ _id: productId });
+    const findProduct = await Product.findOne({
+      _id: productId,
+      isDeleted: false,
+    });
     if (!findProduct) {
       return res.status(404).json({
         status: false,
@@ -218,25 +229,197 @@ const removeProductOffer = async (req, res) => {
   }
 };
 
-const blockProduct = async (req, res) => {
+//block product
+const toggleProductBlock = async (req, res) => {
   try {
-    let id = req.query.id;
-    await Product.updateOne({ _id: id }, { $set: { isBlocked: true } });
-    req.flash("success", "Procduct blocked successfully");
+    const { id } = req.query;
+    const product = await Product.findById(id);
+    if (!product) {
+      req.flash("error", "Product not found.");
+      return res.redirect("/admin/products");
+    }
+
+    product.isBlocked = !product.isBlocked;
+    await product.save();
+
+    req.flash(
+      "success",
+      `Product ${product.isBlocked ? "blocked" : "unblocked"} successfully.`
+    );
     res.redirect("/admin/products");
+  } catch (error) {
+    console.error("Error toggling product block:", error);
+    res.redirect("/admin/pageerror");
+  }
+};
+
+const getEditProduct = async (req, res) => {
+  try {
+    const admin = req.session.admin;
+    const id = req.params.id;
+    const product = await Product.findOne({ _id: id, isDeleted: false });
+    const category = await Category.find({});
+    const brand = await Brand.find({});
+
+    res.render("editproduct.ejs", {
+      admin: admin,
+      product: product,
+      cat: category,
+      brand: brand,
+    });
   } catch (error) {
     res.redirect("/admin/pageerror");
   }
 };
 
-const unblockProduct = async (req, res) => {
+// Update product
+const updateProduct = async (req, res) => {
   try {
-    let id = req.query.id;
-    await Product.updateOne({ _id: id }, { $set: { isBlocked: false } });
-    req.flash("success", "Product Unblocked Successfully");
-    res.redirect("/admin/products");
+    const { id } = req.params;
+    let product = await Product.findById(id);
+    if (!product) {
+      req.flash("error", "Product not found.");
+      return res.redirect("/admin/products");
+    }
+
+    // Validate inputs
+    const {
+      productName,
+      description,
+      productNumber,
+      category,
+      brand,
+      regularPrice,
+      salePrice,
+      quantity,
+      warranty,
+      color,
+      productOffer,
+      existingImages = [],
+      deleteImages = [],
+    } = req.body;
+
+    if (
+      !productName ||
+      !description ||
+      !category ||
+      !brand ||
+      !regularPrice ||
+      !salePrice
+    ) {
+      req.flash("error", "Please fill all required fields.");
+      return res.redirect(`/admin/editProduct/${id}`);
+    }
+
+    if (parseFloat(salePrice) >= parseFloat(regularPrice)) {
+      req.flash("error", "Sale price must be lower than the regular price.");
+      return res.redirect(`/admin/editProduct/${id}`);
+    }
+
+    const existingImagesArray = Array.isArray(existingImages)
+      ? existingImages
+      : [existingImages];
+
+    const deleteImagesArray = Array.isArray(deleteImages)
+      ? deleteImages
+      : [deleteImages];
+
+    let updatedImages = [];
+
+    // Remove deleted images
+    existingImagesArray.forEach((image, index) => {
+      if (
+        deleteImagesArray[index] === "true" ||
+        deleteImagesArray[index] === true
+      ) {
+        const imagePath = path.join(
+          __dirname,
+          "..",
+          "..",
+          "public",
+          "uploads",
+          "product-images",
+          image
+        );
+
+        try {
+          if (fs.existsSync(imagePath)) {
+            fs.unlinkSync(imagePath);
+            console.log("Image deleted:", image);
+          } else {
+            console.warn("Image not found, skipping:", imagePath);
+          }
+        } catch (err) {
+          console.error("Error deleting image:", err);
+        }
+      } else {
+        updatedImages.push(image);
+      }
+    });
+
+    // Add new images
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        updatedImages.push(file.filename);
+      }
+    }
+
+    // Ensure at least one image remains
+    if (updatedImages.length === 0) {
+      req.flash("error", "Product must have at least one image.");
+      return res.redirect(`/admin/editProduct/${id}`);
+    }
+
+    // Update product in the database
+    product = await Product.findByIdAndUpdate(
+      id,
+      {
+        productName,
+        description,
+        productNumber: productNumber || null,
+        category,
+        brand,
+        regularPrice: parseFloat(regularPrice),
+        salePrice: parseFloat(salePrice),
+        productOffer: parseInt(productOffer),
+        quantity: parseInt(quantity),
+        warranty: parseInt(warranty),
+        color,
+        productImage: updatedImages,
+        updatedAt: new Date(),
+      },
+      { new: true }
+    );
+
+    req.flash("success", "Product updated successfully.");
+    return res.redirect("/admin/products");
   } catch (error) {
-    res.redirect("admin/pageerror");
+    console.error("Error updating product:", error);
+    req.flash("error", "Failed to update product.");
+    return res.redirect("/admin/products");
+  }
+};
+
+const deleteProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+    let product = await Product.findById(id);
+
+    if (!product) {
+      req.flash("error", "Product not found.");
+      return res.redirect("/admin/products");
+    }
+    // Mark as deleted (soft delete)
+    product.isDeleted = true;
+    product.deletedAt = new Date();
+    await product.save();
+
+    req.flash("success", "Product deleted successfully.");
+    return res.redirect("/admin/products");
+  } catch (error) {
+    console.error("Error deleting product:", error);
+    req.flash("error", "Failed to delete product.");
+    return res.redirect("/admin/products");
   }
 };
 
@@ -246,6 +429,8 @@ module.exports = {
   getProducts,
   addProductOffer,
   removeProductOffer,
-  unblockProduct,
-  blockProduct,
+  getEditProduct,
+  updateProduct,
+  toggleProductBlock,
+  deleteProduct,
 };

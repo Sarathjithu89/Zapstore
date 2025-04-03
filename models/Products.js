@@ -38,6 +38,10 @@ const productSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    productNumber: {
+      type: String,
+      required: true,
+    },
     warranty: {
       type: Number,
       default: 0,
@@ -55,6 +59,8 @@ const productSchema = new mongoose.Schema(
       enum: ["Available", "Out of Stock", "Discontinued"],
       default: "Available",
     },
+    isDeleted: { type: Boolean, default: false },
+    deletedAt: { type: Date, default: null },
   },
   { timestamps: true }
 );

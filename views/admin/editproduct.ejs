@@ -1,0 +1,529 @@
+<%- include('../partials2/header.ejs') %>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+<main id="main">
+  <!-- Breadcrumbs-->
+ <div class="bg-light border-bottom py-3 mb-4">
+  <div class="container-fluid">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb m-0">
+        <li class="breadcrumb-item"><a href="/admin/dashboard">Home</a></li>
+        <li class="breadcrumb-item"><a href="/admin/products">Products</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Edit Product</li>
+      </ol>
+    </nav>
+  </div>
+  </div>
+<!-- / Breadcrumbs-->
+  <style>
+    body {
+        background-color: #f4f6f9;
+        font-family: 'Arial', sans-serif;
+        height: 100vh;
+    }
+    .form-container {
+        background-color: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        padding: 30px;
+        margin-top: 10px;
+    }
+    .error-message {
+        color: #dc3545;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+    .image-preview {
+        max-width: 200px;
+        max-height: 200px;
+        border-radius: 8px;
+        object-fit: cover;
+        margin-bottom: 10px;
+    }
+    .image-upload-container {
+        border: 2px dashed #007bff;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        transition: background-color 0.3s ease;
+        position: relative;
+        min-height: 250px;
+    }
+    .image-upload-container:hover {
+        background-color: rgba(0,123,255,0.1);
+    }
+    .custom-file-input {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+    }
+    .cropper-container {
+        max-width: 400px;
+        margin: 0 auto;
+    }
+    .thumbnail {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: transform 0.3s ease;
+        border: 2px solid transparent;
+    }
+    .thumbnail:hover {
+        transform: scale(1.1);
+        border-color: #007bff;
+    }
+    .existing-image {
+        position: relative;
+        display: inline-block;
+        margin-right: 10px;
+        margin-bottom: 10px;
+    }
+    .delete-image {
+        position: absolute;
+        top: -10px;
+        right: -10px;
+        background-color: #dc3545;
+        color: white;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        text-align: center;
+        line-height: 24px;
+        cursor: pointer;
+    }
+  </style>
+
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-10 form-container">
+        
+        <form id="productForm" method="post" action="/admin/updateProduct/<%= product._id %>" enctype="multipart/form-data">
+          <input type="hidden" name="_method" value="PUT">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="productName" class="form-label">Product Name</label>
+                <input type="text" class="form-control" id="productName" name="productName" placeholder="Enter product name" value="<%= product.productName %>">
+                <div id="productName-error" class="error-message"></div>
+              </div>
+
+              <div class="mb-3">
+                <label for="description" class="form-label">Full Description</label>
+                <textarea class="form-control" id="description" name="description" rows="4" placeholder="Enter product description"><%= product.description %></textarea>
+                <div id="description-error" class="error-message"></div>
+              </div>
+
+              <div class="mb-3">
+                <label for="productNumber" class="form-label">Product Number</label>
+                <input type="text" class="form-control" id="productNumber" name="productNumber" placeholder="Enter product number" value="<%= product.productNumber || '' %>">
+                <div id="productNumber-error" class="error-message"></div>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="category" class="form-label">Category</label>
+                  <select class="form-select" id="category" name="category">
+                    <option value="" disabled>Select Category</option>
+                    <% for(let i=0; i<cat.length; i++) { %>
+                      <option value="<%= cat[i]._id %>" <%= product.category.toString() === cat[i]._id.toString() ? 'selected' : '' %>><%=cat[i].name %></option>
+                    <% }; %>
+                  </select>
+                  <div id="category-error" class="error-message"></div>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                  <label for="brand" class="form-label">Brand</label>
+                  <select class="form-select" id="brand" name="brand">
+                    <option value="" disabled>Select Brand</option>
+                    <% for(let i=0; i<brand.length; i++) { %>
+                      <option value="<%=brand[i].brandName%>" <%= product.brand === brand[i].brandName ? 'selected' : '' %>><%=brand[i].brandName%></option>
+                    <% } %>
+                  </select>
+                  <div id="brand-error" class="error-message"></div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="regularPrice" class="form-label">Regular Price</label>
+                  <div class="input-group">
+                    <span class="input-group-text">₹</span>
+                    <input type="number" step="1.0" min="0" class="form-control" id="regularPrice" name="regularPrice" placeholder="0.00" value="<%= product.regularPrice %>">
+                  </div>
+                  <div id="regularPrice-error" class="error-message"></div>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                  <label for="salePrice" class="form-label">Sale Price</label>
+                  <div class="input-group">
+                    <span class="input-group-text">₹</span>
+                    <input type="number" step="1.0" min="0" class="form-control" id="salePrice" name="salePrice" placeholder="0.00" value="<%= product.salePrice %>" required>
+                  </div>
+                  <div id="salePrice-error" class="error-message"></div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="quantity" class="form-label">Quantity</label>
+                  <input type="number" min="0" class="form-control" id="quantity" name="quantity" placeholder="Number of items" value="<%= product.quantity %>" required>
+                  <div id="quantity-error" class="error-message"></div>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                  <label for="warranty" class="form-label">Warranty (Months)</label>
+                  <input type="number" min="0" class="form-control" id="warranty" name="warranty" placeholder="Warranty period" value="<%= product.warranty %>" required>
+                  <div id="warranty-error" class="error-message"></div>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label for="color" class="form-label">Color</label>
+                  <input type="string" min="0" class="form-control" id="color" name="color" placeholder="Enter color" value="<%= product.color %>" required>
+                  <div id="color-error" class="error-message"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row mt-4">
+            <div class="col-12">
+              <h5 class="mb-3">Current Product Images</h5>
+              <div class="existing-images-container mb-4">
+                <% if(product.productImage && product.productImage.length > 0) { %>
+                  <% product.productImage.forEach((image, index) => { %>
+                    <div class="existing-image">
+                      <img src="/uploads/product-images/<%= image %>" class="thumbnail" alt="Product Image <%= index+1 %>">
+                      <span class="delete-image" onclick="markImageForDeletion('<%= index %>')">×</span>
+                      <input type="hidden" name="existingImages" value="<%= image %>" id="existingImage<%= index %>">
+                      <input type="hidden" name="deleteImages" value="false" id="deleteImage<%= index %>">
+                    </div>
+                  <% }) %>
+                <% } else { %>
+                  <p>No existing images</p>
+                <% } %>
+              </div>
+              
+              <h5 class="mb-3">Add New Images</h5>
+              <div class="thumbnail-container" id="addedImagesContainer"></div>
+            </div>
+
+            <% for (let i = 1; i <= 4; i++) { %>
+              <div class="col-md-3 mb-3">
+                <div class="image-upload-container">
+                  <input 
+                    type="file" 
+                    class="custom-file-input" 
+                    id="input<%= i %>" 
+                    name="images" 
+                    accept="image/png, image/jpeg, image/jpg" 
+                    onchange="viewImage(event, '<%= i %>')"
+                  >
+                  <label for="input<%= i %>" class="custom-file-label">
+                    Upload New Image <%= i %>
+                  </label>
+                  <img src="" alt="Image Preview" id="imgView<%= i %>" class="image-preview" style="display:none;">
+                  <div id="cropperContainer<%= i %>" class="cropper-container mt-2" style="display:none;">
+                    <img src="" id="croppedImg<%= i %>" class="img-fluid">
+                    <div class="text-center mt-2">
+                      <button type="button" id="saveButton<%= i %>" class="btn btn-primary btn-sm">
+                        Save Crop
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            <% } %>
+          </div>
+
+          <div class="text-center mt-4">
+            <button type="button" class="btn btn-primary btn-lg" onclick="validateAndSubmit()">
+              Update Product
+            </button>
+            <a href="/admin/products" class="btn btn-secondary btn-lg ms-2">
+              Cancel
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+// Image Preview and Cropping
+const croppers = {};
+function viewImage(event, inputNumber) {
+    const file = event.target.files[0];
+    const imgViewElement = document.getElementById(`imgView${inputNumber}`);
+    const cropperContainer = document.getElementById(`cropperContainer${inputNumber}`);
+    const croppedImgElement = document.getElementById(`croppedImg${inputNumber}`);
+
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            imgViewElement.src = e.target.result;
+            imgViewElement.style.display = 'block';
+            cropperContainer.style.display = 'block';
+            croppedImgElement.src = e.target.result;
+
+            if (croppers[inputNumber]) {
+                croppers[inputNumber].destroy();
+            }
+            croppers[inputNumber] = new Cropper(croppedImgElement, {
+                aspectRatio: 1, // Square crop
+                viewMode: 1,
+                minCropBoxWidth: 100,
+                minCropBoxHeight: 100
+            });
+            //Save crop
+            const saveButton = document.getElementById(`saveButton${inputNumber}`);
+            saveButton.onclick = function() {
+                const croppedCanvas = croppers[inputNumber].getCroppedCanvas({
+                    width: 300,
+                    height: 300
+                });
+                //replace original file
+                croppedCanvas.toBlob((blob) => {
+                    const file = new File([blob], 'cropped-image.jpg', { type: 'image/jpeg' });
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(file);
+                    event.target.files = dataTransfer.files;
+                    imgViewElement.src = croppedCanvas.toDataURL('image/jpeg');
+                    cropperContainer.style.display = 'none';
+                }, 'image/jpeg');
+            };
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+// Mark images for deletion
+function markImageForDeletion(index) {
+    const deleteInput = document.getElementById(`deleteImage${index}`);
+    const imageContainer = deleteInput.closest('.existing-image');
+    
+    if (deleteInput.value === 'false') {
+        deleteInput.value = 'true';
+        imageContainer.style.opacity = '0.3';
+        Swal.fire({
+            title: 'Image Marked for Deletion',
+            text: 'This image will be removed when you update the product',
+            icon: 'info',
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000
+        });
+    } else {
+        deleteInput.value = 'false';
+        imageContainer.style.opacity = '1';
+    }
+}
+
+// Form Validation
+function validateForm() {
+    let isValid = true;
+    const fields = [
+        { 
+            id: 'productName', 
+            validate: (value) => value.trim() !== '' && /^[a-zA-Z0-9\s]+$/.test(value),
+            errorMessage: 'Please enter a valid product name (alphanumeric characters only).'
+        },
+        { 
+            id: 'description', 
+            validate: (value) => value.trim() !== '' && value.length >= 10,
+            errorMessage: 'Description must be at least 10 characters long.'
+        },
+        { 
+            id: 'productNumber', 
+            validate: (value) => value.trim() === '' || /^[A-Z0-9-]+$/.test(value),
+            errorMessage: 'Product number must be alphanumeric with optional hyphens.'
+        },
+        { 
+            id: 'category', 
+            validate: (value) => value && value !== '',
+            errorMessage: 'Please select a category.'
+        },
+        { 
+            id: 'brand', 
+            validate: (value) => value && value !== '',
+            errorMessage: 'Please select a brand.'
+        },
+        { 
+            id: 'regularPrice', 
+            validate: (value) => !isNaN(value) && parseFloat(value) > 0,
+            errorMessage: 'Please enter a valid positive price.'
+        },
+        { 
+            id: 'salePrice', 
+            validate: (value) => !isNaN(value) && parseFloat(value) > 0,
+            errorMessage: 'Please enter a valid positive sale price.'
+        }
+    ];
+    document.querySelectorAll('.error-message').forEach(el => el.textContent = '');
+    
+    //Validate fields
+    fields.forEach(field => {
+        const element = document.getElementById(field.id);
+        const errorElement = document.getElementById(`${field.id}-error`);
+        
+        if (!field.validate(element.value)) {
+            errorElement.textContent = field.errorMessage;
+            isValid = false;
+        }
+    });
+    
+    //Price validation
+    const regularPrice = parseFloat(document.getElementById('regularPrice').value);
+    const salePrice = parseFloat(document.getElementById('salePrice').value);
+    const salePriceError = document.getElementById('salePrice-error');
+    
+    if (salePrice >= regularPrice) {
+        salePriceError.textContent = 'Sale price must be less than regular price.';
+        isValid = false;
+    }
+    
+    //Image validation - require at least one image (existing or new)
+    const newImageInputs = document.querySelectorAll('input[name="newImages"]');
+    const existingImages = document.querySelectorAll('input[name="existingImages"]');
+    const markedForDeletion = document.querySelectorAll('input[name="deleteImages"][value="true"]');
+    
+    const hasNewImages = Array.from(newImageInputs).some(input => input.files.length > 0);
+    const hasExistingImages = existingImages.length - markedForDeletion.length > 0;
+    
+    if (!hasNewImages && !hasExistingImages) {
+        const imagesError = document.createElement('div');
+        imagesError.id = 'images-error';
+        imagesError.className = 'error-message';
+        imagesError.textContent = 'Please have at least one product image (existing or new).';
+        document.querySelector('.existing-images-container').appendChild(imagesError);
+        isValid = false;
+    }
+    
+    return isValid;
+}
+
+// Calculate discount percentage based on regular and sale price
+function calculateDiscount() {
+    const regularPrice = parseFloat(document.getElementById('regularPrice').value);
+    const salePrice = parseFloat(document.getElementById('salePrice').value);
+    
+    if (!isNaN(regularPrice) && !isNaN(salePrice) && regularPrice > 0) {
+        const discountPercentage = Math.round(((regularPrice - salePrice) / regularPrice) * 100);
+        return discountPercentage;
+    }
+    return 0;
+}
+
+// Form Submission Handler
+function validateAndSubmit() {
+    if (validateForm()) {
+        // Add calculated product offer field
+        const productOffer = calculateDiscount();
+        const hiddenOfferInput = document.createElement('input');
+        hiddenOfferInput.type = 'hidden';
+        hiddenOfferInput.name = 'productOffer';
+        hiddenOfferInput.value = productOffer;
+        document.getElementById('productForm').appendChild(hiddenOfferInput);
+        
+        Swal.fire({
+            title: 'Update Product?',
+            text: 'Are you sure you want to update this product?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, update!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('productForm').submit();
+            }
+        });
+    } else {
+        Swal.fire({
+            title: 'Validation Error',
+            text: 'Please correct the errors in the form.',
+            icon: 'error',
+            confirmButtonText: 'OK'
+        });
+    }
+}
+
+// Handle thumbnails for new images
+function updateThumbnails() {
+    const addedImagesContainer = document.getElementById('addedImagesContainer');
+    const imageInputs = document.querySelectorAll('input[name="newImages"]');
+    
+    addedImagesContainer.innerHTML = ''; // Clear existing thumbnails
+
+    imageInputs.forEach((input, index) => {
+        if (input.files.length > 0) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const thumbnail = document.createElement('img');
+                thumbnail.src = e.target.result;
+                thumbnail.classList.add('thumbnail');
+                thumbnail.onclick = () => {
+                    Swal.fire({
+                        imageUrl: e.target.result,
+                        imageAlt: `New Product Image ${index + 1}`,
+                        showConfirmButton: false
+                    });
+                };
+                addedImagesContainer.appendChild(thumbnail);
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    });
+}
+
+// Add event listeners
+document.addEventListener('DOMContentLoaded', () => {
+    const imageInputs = document.querySelectorAll('input[name="newImages"]');
+    imageInputs.forEach(input => {
+        input.addEventListener('change', (event) => {
+            const inputNumber = event.target.id.replace('input', '');
+            viewImage(event, inputNumber);
+            updateThumbnails();
+        });
+    });
+    
+    // Add click events to existing image thumbnails
+    document.querySelectorAll('.existing-image .thumbnail').forEach((thumbnail, index) => {
+        thumbnail.onclick = () => {
+            Swal.fire({
+                imageUrl: thumbnail.src,
+                imageAlt: `Existing Product Image ${index + 1}`,
+                showConfirmButton: false
+            });
+        };
+    });
+    
+    // Link sale price and regular price for automatic discount calculation
+    const regularPriceInput = document.getElementById('regularPrice');
+    const salePriceInput = document.getElementById('salePrice');
+    
+    [regularPriceInput, salePriceInput].forEach(input => {
+        input.addEventListener('input', () => {
+            const discountPercentage = calculateDiscount();
+            // Optionally display the discount percentage somewhere on the form
+            // For example: document.getElementById('discountDisplay').textContent = `${discountPercentage}% off`;
+        });
+    });
+});
+</script>
+
+<%- include('../partials/alerts.ejs') %>
+<%- include('../partials2/footer.ejs') %>

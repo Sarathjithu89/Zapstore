@@ -5,7 +5,7 @@ const { adminAuth } = require("../middleware/adminAuth.js");
 const customerContorller = require("../controllers/admin/customerContorller.js");
 const categoryController = require("../controllers/admin/categoryController.js");
 const brandController = require("../controllers/admin/brandController.js");
-const productContorller = require("../controllers/admin/productContorller.js");
+const productController = require("../controllers/admin/productController.js");
 
 const { BrandUploads, ProductUploads } = require("../uility/multer.js");
 
@@ -65,25 +65,44 @@ adminRouter.get("/unBlockBrand", adminAuth, brandController.unBlockBrand);
 adminRouter.get("/deleteBrand", adminAuth, brandController.deleteBrand);
 
 //products management
-adminRouter.get("/addProducts", adminAuth, productContorller.getProductAddPage);
+adminRouter.get("/addProducts", adminAuth, productController.getProductAddPage);
 adminRouter.post(
   "/addProducts",
   adminAuth,
   ProductUploads.array("images", 4),
-  productContorller.addProducts
+  productController.addProducts
 );
-adminRouter.get("/products", adminAuth, productContorller.getProducts);
+adminRouter.get("/products", adminAuth, productController.getProducts);
 adminRouter.post(
   "/addProductOffer",
   adminAuth,
-  productContorller.addProductOffer
+  productController.addProductOffer
 );
 adminRouter.post(
   "/removeProductOffer",
   adminAuth,
-  productContorller.removeProductOffer
+  productController.removeProductOffer
 );
-adminRouter.get("/blockProduct", adminAuth, productContorller.blockProduct);
-adminRouter.get("/unblockProduct", adminAuth, productContorller.unblockProduct);
+adminRouter.get(
+  "/blockProduct",
+  adminAuth,
+  productController.toggleProductBlock
+);
+adminRouter.get(
+  "/editProduct/:id",
+  adminAuth,
+  productController.getEditProduct
+);
+adminRouter.post(
+  "/updateProduct/:id",
+  adminAuth,
+  ProductUploads.array("images", 4),
+  productController.updateProduct
+);
+adminRouter.get(
+  "/deleteProduct/:id",
+  adminAuth,
+  productController.deleteProduct
+);
 
 module.exports = adminRouter;

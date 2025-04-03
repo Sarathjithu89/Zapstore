@@ -42,6 +42,49 @@ const ProductStorage = multer.diskStorage({
 });
 
 const ProductUploads = multer({ storage: ProductStorage });
+module.exports = { BrandUploads, ProductUploads };
+
+// Middleware for handling file uploads
+
+// Configure storage
+// const storage = multer.diskStorage({
+//   destination: function (req, file, cb) {
+//     cb(null, "public/uploads/product-images/");
+//   },
+//   filename: function (req, file, cb) {
+//     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+//     const fileExt = path.extname(file.originalname);
+//     cb(null, file.fieldname + "-" + uniqueSuffix + fileExt);
+//   },
+// });
+
+// File filter
+// const fileFilter = (req, file, cb) => {
+//   const allowedFileTypes = /jpeg|jpg|png/;
+//   const extname = allowedFileTypes.test(
+//     path.extname(file.originalname).toLowerCase()
+//   );
+//   const mimetype = allowedFileTypes.test(file.mimetype);
+
+//   if (extname && mimetype) {
+//     return cb(null, true);
+//   } else {
+//     cb(new Error("Only JPEG, JPG, and PNG files are allowed"));
+//   }
+// };
+
+// Initialize upload middleware
+// const upload = multer({
+//   storage: storage,
+//   fileFilter: fileFilter,
+//   limits: {
+//     fileSize: 5 * 1024 * 1024, // 5MB limit
+//   },
+// });
+
+// Export controller function with middleware
+// module.exports = {
+//   updateProduct: [upload.array("newImages", 4), updateProduct],
+// };
 
 //Exports
-module.exports = { BrandUploads, ProductUploads };

@@ -697,7 +697,7 @@
                       <button
                         class="btn btn-sm btn-info"
                         title="Edit product"
-                        onclick="window.location.href='/admin/editProduct?id=<%= data[i]._id %>'"
+                        onclick="window.location.href='/admin/editProduct/<%= data[i]._id %>'"
                       >
                         <i class="bi bi-pencil"></i> Edit
                       </button>
@@ -897,7 +897,7 @@
       confirmButtonText: "Yes, Unblock!",
     }).then((result) => {
       if (result.isConfirmed) {
-        window.location.href = "/admin/unblockProduct?id=" + productId;
+        window.location.href = "/admin/blockProduct?id=" + productId;
       }
     });
   }
@@ -914,7 +914,7 @@
     }).then((result) => {
       if (result.isConfirmed) {
         // Proceed with the deletion
-        window.location.href = `/admin/deleteProduct?id=${productId}`;
+        window.location.href = `/admin/deleteProduct/${productId}`;
       }
     });
   }
