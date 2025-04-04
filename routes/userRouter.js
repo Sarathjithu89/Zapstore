@@ -2,14 +2,14 @@ const express = require("express");
 const router = express.Router();
 const userController = require("../controllers/user/userController");
 const passport = require("passport");
-const { authenticateToken } = require("../middleware/authToken");
+const { authToken } = require("../middleware/authToken");
 const { json } = require("body-parser");
 
 router.get("/pageNotFound", userController.pageNotFound);
 //user login
-router.get("/", authenticateToken, userController.loadHomepage);
-router.get("/login", userController.loadLogin);
-router.post("/login", userController.login);
+router.get("/", authToken, userController.loadHomepage);
+router.get("/login", authToken, userController.loadLogin);
+router.post("/login", authToken, userController.login);
 //register routes
 router.get("/register", userController.loadRegister);
 router.post("/register", userController.register);
@@ -26,7 +26,7 @@ router.post("/verifyForgotOtp", userController.verifyForgotOtp);
 router.post("/resetPassword", userController.changePassword);
 router.post("/resetPassword", userController.resetPassword);
 //checkout page
-router.get("/checkout", userController.checkoutPage);
+router.get("/checkout", authToken, userController.checkoutPage);
 
 //google signin routes
 router.get(
@@ -47,5 +47,9 @@ router.get(
     res.redirect("/");
   }
 );
+
+router.get("/product", userController.getSingleProduct);
+router.get("/shop", userController.getCategoryPage);
+router.get("/category", userController.getCategoryPage);
 
 module.exports = router;

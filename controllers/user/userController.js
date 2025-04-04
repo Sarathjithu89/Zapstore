@@ -1,19 +1,29 @@
-const User = require("../../models/User.js");
 const nodemailer = require("nodemailer");
 const dotenv = require("dotenv").config();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const Product = require("../../models/Products.js");
+const User = require("../../models/User.js");
+const Category = require("../../models/Category.js");
+
 /*-----------------------------------------Loading Pages----------------------------------------------------*/
-//load Home Page
+
 const loadHomepage = async (req, res) => {
   try {
+    let userData = null;
+
     if (req.user) {
-      const userData = await User.findOne({ _id: req.user.userId });
-      return res.render("home.ejs", { user: userData });
+      userData = await User.findOne({ _id: req.user.userId });
     }
-    return res.render("home.ejs");
+
+    const products = await Product.find({ isDeleted: false })
+      .sort({ createdAt: -1 })
+      .limit(8)
+      .exec();
+
+    res.render("home.ejs", { user: userData, products: products });
   } catch (error) {
-    console.log("Home page not found", error);
+    console.error("Home page error:", error);
     res.status(500).send("Server error");
   }
 };
@@ -374,6 +384,166 @@ const register = async (req, res) => {
   }
 };
 
+//single Product function
+const getSingleProduct = async (req, res) => {
+  try {
+    const productId = req.query.id;
+    const product = await Product.findById(productId)
+      .populate("category")
+      .populate("brand");
+
+    if (!product) {
+      req.flash("error", "Product not found");
+      return res.redirect("/");
+    }
+    // Find related
+    const relatedProducts = await Product.find({
+      category: product.category,
+      _id: { $ne: productId },
+    }).limit(8);
+
+    res.render("singleproduct.ejs", {
+      title: product.productName,
+      product,
+      relatedProducts,
+      user: req.user || null,
+    });
+  } catch (error) {
+    console.error("Error fetching product:", error);
+    req.flash("error", "Something went wrong");
+    res.redirect("/");
+  }
+};
+
+//category page function
+const getCategoryPage = async (req, res, next) => {
+  try {
+    const categoryId = req.query.id;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 9;
+    const minPrice = parseInt(req.query.minPrice) || 0;
+    const maxPrice = parseInt(req.query.maxPrice) || 100000;
+    const sort = req.query.sort || "default";
+    const skip = (page - 1) * limit;
+
+    let category = null;
+    if (categoryId) {
+      category = await Category.findById(categoryId);
+      if (!category) {
+        return res.status(404).render("error", {
+          message: "Category not found",
+          error: { status: 404 },
+        });
+      }
+
+      if (category && category.isListed === false) {
+        return res.status(404).render("error", {
+          message: "Category not found",
+          error: { status: 404 },
+        });
+      }
+    }
+
+    let query = {};
+    if (category) {
+      query.category = categoryId;
+    }
+    query.salePrice = { $gte: minPrice, $lte: maxPrice };
+    let sortOptions = {};
+
+    switch (sort) {
+      case "name-asc":
+        sortOptions.productName = 1;
+        break;
+      case "name-desc":
+        sortOptions.productName = -1;
+        break;
+      case "price-asc":
+        sortOptions.salePrice = 1;
+        break;
+      case "price-desc":
+        sortOptions.salePrice = -1;
+        break;
+      case "rating-desc":
+        sortOptions.rating = -1;
+        break;
+      case "date-desc":
+        sortOptions.createdAt = -1;
+        break;
+      case "date-asc":
+        sortOptions.createdAt = 1;
+        break;
+      default:
+        sortOptions.createdAt = -1;
+    }
+
+    const categories = await Category.aggregate([
+      {
+        $match: { isListed: { $ne: false } },
+      },
+      {
+        $lookup: {
+          from: "products",
+          localField: "_id",
+          foreignField: "category",
+          as: "products",
+        },
+      },
+      {
+        $project: {
+          name: 1,
+          description: 1,
+          bannerImage: 1,
+          productCount: { $size: "$products" },
+          isListed: 1,
+        },
+      },
+      { $sort: { name: 1 } },
+    ]);
+    if (!categoryId) {
+      query.category = { $in: categories.map((cat) => cat._id) };
+    }
+
+    const totalItems = await Product.countDocuments(query);
+
+    const products = await Product.find(query)
+      .sort(sortOptions)
+      .skip(skip)
+      .limit(limit)
+      .populate("category", "name");
+
+    const featuredProducts = await Product.find({ isFeatured: true })
+      .sort({ createdAt: -1 })
+      .limit(3);
+
+    const totalPages = Math.ceil(totalItems / limit);
+    const pagination = {
+      currentPage: page,
+      totalPages: totalPages,
+      totalItems: totalItems,
+      limit: limit,
+      startIndex: skip,
+      endIndex: skip + products.length - 1,
+      baseUrl: category ? `/category/${categoryId}` : "/shop",
+    };
+
+    res.render("Categorys.ejs", {
+      title: category ? `${category.name} | Shop` : "Shop",
+      products,
+      category,
+      categories,
+      featuredProducts,
+      pagination,
+      minPrice,
+      maxPrice,
+      sort,
+    });
+  } catch (error) {
+    console.error("Error in getCategoryPage controller:", error);
+    next(error);
+  }
+};
+
 /*-----------------------------------functions-------------------------------------------*/
 
 //otp generation function
@@ -443,4 +613,6 @@ module.exports = {
   verifyForgotOtp,
   changePassword,
   checkoutPage,
+  getSingleProduct,
+  getCategoryPage,
 };

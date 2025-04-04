@@ -6,6 +6,7 @@ const customerContorller = require("../controllers/admin/customerContorller.js")
 const categoryController = require("../controllers/admin/categoryController.js");
 const brandController = require("../controllers/admin/brandController.js");
 const productController = require("../controllers/admin/productController.js");
+const couponController = require("../controllers/admin/couponController.js");
 
 const { BrandUploads, ProductUploads } = require("../uility/multer.js");
 
@@ -105,4 +106,20 @@ adminRouter.get(
   productController.deleteProduct
 );
 
+//coupon routs
+adminRouter.get("/coupons", adminAuth, couponController.getCoupons);
+adminRouter.get("/addCoupon", adminAuth, couponController.getAddCouponPage);
+adminRouter.post("/addCoupon", adminAuth, couponController.addCoupon);
+adminRouter.get(
+  "/editCoupon/:id",
+  adminAuth,
+  couponController.getEditCouponPage
+);
+adminRouter.post("/editCoupon/:id", adminAuth, couponController.updateCoupon);
+adminRouter.post(
+  "/toggleCouponStatus",
+  adminAuth,
+  couponController.toggleCouponStatus
+);
+adminRouter.post("/deleteCoupon/:id", adminAuth, couponController.deleteCoupon);
 module.exports = adminRouter;

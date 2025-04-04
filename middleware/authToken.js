@@ -2,57 +2,71 @@ const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv").config();
 const User = require("../models/User.js");
 
-const authenticateToken = (req, res, next) => {
+const authToken = async (req, res, next) => {
   try {
-    const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
-
-    if (!token) {
-      console.log("No token found, redirecting to Home");
-      return res.render("home.ejs", { message: "please login" }); // Redirect if no token
-    }
-
-    // Verify Token
-    jwt.verify(token, process.env.JWT_SECRET_KEY, async (err, decoded) => {
-      if (err) {
-        console.log("Token verification error:", err.message);
-        res.clearCookie("token");
-        return res.render("home.ejs");
-      }
-
+    const token = req.cookies.token ? req.cookies.token : null;
+    if (token) {
+      let decoded;
       try {
-        const user = await User.findById(decoded.userId);
-
-        if (!user) {
-          // User no longer exists
-          res.clearCookie("token");
-          return res.redirect("/login", { message: "User account not found" });
-        }
-
-        if (user.isBlocked) {
-          // Clear token and logout user if blocked
-          res.clearCookie("token");
-
-          // Option 1: Render home page with blocked message
-          return res.render("home.ejs", {
-            message: "Your account has been blocked. Please contact support.",
-          });
-
-          // Option 2: Redirect to a specific logout route
-          // return res.redirect("/logout?reason=blocked");
-        }
-
-        // User is not blocked, proceed
-        req.user = decoded; // Store user info in req
+        decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+      } catch (error) {
+        console.log(error);
+        res.clearCookie("token");
         next();
-      } catch (findError) {
-        console.error("User lookup error:", findError);
-        res.status(500).json({ message: "Server Error" });
       }
-    });
+      const user = await User.findOne({
+        _id: decoded.userId,
+        is_blocked: false,
+      });
+      if (user) {
+        req.user = decoded;
+        next();
+      } else {
+        req.flash("error", "User is Blocked");
+        res.clearCookie("token");
+        next();
+      }
+    } else {
+      next();
+    }
   } catch (error) {
-    console.error("Authentication Error:", error);
-    res.status(500).json({ message: "Server Error" });
+    console.log("Authentication Error", error);
+    next();
   }
 };
 
-module.exports = { authenticateToken };
+// const authToken = async (req, res, next) => {
+//   try {
+//     const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
+
+//     if (!token) {
+//       res.clearCookie("token");
+//       return res.redirect("/login"); // Redirect to login page instead of "/"
+//     }
+
+//     let decoded;
+//     try {
+//       decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+//     } catch (err) {
+//       console.error("Token verification failed:", err.message);
+//       res.clearCookie("token");
+//       return res.redirect("/login"); // Redirect properly
+//     }
+
+//     const user = await User.findOne({ _id: decoded.userId, is_blocked: false });
+
+//     if (!user) {
+//       req.flash("error", "User is Blocked");
+//       res.clearCookie("token");
+//       return res.redirect("/login"); // Avoid infinite redirect loop
+//     }
+
+//     req.user = decoded; // Store user info in request
+//     next();
+//   } catch (error) {
+//     console.error("Authentication Error:", error);
+//     res.status(500).json({ message: "Server Error" });
+//   }
+// };
+
+module.exports = { authToken };

@@ -1,0 +1,1052 @@
+<%- include('../partials/header.ejs') %>
+<head>
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="shortcut icon" type="image/x-icon" href="images/favicon.png" />
+  <!-- Material Design Iconic Font-V2.2.0 -->
+  <link rel="stylesheet" href="/css/material-design-iconic-font.min.css" />
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="/css/font-awesome.min.css" />
+  <!-- Font Awesome Stars-->
+  <link rel="stylesheet" href="/css/fontawesome-stars.css" />
+  <!-- Meanmenu CSS -->
+  <link rel="stylesheet" href="/css/meanmenu.css" />
+  <!-- owl carousel CSS -->
+  <link rel="stylesheet" href="/css/owl.carousel.min.css" />
+  <!-- Slick Carousel CSS -->
+  <link rel="stylesheet" href="/css/slick.css" />
+  <!-- Animate CSS -->
+  <link rel="stylesheet" href="/css/animate.css" />
+  <!-- Jquery-ui CSS -->
+  <link rel="stylesheet" href="/css/jquery-ui.min.css" />
+  <!-- Venobox CSS -->
+  <link rel="stylesheet" href="/css/venobox.css" />
+  <!-- Nice Select CSS -->
+  <link rel="stylesheet" href="/css/nice-select.css" />
+  <!-- Magnific Popup CSS -->
+  <link rel="stylesheet" href="/css/magnific-popup.css" />
+  <!-- Bootstrap V4.1.3 Fremwork CSS -->
+  <link rel="stylesheet" href="/css/bootstrap.min.css" />
+  <!-- Helper CSS -->
+  <link rel="stylesheet" href="/css/helper.css" />
+  <!-- Main Style CSS -->
+  <link rel="stylesheet" href="style.css" />
+  <!-- Responsive CSS -->
+  <link rel="stylesheet" href="/css/responsive.css" />
+</head>
+<style>
+  /* Shop Page Styling */
+  /* Breadcrumb */
+  .shop-breadcrumb {
+    padding: 20px 0;
+    background-color: #f6f6f6;
+    margin-bottom: 40px;
+  }
+
+  .breadcrumb-content {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .breadcrumb-content h2 {
+    font-size: 30px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #333;
+  }
+
+  .breadcrumb-content ol {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: 14px;
+  }
+
+  .breadcrumb-content li + li:before {
+    content: "›";
+    padding: 0 8px;
+    color: #777;
+  }
+
+  .breadcrumb-content a {
+    color: #555;
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+
+  .breadcrumb-content a:hover {
+    color: #ff6a00;
+  }
+
+  /* Shop Sidebar */
+  .shop-sidebar-wrapper {
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+    margin-bottom: 30px;
+    background: #fff;
+  }
+
+  .sidebar-title {
+    padding: 15px 20px;
+    background-color: #f7f7f7;
+    border-bottom: 1px solid #eee;
+  }
+
+  .sidebar-title h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+    color: #333;
+  }
+
+  .sidebar-content {
+    padding: 15px 20px;
+  }
+
+  /* Category Menu */
+  .category-menu ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .category-menu li {
+    padding: 8px 0;
+    border-bottom: 1px dashed #eee;
+  }
+
+  .category-menu li:last-child {
+    border-bottom: none;
+  }
+
+  .category-menu a {
+    display: flex;
+    justify-content: space-between;
+    color: #555;
+    text-decoration: none;
+    transition: all 0.3s;
+  }
+
+  .category-menu a:hover {
+    color: #ff6a00;
+    padding-left: 5px;
+  }
+
+  .category-count {
+    background-color: #f5f5f5;
+    border-radius: 20px;
+    padding: 2px 8px;
+    font-size: 12px;
+    color: #777;
+    transition: all 0.3s;
+  }
+
+  .category-menu a:hover .category-count {
+    background-color: #ff6a00;
+    color: white;
+  }
+
+  /* Price Range Filter */
+  .price-filter {
+    margin: 15px 0;
+  }
+
+  .price-slider-amount {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 15px;
+  }
+
+  .price-range {
+    font-size: 14px;
+    color: #555;
+  }
+
+  .filter-btn {
+    padding: 6px 15px;
+    background-color: #ff6a00;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 14px;
+  }
+
+  .filter-btn:hover {
+    background-color: #e55f00;
+  }
+
+  /* Shop Toolbar */
+  .shop-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background-color: #f7f7f7;
+    margin-bottom: 20px;
+    border-radius: 10px;
+  }
+
+  .product-view-mode {
+    display: flex;
+    gap: 10px;
+  }
+
+  .product-view-mode a {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: white;
+    border-radius: 4px;
+    color: #777;
+    border: 1px solid #ddd;
+    transition: all 0.3s;
+  }
+
+  .product-view-mode a.active,
+  .product-view-mode a:hover {
+    background-color: #ff6a00;
+    color: white;
+    border-color: #ff6a00;
+  }
+
+  .product-short {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .nice-select {
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    padding: 0 15px;
+    height: 40px;
+    line-height: 40px;
+    background-color: white;
+  }
+
+  /* Product Card Styling */
+  .shop-product-wrap {
+    margin-bottom: 30px;
+  }
+
+  .product-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 25px;
+  }
+
+  /* Single Product Card */
+  .product-card {
+    background-color: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    /* transition: transform 0.3s ease, box-shadow 0.3s ease; */
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+
+  /* .product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
+  } */
+
+  .product-card-image {
+    position: relative;
+    overflow: hidden;
+    height: 240px;
+  }
+
+  .product-card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+  }
+
+  .product-card:hover .product-card-image img {
+    transform: scale(1.08);
+  }
+
+  .product-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    padding: 6px 12px;
+    color: white;
+    font-size: 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    z-index: 2;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
+
+  .badge-new {
+    background: linear-gradient(45deg, #00c853, #69f0ae);
+  }
+
+  .badge-sale {
+    background: linear-gradient(45deg, #ff3d00, #ff8a65);
+  }
+
+  .product-card-body {
+    padding: 18px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .product-card-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 10px;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-decoration: none;
+    /* transition: color 0.3s; */
+  }
+
+  .product-card-title:hover {
+    color: #ff6a00;
+  }
+
+  .product-card-rating {
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+  }
+
+  .rating-stars {
+    display: flex;
+    color: #ffc107;
+    gap: 2px;
+  }
+
+  .rating-count {
+    margin-left: 8px;
+    font-size: 13px;
+    color: #777;
+  }
+
+  .product-card-price {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+
+  .price-current {
+    font-size: 18px;
+    font-weight: 700;
+    color: #ff6a00;
+  }
+
+  .price-original {
+    font-size: 14px;
+    font-weight: 400;
+    color: #999;
+    text-decoration: line-through;
+  }
+
+  .product-card-description {
+    font-size: 14px;
+    color: #666;
+    line-height: 1.5;
+    margin-bottom: 15px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .product-card-actions {
+    margin-top: auto;
+    display: flex;
+    gap: 10px;
+  }
+
+  .btn-add-cart {
+    flex: 1;
+    display: block;
+    padding: 10px;
+    background: linear-gradient(to right, #ff6a00, #ff8c42);
+    color: white;
+    text-align: center;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+  }
+
+  .btn-add-cart:hover {
+    background: linear-gradient(to right, #e55f00, #ff7c2f);
+    transform: translateY(-2px);
+  }
+
+  .btn-wishlist,
+  .btn-quickview {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #eee;
+    border-radius: 6px;
+    color: #555;
+    background-color: white;
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+
+  .btn-wishlist:hover,
+  .btn-quickview:hover {
+    background: #f9f9f9;
+    color: #ff6a00;
+    border-color: #ff6a00;
+  }
+
+  /* List View Style */
+  .list-view .product-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .list-view .product-card {
+    display: flex;
+    flex-direction: row;
+    height: auto;
+  }
+
+  .list-view .product-card-image {
+    flex: 0 0 250px;
+    height: auto;
+  }
+
+  .list-view .product-card-body {
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    flex: 1;
+  }
+
+  .list-view .product-card-description {
+    display: block;
+    -webkit-line-clamp: initial;
+    margin-bottom: 20px;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 1199px) {
+    .product-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  @media (max-width: 991px) {
+    .product-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 767px) {
+    .list-view .product-card {
+      flex-direction: column;
+    }
+
+    .list-view .product-card-image {
+      flex: none;
+    }
+  }
+
+  @media (max-width: 575px) {
+    .product-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  /* Pagination */
+  .paginatoin-area {
+    margin-top: 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .pagination-box {
+    display: flex;
+    gap: 5px;
+  }
+
+  .pagination-box li a {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: white;
+    border-radius: 4px;
+    color: #555;
+    border: 1px solid #ddd;
+    text-decoration: none;
+    transition: all 0.3s;
+  }
+
+  .pagination-box li a.active,
+  .pagination-box li a:hover {
+    background-color: #ff6a00;
+    color: white;
+    border-color: #ff6a00;
+  }
+
+  .showing-product {
+    font-size: 14px;
+    color: #777;
+  }
+
+  /* Category Banner */
+  .category-banner {
+    position: relative;
+    margin-bottom: 30px;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  .category-banner img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+  }
+
+  .category-banner-content {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 30px;
+    background: linear-gradient(
+      to right,
+      rgba(0, 0, 0, 0.6) 0%,
+      rgba(0, 0, 0, 0.1) 100%
+    );
+  }
+
+  .category-banner-content h2 {
+    color: white;
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+
+  .category-banner-content p {
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 15px;
+    max-width: 60%;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  }
+
+  .category-banner-content .banner-link {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #ff6a00;
+    color: white;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s;
+  }
+
+  .category-banner-content .banner-link:hover {
+    background-color: #fff;
+    color: #ff6a00;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 1199px) {
+    .product-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  @media (max-width: 991px) {
+    .product-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .category-banner-content h2 {
+      font-size: 24px;
+    }
+
+    .category-banner-content p {
+      max-width: 80%;
+    }
+  }
+
+  @media (max-width: 767px) {
+    .shop-top-bar {
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .product-short {
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    .product-list .product-image {
+      flex: 0 0 180px;
+    }
+
+    .category-banner-content h2 {
+      font-size: 20px;
+    }
+
+    .category-banner-content p {
+      display: none;
+    }
+  }
+
+  @media (max-width: 575px) {
+    .product-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .product-list {
+      flex-direction: column;
+    }
+
+    .product-list .product-image {
+      flex: none;
+    }
+
+    .paginatoin-area {
+      flex-direction: column;
+      gap: 15px;
+    }
+  }
+
+  /* Animation Effects */
+  /* @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  } */
+
+  /* Apply animations */
+  /* .shop-product-wrap {
+    animation: fadeUp 0.5s ease-out;
+  } */
+</style>
+
+<!-- Sticky Header Area Start -->
+<div class="header-bottom header-sticky d-none d-lg-block d-xl-block mb-0">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-12">
+        <!-- Begin Header Bottom Menu Area -->
+        <div class="hb-menu">
+          <nav>
+            <ul>
+              <li class="dropdown-holder">
+                <a href="/">Home</a>
+              </li>
+              <li class="megamenu-holder active">
+                <a href="/shop">Shop</a>
+              </li>
+              <li><a href="/about">About Us</a></li>
+              <li><a href="/contact">Contact</a></li>
+            </ul>
+          </nav>
+        </div>
+        <!-- Header Bottom Menu Area End Here -->
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Sticky Header Area End -->
+
+<!-- Begin Breadcrumb Area -->
+<div class="shop-breadcrumb">
+  <div class="container">
+    <div class="row">
+      <div class="col-12">
+        <div class="breadcrumb-content">
+          <ol>
+            <li><a href="/">Home</a></li>
+            <li>Shop</li>
+            <% if (locals.category) { %>
+            <li><%= category.name %></li>
+            <% } %>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Breadcrumb Area End -->
+
+<!-- Shop Page Content Start -->
+<div class="content-wraper">
+  <div class="container">
+    <div class="row">
+      <!-- Sidebar Start -->
+      <div class="col-lg-3 order-2 order-lg-1">
+        <!-- Category Banner -->
+
+        <!-- Categories Sidebar -->
+        <div class="shop-sidebar-wrapper">
+          <div class="sidebar-title">
+            <h3>Categories</h3>
+          </div>
+          <div class="sidebar-content">
+            <div class="category-menu">
+              <ul>
+                <% if (locals.categories && categories.length > 0) { %> <%
+                categories.forEach(category => { %>
+                <li>
+                  <a
+                    href="/category?id=<%= category._id %>"
+                    class="<%= locals.category && category._id.toString() === locals.category._id.toString() ? 'active' : '' %>"
+                  >
+                    <%= category.name %>
+                    <span class="category-count"
+                      ><%= category.productCount || 0 %></span
+                    >
+                  </a>
+                </li>
+                <% }) %> <% } else { %>
+                <li>No categories found</li>
+                <% } %>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Price Range Sidebar -->
+        <div class="shop-sidebar-wrapper">
+          <div class="sidebar-title">
+            <h3>Price Range</h3>
+          </div>
+          <div class="sidebar-content">
+            <div class="price-filter">
+              <div id="slider-range"></div>
+              <div class="price-slider-amount">
+                <div class="price-range">
+                  <span>₹<span id="min-price">0</span></span>
+                  <span> - </span>
+                  <span>₹<span id="max-price">10000</span></span>
+                </div>
+                <button type="button" class="filter-btn">Filter</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Featured Products Sidebar -->
+        <div class="shop-sidebar-wrapper">
+          <div class="sidebar-title">
+            <h3>Featured Products</h3>
+          </div>
+          <div class="sidebar-content">
+            <% if (locals.featuredProducts && featuredProducts.length > 0) { %>
+            <% featuredProducts.slice(0, 3).forEach(product => { %>
+            <div class="featured-product-item d-flex mb-3">
+              <div
+                class="product-thumb"
+                style="width: 80px; margin-right: 10px"
+              >
+                <a href="/product?id=<%= product._id %>">
+                  <img
+                    src="<%= product.productImage && product.productImage.length ? '/uploads/product-images/' + product.productImage[0] : '/images/product?id=small-size/default.jpg' %>"
+                    alt="<%= product.productName %>"
+                    style="width: 100%; border-radius: 5px"
+                  />
+                </a>
+              </div>
+              <div class="product-info">
+                <h6 class="product-name">
+                  <a href="/product?id=<%= product._id %>"
+                    ><%= product.productName %></a
+                  >
+                </h6>
+                <div class="price-box">
+                  <span class="new-price"
+                    >₹<%= product.salePrice.toFixed(2) %></span
+                  >
+                  <% if (product.regularPrice > product.salePrice) { %>
+                  <span class="old-price"
+                    >₹<%= product.regularPrice.toFixed(2) %></span
+                  >
+                  <% } %>
+                </div>
+              </div>
+            </div>
+            <% }) %> <% } else { %>
+            <p>No featured products found</p>
+            <% } %>
+          </div>
+        </div>
+      </div>
+      <!-- Sidebar End -->
+
+      <!-- Main Content Start -->
+      <div class="col-lg-9 order-1 order-lg-2">
+        <!-- Shop Toolbar -->
+        <div class="shop-top-bar">
+          <div class="product-view-mode">
+            <a class="active" data-view="grid"><i class="fa fa-th"></i></a>
+            <a data-view="list"><i class="fa fa-list"></i></a>
+          </div>
+
+          <div class="product-short">
+            <p>Sort By:</p>
+            <select class="nice-select" name="sortby">
+              <option value="default">Default</option>
+              <option value="name-asc">Name (A - Z)</option>
+              <option value="name-desc">Name (Z - A)</option>
+              <option value="price-asc">Price (Low &gt; High)</option>
+              <option value="price-desc">Price (High &gt; Low)</option>
+              <option value="rating-desc">Rating (Highest)</option>
+              <option value="date-desc">Date (Newest)</option>
+              <option value="date-asc">Date (Oldest)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Product Grid/List -->
+        <div class="shop-product-wrap grid-view">
+          <div class="product-grid">
+            <% if (locals.products && products.length > 0) { %> <%
+            products.forEach(product => { %>
+            <div class="product-card">
+              <div class="product-card-image">
+                <a href="/product?id=<%= product._id %>">
+                  <img
+                    src="<%= product.productImage && product.productImage.length ? '/uploads/product-images/' + product.productImage[0] : '/images/product?id=large-size/default.jpg' %>"
+                    alt="<%= product.productName %>"
+                  />
+                </a>
+                <% if (product.isNew) { %>
+                <span class="product-badge badge-new">New</span>
+                <% } else if (product.regularPrice > product.salePrice) { %>
+                <span class="product-badge badge-sale">Sale</span>
+                <% } %>
+              </div>
+              <div class="product-card-body">
+                <h4>
+                  <a
+                    class="product-card-title"
+                    href="/product?id=<%= product._id %>"
+                  >
+                    <%= product.productName %>
+                  </a>
+                </h4>
+                <div class="product-card-rating">
+                  <div class="rating-stars">
+                    <% for (let i = 0; i < 5; i++) { %> <% if (i <
+                    Math.round(product.rating || 0)) { %>
+                    <i class="fa fa-star"></i>
+                    <% } else { %>
+                    <i class="fa fa-star-o"></i>
+                    <% } %> <% } %>
+                  </div>
+                  <span class="rating-count">(<%= product.rating || 0 %>)</span>
+                </div>
+                <div class="product-card-price">
+                  <span class="price-current"
+                    >₹<%= product.salePrice.toFixed(2) %></span
+                  >
+                  <% if (product.regularPrice > product.salePrice) { %>
+                  <span class="price-original"
+                    >₹<%= product.regularPrice.toFixed(2) %></span
+                  >
+                  <% } %>
+                </div>
+                <p class="product-card-description">
+                  <%= product.shortDescription %>
+                </p>
+                <div class="product-card-actions">
+                  <a
+                    href="/cart/add/<%= product._id %>?quantity=1"
+                    class="btn-add-cart"
+                    >Add to cart</a
+                  >
+                  <button class="btn-wishlist" title="Add to Wishlist">
+                    <i class="fa fa-heart-o"></i>
+                  </button>
+                  <a
+                    href="/product?id=<%= product._id %>"
+                    class="btn-quickview"
+                    title="Quick View"
+                  >
+                    <i class="fa fa-eye"></i>
+                  </a>
+                </div>
+              </div>
+            </div>
+            <% }) %> <% } else { %>
+            <div
+              class="alert alert-info text-center"
+              role="alert"
+              style="grid-column: 1 / -1"
+            >
+              No products found. Please try a different category or search term.
+            </div>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="paginatoin-area">
+          <div class="showing-product">
+            <p>
+              Showing <%= locals.pagination ? `${pagination.startIndex +
+              1}-${Math.min(pagination.endIndex + 1, pagination.totalItems)}` :
+              "0" %> of <%= locals.pagination ? pagination.totalItems : "0" %>
+              item(s)
+            </p>
+          </div>
+          <div class="pagination-box">
+            <ul class="pagination-box">
+              <% if (locals.pagination && pagination.totalPages > 1) { %> <% if
+              (pagination.currentPage > 1) { %>
+              <li>
+                <a
+                  href="<%= pagination.baseUrl %>?page=<%= pagination.currentPage - 1 %>"
+                  aria-label="Previous"
+                >
+                  <i class="fa fa-chevron-left"></i>
+                </a>
+              </li>
+              <% } %> <% for (let i = 1; i <= pagination.totalPages; i++) { %>
+              <% if (i === pagination.currentPage) { %>
+              <li>
+                <a href="#" class="active"><%= i %></a>
+              </li>
+              <% } else if ( i === 1 || i === pagination.totalPages || (i >=
+              pagination.currentPage - 1 && i <= pagination.currentPage + 1) ) {
+              %>
+              <li>
+                <a href="<%= pagination.baseUrl %>?page=<%= i %>"><%= i %></a>
+              </li>
+              <% } else if ( i === pagination.currentPage - 2 || i ===
+              pagination.currentPage + 2 ) { %>
+              <li>
+                <a href="#" class="disabled">...</a>
+              </li>
+              <% } %> <% } %> <% if (pagination.currentPage <
+              pagination.totalPages) { %>
+              <li>
+                <a
+                  href="<%= pagination.baseUrl %>?page=<%= pagination.currentPage + 1 %>"
+                  aria-label="Next"
+                >
+                  <i class="fa fa-chevron-right"></i>
+                </a>
+              </li>
+              <% } %> <% } %>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <!-- Main Content End -->
+    </div>
+  </div>
+</div>
+<!-- Shop Page Content End -->
+<script>
+  $(document).ready(function () {
+    // Price range slider
+    $("#slider-range").slider({
+      range: true,
+      min: 0,
+      max: 10000,
+      values: [0, 10000],
+      slide: function (event, ui) {
+        $("#min-price").text(ui.values[0]);
+        $("#max-price").text(ui.values[1]);
+      },
+    });
+
+    // View switching
+    $(document).ready(function () {
+      // View switching
+      $(".product-view-mode a").on("click", function (e) {
+        e.preventDefault();
+        const viewMode = $(this).data("view");
+
+        $(".product-view-mode a").removeClass("active");
+        $(this).addClass("active");
+
+        if (viewMode === "grid") {
+          $(".shop-product-wrap")
+            .removeClass("list-view")
+            .addClass("grid-view");
+        } else {
+          $(".shop-product-wrap")
+            .removeClass("grid-view")
+            .addClass("list-view");
+        }
+      });
+    });
+
+    // Sort by functionality
+    $(".nice-select").on("change", function () {
+      const sortBy = $(this).val();
+      const currentUrl = new URL(window.location.href);
+
+      currentUrl.searchParams.set("sort", sortBy);
+      window.location.href = currentUrl.toString();
+    });
+
+    // Filter button
+    $(".filter-btn").on("click", function () {
+      const minPrice = $("#min-price").text();
+      const maxPrice = $("#max-price").text();
+      const currentUrl = new URL(window.location.href);
+
+      currentUrl.searchParams.set("minPrice", minPrice);
+      currentUrl.searchParams.set("maxPrice", maxPrice);
+      window.location.href = currentUrl.toString();
+    });
+  });
+</script>
+<!-- Begin Footer Area -->
+
+<!-- Footer Area End -->
+
+<!-- jQuery JS -->
+<script src="/js/vendor/jquery-1.12.4.min.js"></script>
+<!-- Popper JS -->
+<script src="/js/popper.min.js"></script>
+<!-- Bootstrap JS -->
+<script src="/js/bootstrap.min.js"></script>
+<!-- Plugins JS -->
+<script src="/js/plugins.js"></script>
+<!-- jQuery-ui JS -->
+<script src="/js/jquery-ui.min.js"></script>
+<!-- Main JS -->
+<script src="/js/main.js"></script>
+<%- include('../partials/footer.ejs') %>
