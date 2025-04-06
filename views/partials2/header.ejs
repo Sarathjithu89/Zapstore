@@ -150,21 +150,31 @@
                 aria-labelledby="profileDropdown"
               >
                 <li class="d-flex py-2 align-items-start">
+                  <% if(locals.admin){ %>
                   <button
                     class="btn-icon bg-primary-faded text-primary fw-bolder me-3"
                   >
                     <%= admin.name.charAt(0).toUpperCase() %>
                   </button>
+                  <% }else{ %>
+                  <button
+                    class="btn-icon bg-primary-faded text-primary fw-bolder me-3"
+                  >
+                    Admin
+                  </button>
+                  <% }; %>
                   <div
                     class="d-flex align-items-start justify-content-between flex-grow-1"
                   >
                     <div>
+                      <% if(locals.admin){ %>
                       <p class="lh-1 mb-2 fw-semibold text-body">
-                        <%= admin.name %>
+                        <%= locals.admin.name %>
                       </p>
                       <p class="text-muted lh-1 mb-2 small">
-                        <%= admin.email %>
+                        <%= locals.admin.email %>
                       </p>
+                      <% }; %>
                     </div>
                     <!-- <small
                       class="badge bg-success-faded text-success rounded-pill"
@@ -205,5 +215,3 @@
       </div>
     </nav>
     <!-- / Navbar-->
-  </body>
-</html>

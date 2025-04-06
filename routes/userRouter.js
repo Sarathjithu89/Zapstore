@@ -38,18 +38,16 @@ router.get(
   passport.authenticate("google", {
     session: false,
     failureRedirect: "/register",
-  }),
-  (req, res) => {
-    const token = req.user.token;
-    res.cookie("token", token, { httpOnly: true, secure: true });
-    res.status(200),
-      json({ sucess: true, message: "Google login sucessful", token });
-    res.redirect("/");
-  }
+  }),userController.googleCallback
+  
 );
+//for adding new password in Google sign in
+router.get("/addpassword",userController.getAddPassword);
+router.post("/addpassword", userController.addPassword);
 
-router.get("/product", userController.getSingleProduct);
-router.get("/shop", userController.getCategoryPage);
-router.get("/category", userController.getCategoryPage);
+//product routes
+router.get("/product", authToken, userController.getSingleProduct);
+router.get("/shop", authToken, userController.getCategoryPage);
+router.get("/category", authToken, userController.getCategoryPage);
 
 module.exports = router;

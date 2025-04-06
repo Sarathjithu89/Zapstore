@@ -16,7 +16,7 @@ const loadHomepage = async (req, res) => {
       userData = await User.findOne({ _id: req.user.userId });
     }
 
-    const products = await Product.find({ isDeleted: false })
+    const products = await Product.find({isBlocked:false,isDeleted: false })
       .sort({ createdAt: -1 })
       .limit(8)
       .exec();
@@ -102,6 +102,20 @@ const pageNotFound = async (req, res) => {
     res.redirect("/pageNotFound");
   }
 };
+/*---------------------------------------------google callback---------------------------------------------------------*/
+async function googleCallback(req, res) {
+    const token = req.user.token;
+    res.cookie("token", token, { httpOnly: true, secure: true });
+    // res.status(200),json({ sucess: true, message: "Google login sucessful", token });
+    const decoded=jwt.verify(token,process.env.JWT_SECRET_KEY);
+    const userEmail=decoded.email;
+    const user=await User.findOne({email:userEmail});
+    if(!user.password){
+      req.flash("success", "Please Enter New Password");
+      return res.redirect("/addpassword");
+    }
+    return res.redirect('/login');
+  }
 
 /*---------------------------------------------Main functions---------------------------------------------------------*/
 //login check function
@@ -269,13 +283,47 @@ const resendOtp = async (req, res) => {
   }
 };
 
+//google Add passoword
+const getAddPassword=async(req,res)=>{
+  try {
+    return res.render("addpassword.ejs")
+  } catch (error) {
+    console.log(error);
+    return res.redirect('/pageerror');
+  }
+  };
+  const addPassword=async(req,res)=>{
+    try {
+      const {password,cpassword}=req.body;
+      const trimmedPassword=password.trim();
+      const trimmedCassword=cpassword.trim();
+      if (trimmedPassword !== trimmedCassword) {
+        req.flash("error","Passwords donot Match");
+        return res.redirect('/addpassword')
+      }
+      const token=req.cookies.token;
+      let decoded=jwt.verify(token,process.env.JWT_SECRET_KEY);
+      const email=decoded.email;
+      const hashedPassword=await securePassword(password)
+      const user=await User.findOne({email:email});
+      user.password=hashedPassword;
+      await user.save();
+      req.flash("success","Success! Please Login");
+      return res.redirect('/login');
+    } catch (error) {
+      console.log("Adding Password Error :",error)
+      return res.redirect('/pageerror');
+    }
+  }
+  
+
 //reset password function
 const resetPassword = async (req, res) => {
   try {
     const { password, cpassword } = req.body;
     if (password !== cpassword) {
       return res.render("resetPassword.ejs", {
-        message: "Password not matched",
+        "error": "Password not matched",
       });
     }
     const { token } = req.params;
@@ -596,6 +644,7 @@ function createJwtToken(payLoad) {
 }
 
 module.exports = {
+  googleCallback,
   loadHomepage,
   loadLogin,
   loadRegister,
@@ -615,4 +664,6 @@ module.exports = {
   checkoutPage,
   getSingleProduct,
   getCategoryPage,
+  getAddPassword,
+  addPassword,
 };

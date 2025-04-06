@@ -107,19 +107,19 @@ adminRouter.get(
 );
 
 //coupon routs
-adminRouter.get("/coupons", adminAuth, couponController.getCoupons);
-adminRouter.get("/addCoupon", adminAuth, couponController.getAddCouponPage);
-adminRouter.post("/addCoupon", adminAuth, couponController.addCoupon);
-adminRouter.get(
-  "/editCoupon/:id",
-  adminAuth,
-  couponController.getEditCouponPage
-);
-adminRouter.post("/editCoupon/:id", adminAuth, couponController.updateCoupon);
-adminRouter.post(
-  "/toggleCouponStatus",
-  adminAuth,
-  couponController.toggleCouponStatus
-);
-adminRouter.post("/deleteCoupon/:id", adminAuth, couponController.deleteCoupon);
+// adminRouter.get("/coupons", adminAuth, couponController.getCoupons);
+// adminRouter.get("/addCoupon", adminAuth, couponController.getAddCouponPage);
+// adminRouter.post("/addCoupon", adminAuth, couponController.addCoupon);
+// adminRouter.get(
+//   "/editCoupon/:id",
+//   adminAuth,
+//   couponController.getEditCouponPage
+// );
+// adminRouter.post("/editCoupon/:id", adminAuth, couponController.updateCoupon);
+// adminRouter.post(
+//   "/toggleCouponStatus",
+//   adminAuth,
+//   couponController.toggleCouponStatus
+// );
+// adminRouter.post("/deleteCoupon/:id", adminAuth, couponController.deleteCoupon);
 module.exports = adminRouter;

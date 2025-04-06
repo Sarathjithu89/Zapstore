@@ -1,0 +1,56 @@
+
+<style>
+    .pagination-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 8px;
+      margin-bottom: 8px;
+      gap: 8px;
+    }
+  
+    .pagination-container a,
+    .pagination-container .current-page {
+      text-align: center;
+      padding: 1px 7px;
+      font-size: 16px;
+      border-radius: 3px;
+      text-decoration: none;
+      transition: 0.3s ease-in-out;
+      align-items: center;
+      justify-content: center;
+    }
+  
+    .pagination-container a {
+      background-color: #007bff;
+      color: white;
+      text-align: center;
+      align-items: center;
+      justify-content: center;
+    }
+  
+    .pagination-container a:hover {
+      background-color: #0056b3;
+      
+    }
+  
+    .pagination-container .current-page {
+      background-color: #28a745;
+      color: white;
+      font-weight: bold;
+      
+    }
+
+</style>
+
+<div class="pagination-container">
+    <% if(currentPage>1){ %>
+    <a href="?page=<%= 1 %>">&laquo;</a>
+    <% } %><% for(let i=1;i<=totalPages;i++) { %><% if(i===currentPage){ %>
+    <span class="current-page"><%= i %></span>
+    <% }else{ %>
+    <a href="?page=<%= i %>"><%= i %></a>
+    <% } %><% } %><% if(currentPage<totalPages){ %>
+    <a href="?page=<%= totalPages %>">&raquo;</a>
+    <% }; %>
+  </div>

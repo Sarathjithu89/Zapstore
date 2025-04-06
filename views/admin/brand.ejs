@@ -1,5 +1,8 @@
 <%- include('../partials2/header.ejs') %>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"
+/>
 <!-- Page Content -->
 <main id="main">
   <!-- Breadcrumbs-->
@@ -89,17 +92,6 @@
   </style>
 
   <!-- Alerts -->
-  <% if (messages && messages.success) { %>
-  <div class="alert alert-success alert-toast">
-    <i class="fa fa-check-circle me-2"></i>
-    <%= messages.success %>
-  </div>
-  <% } %> <% if (messages && messages.error) { %>
-  <div class="alert alert-danger alert-toast">
-    <i class="fa fa-exclamation-circle me-2"></i>
-    <%= messages.error %>
-  </div>
-  <% } %>
 
   <!-- Content-->
   <section class="container-fluid">
@@ -229,39 +221,8 @@
             </div>
             <% } %>
           </div>
-          <% if (data.length > 0) { %>
-          <div class="card-footer bg-white">
-            <!-- Pagination -->
-            <nav>
-              <ul class="pagination justify-content-center mb-0">
-                <% if (currentPage > 1) { %>
-                <li class="page-item">
-                  <a
-                    class="page-link"
-                    href="/admin/brands?page=<%= currentPage - 1 %>"
-                    ><i class="fa fa-angle-left"></i
-                  ></a>
-                </li>
-                <% } %> <% for (let i = 1; i <= totalPages; i++) { %>
-                <li class="page-item <%= i === currentPage ? 'active' : '' %>">
-                  <a class="page-link" href="/admin/brands?page=<%= i %>"
-                    ><%= i %></a
-                  >
-                </li>
-                <% } %> <% if (currentPage < totalPages) { %>
-                <li class="page-item">
-                  <a
-                    class="page-link"
-                    href="/admin/brands?page=<%= currentPage + 1 %>"
-                    ><i class="fa fa-angle-right"></i
-                  ></a>
-                </li>
-                <% } %>
-              </ul>
-            </nav>
-          </div>
-          <% } %>
         </div>
+        <%- include("../partials2/pagination.ejs") %>
       </div>
     </div>
   </section>
@@ -288,5 +249,5 @@
     }
   });
 </script>
-
-<%- include('../partials2/footer.ejs') %>
+<%- include("../partials/alerts.ejs") %> <%- include('../partials2/footer.ejs')
+%>

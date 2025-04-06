@@ -1,9 +1,10 @@
 <%-include('../partials2/header.ejs') %>
 <%-include('../partials/alerts.ejs') %>
+
 <!-- Page Content -->
 <main id="main">
   <!-- Breadcrumbs-->
-  <div class="bg-white border-bottom py-3 mb-5">
+  <div class="bg-white border-bottom py-3 mb-3">
     <div
       class="container-fluid d-flex justify-content-between align-items-start align-items-md-center flex-column flex-md-row"
     >
@@ -22,7 +23,7 @@
 
   <!-- Content-->
   <section class="container-fluid">
-    <div class="card mb-4">
+    <div class="card">
       <div
         class="card-header justify-content-between align-items-center d-flex"
       >
@@ -121,17 +122,15 @@
           </table>
         </div>
         <!-- /User Listing Table-->
-        <nav>
-          <ul class="pagination justify-content-end mt-3 mb-0">
-            <% for(let i=1;i<=totalPages;i++){ %>
-              <li class="page-item <%= (i==currentPage)?'active':'' %>">
-                <a class="page-link" href="?page=<%= i %>"><%= i %></a>
-              </li>
-              <% } %>
-          </ul>
-        </nav>
+        <!-- pagination -->
+        
       </div>
+      
     </div>
+    <nav>
+    <%- include("../partials2/pagination.ejs")%> 
+    </nav>
+    
     <!-- Footer -->
     <footer class="footer">
       <!-- <p class="small text-muted m-0">All rights reserved</p> -->

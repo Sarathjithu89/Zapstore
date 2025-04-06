@@ -41,8 +41,8 @@ const adminLogin = async (req, res) => {
 const loadDashboard = async (req, res) => {
   if (req.session.admin) {
     try {
-      const admin = req.session.admin;
-      res.render("dashboard.ejs", { admin });
+      const admin = await req.session.admin;
+      return res.render("dashboard.ejs", { admin });
     } catch (error) {
       console.log(error);
       res.redirect("/pageerror");

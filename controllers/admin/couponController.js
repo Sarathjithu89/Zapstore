@@ -252,6 +252,66 @@ const applyCoupon = async (userId, couponCode) => {
     return false;
   }
 };
+// Validate coupon (for checkout process)
+
+const validateCoupon = async (req, res) => {
+  try {
+    const { couponCode, total, userId } = req.body;
+
+    if (!couponCode || !total || !userId) {
+      return res.json({
+        status: false,
+        message: "Invalid request parameters",
+      });
+    }
+
+    // Find coupon (case insensitive)
+    const coupon = await Coupon.findOne({
+      name: { $regex: new RegExp("^" + couponCode + "$", "i") },
+      isList: true,
+      expireOn: { $gt: new Date() },
+    });
+
+    if (!coupon) {
+      return res.json({
+        status: false,
+        message: "Invalid or expired coupon code",
+      });
+    }
+
+    // Check if user has already used this coupon
+    if (coupon.UserId.includes(userId)) {
+      return res.json({
+        status: false,
+        message: "You have already used this coupon",
+      });
+    }
+
+    // Check minimum purchase requirement
+    if (total < coupon.minimumPrice) {
+      return res.json({
+        status: false,
+        message: `Minimum purchase of ₹${coupon.minimumPrice.toLocaleString()} required for this coupon`,
+      });
+    }
+
+    return res.json({
+      status: true,
+      coupon: {
+        id: coupon._id,
+        code: coupon.name,
+        discountValue: coupon.offerPrice,
+        minPurchase: coupon.minimumPrice,
+      },
+    });
+  } catch (error) {
+    console.log("Validate coupon error", error);
+    return res.json({
+      status: false,
+      message: "Failed to validate coupon",
+    });
+  }
+};
 
 module.exports = {
   getCoupons,

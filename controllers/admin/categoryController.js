@@ -3,8 +3,7 @@ const Product = require("../../models/Products.js");
 
 const categoryInfo = async (req, res) => {
   try {
-
-    const admin=req.session.admin;
+    const admin = req.session.admin;
     const page = parseInt(req.query.page) || 1;
     const limit = 4;
     const skip = (page - 1) * limit;
@@ -12,12 +11,14 @@ const categoryInfo = async (req, res) => {
     const categoryData = await Category.find({})
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .exec();
 
     const totalCategories = await Category.countDocuments();
     const totalPages = Math.ceil(totalCategories / limit);
+
     res.render("category.ejs", {
-      admin:admin,
+      admin: admin,
       cat: categoryData,
       currentPage: page,
       totalPages: totalPages,
@@ -40,7 +41,11 @@ const addcategory = async (req, res) => {
         .json({ error: "Name and Description are required" });
     }
 
-    const existingCategory = await Category.findOne({ name: nameTrimmed });
+    const existingCategory = await Category.findOne({
+      name: { $regex: new RegExp(`^${nameTrimmed}$`, "i") },
+    });
+    console.log("existig cat", existingCategory);
+
     if (existingCategory) {
       return res.status(400).json({ error: "Category already exists" });
     }
@@ -168,13 +173,7 @@ const editCategory = async (req, res) => {
     // Check if the category name already exists
     const existingCategory = await Category.findOne({
       name: categoryName,
-      // _id: { $ne: id }, // Exclude the current category being edited
     });
-
-    if (existingCategory) {
-      req.flash("error", "Category already exists, please choose another name");
-      return res.redirect(`/admin/category`);
-    }
 
     const updateCategory = await Category.findByIdAndUpdate(
       id,

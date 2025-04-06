@@ -85,7 +85,7 @@ const getProducts = async (req, res) => {
   try {
     const admin = req.session.admin;
     const search = req.query.search || "";
-    const page = req.query.page || 1;
+    const page = parseInt(req.query.page) || 1;
     const limit = 4;
 
     const productData = await Product.find({
@@ -122,17 +122,6 @@ const getProducts = async (req, res) => {
     } else {
       res.render("404.ejs");
     }
-
-    // const admin=req.session.admin;
-
-    // const currentPage=1;
-    // const totalPages=1;
-
-    // const cat=await Category.find({})
-
-    // const data=await Product.find({});
-
-    // return res.render("products.ejs",{admin:admin,data:data,currentPage:currentPage,totalPages:totalPages,cat:cat});
   } catch (error) {
     console.log("get Product error", error);
     return res.redirect("/admin/pageerror");
