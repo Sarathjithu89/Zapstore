@@ -17,13 +17,20 @@ const addressSchema = new mongoose.Schema(
           type: String,
           required: true,
         },
+        addressLine: {
+          type: String,
+          required: true,
+        },
+        country: {
+          type: String,
+          required: true,
+        },
         city: {
           type: String,
           required: true,
         },
         landMark: {
           type: String,
-          required: true,
         },
         state: {
           type: String,
@@ -32,14 +39,17 @@ const addressSchema = new mongoose.Schema(
         pincode: {
           type: String,
           required: true,
+          match: /^[0-9]{6}$/, //6 digit number check
         },
         phone: {
-          type: Number,
-          required: true,
+          type: String,
         },
         altPhone: {
-          type: Number,
-          required: true,
+          type: String,
+        },
+        isDefault: {
+          type: Boolean,
+          default: false,
         },
       },
     ],

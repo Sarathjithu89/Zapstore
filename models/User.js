@@ -21,6 +21,10 @@ const userSchema = new mongoose.Schema(
         ref: "Order",
       },
     ],
+    profileImage: {
+      type: String,
+      default: "default/default-user-avatar.png",
+    },
     referalCode: {
       type: String,
     },
