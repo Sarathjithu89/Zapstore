@@ -42,8 +42,7 @@ const orderSchema = new mongoose.Schema(
       required: true,
     },
     address: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "user",
+      type: Object,
       required: true,
     },
     invoiceDate: {
@@ -66,11 +65,30 @@ const orderSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    paymentStatus: {
+      type: String,
+      enum: ["Paid", "Not Paid", "Refunded"],
+    },
     couponApplied: {
       type: Boolean,
       default: false,
     },
+    statusHistory: [
+      {
+        status: {
+          type: String,
+        },
+        updatedBy: {
+          type: String,
+        },
+        date: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
   },
+
   { timestamps: true }
 );
 

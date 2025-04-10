@@ -191,7 +191,7 @@ const placeOrder = async (req, res) => {
         totalPrice: subtotal,
         discount: sellerDiscount,
         finalAmount: totalAmount,
-        address: addressId,
+        address: shippingAddress,
         invoiceDate: new Date(),
         status: "Pending",
         paymentMethod: paymentMethod,

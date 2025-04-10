@@ -6,6 +6,7 @@ const sharp = require("sharp");
 const path = require("path");
 const fs = require("fs");
 const Order = require("../../models/Order.js");
+const Product = require("../../models/Products.js");
 
 const { securePassword } = require("./userController.js");
 
@@ -398,6 +399,66 @@ const getUserOrders = async (req, res) => {
   }
 };
 
+// Controller to handle order cancellation
+const cancelOrder = async (req, res) => {
+  try {
+    const { orderId, reason } = req.body;
+    const userId = req.user?.userId;
+
+    const order = await Order.findOne({ _id: orderId, userId: userId });
+
+    if (!order) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found" });
+    }
+
+    if (order.status !== "Pending" && order.status !== "Processing") {
+      return res.status(400).json({
+        success: false,
+        message: "This order cannot be cancelled in its current status",
+      });
+    }
+
+    order.status = "Cancelled";
+    order.cancelReason = reason;
+    order.cancelledAt = new Date();
+
+    for (const item of order.orderedItems) {
+      await Product.findByIdAndUpdate(item.product, {
+        $inc: { quantity: item.quantity, sold: -item.quantity },
+      });
+    }
+
+    // If payment was made, process refund
+    if (order.paymentStatus === "Paid") {
+      // Add amount to user wallet
+      const user = await User.findById(userId);
+      user.wallet = (user.wallet || 0) + order.finalAmount;
+
+      // Add wallet transaction record
+      user.walletHistory.push({
+        amount: order.finalAmount,
+        type: "credit",
+        description: `Refund for cancelled order #${order.orderId}`,
+        date: new Date(),
+      });
+
+      await user.save();
+
+      // Update payment status in order
+      order.paymentStatus = "Refunded";
+    }
+
+    await order.save();
+
+    return res.json({ success: true, message: "Order cancelled successfully" });
+  } catch (error) {
+    console.error("Error cancelling order:", error);
+    res.status(500).json({ success: false, message: "An error occurred" });
+  }
+};
+
 module.exports = {
   getUserProfile,
   uploadProfileImage,
@@ -410,4 +471,5 @@ module.exports = {
   changePasswordProfile,
   forgotPasswordLogout,
   getUserOrders,
+  cancelOrder,
 };

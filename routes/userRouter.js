@@ -100,5 +100,6 @@ userRouter.post("/placeOrder", authToken, checkoutController.placeOrder);
 
 //orders
 userRouter.get("/orders", authToken, profileController.getUserOrders);
+userRouter.post("/cancelOrder", authToken, profileController.cancelOrder);
 
 module.exports = userRouter;

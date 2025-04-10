@@ -464,8 +464,8 @@
                   <button
                     class="accordion-button collapsed"
                     type="button"
-                    data-bs-toggle="collapse"
-                    data-bs-target="#collapse<%= order._id %>"
+                    data-toggle="collapse"
+                    data-target="#collapse<%= order._id %>"
                     aria-expanded="false"
                     aria-controls="collapse<%= order._id %>"
                   >
@@ -475,7 +475,7 @@
                 <div
                   id="collapse<%= order._id %>"
                   class="accordion-collapse collapse"
-                  data-bs-parent="#orderAccordion<%= order._id %>"
+                  data-parent="#orderAccordion<%= order._id %>"
                 >
                   <div class="accordion-body p-0 pt-3">
                     <div class="order-items">
@@ -484,7 +484,7 @@
                         <% if (item.product.productImage &&
                         item.product.productImage.length > 0) { %>
                         <img
-                          src="<%= item.product.productImage[0] %>"
+                          src="uploads/product-images/<%= item.product.productImage[0] %>"
                           alt="<%= item.product.productName %>"
                           class="item-image"
                         />
@@ -603,7 +603,7 @@
         <button
           type="button"
           class="btn-close"
-          data-bs-dismiss="modal"
+          data-dismiss="modal"
           aria-label="Close"
         ></button>
       </div>
@@ -671,7 +671,7 @@
         <button
           type="button"
           class="btn-close"
-          data-bs-dismiss="modal"
+          data-dismiss="modal"
           aria-label="Close"
         ></button>
       </div>
@@ -721,7 +721,7 @@
         </form>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">
           Close
         </button>
         <button type="button" class="btn btn-primary" id="confirmReturnBtn">
@@ -732,53 +732,47 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-  // Filter orders
   function filterOrders() {
     const filterValue = document.getElementById("orderFilter").value;
     const orderCards = document.querySelectorAll(".order-card");
 
+    // Toggle visibility
     orderCards.forEach((card) => {
-      if (
-        filterValue === "all" ||
-        card.getAttribute("data-status") === filterValue
-      ) {
-        card.style.display = "block";
-      } else {
-        card.style.display = "none";
-      }
+      const status = card.getAttribute("data-status");
+      card.style.display =
+        filterValue === "all" || status === filterValue ? "block" : "none";
     });
 
-    // Show "no orders" message if all are filtered out
-    const visibleOrders = document.querySelectorAll(
-      '.order-card[style="display: block"]'
+    // Check for visible cards
+    const visibleOrders = Array.from(orderCards).filter(
+      (card) => card.style.display !== "none"
     );
-    const noOrdersMsg = document.querySelector(".no-orders");
+
+    const existingMsg = document.querySelector(".no-orders-filtered");
+    const ordersContainer = document.querySelector(".orders-container");
 
     if (visibleOrders.length === 0 && filterValue !== "all") {
-      if (!noOrdersMsg) {
-        const ordersContainer = document.querySelector(".orders-container");
-        const noOrdersDiv = document.createElement("div");
-        noOrdersDiv.className = "no-orders-filtered";
-        noOrdersDiv.innerHTML = `
-          <p>No ${filterValue} orders found.</p>
-          <button onclick="document.getElementById('orderFilter').value='all'; filterOrders();" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-funnel"></i> Clear Filter
-          </button>
-        `;
-        ordersContainer.appendChild(noOrdersDiv);
+      if (!existingMsg && ordersContainer) {
+        const msg = document.createElement("div");
+        msg.className = "no-orders-filtered text-center mt-3";
+        msg.innerHTML = `
+        <p>No <strong>${filterValue}</strong> orders found.</p>
+        <button onclick="document.getElementById('orderFilter').value='all'; filterOrders();" class="btn btn-outline-secondary btn-sm mt-2">
+          <i class="bi bi-funnel"></i> Clear Filter
+        </button>
+      `;
+        ordersContainer.appendChild(msg);
       }
-    } else {
-      const noOrdersFiltered = document.querySelector(".no-orders-filtered");
-      if (noOrdersFiltered) {
-        noOrdersFiltered.remove();
-      }
+    } else if (existingMsg) {
+      existingMsg.remove();
     }
   }
 
   // Cancel order
   function cancelOrder(orderId) {
-    const cancelOrderModal = new bootstrap.Modal(
+    let cancelOrderModal = new bootstrap.Modal(
       document.getElementById("cancelOrderModal")
     );
     document.getElementById("cancelOrderId").value = orderId;
@@ -816,7 +810,7 @@
           reason: reason === "Other" ? otherReason : reason,
         };
 
-        fetch("/cancel-order", {
+        fetch("/cancelOrder", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -826,7 +820,7 @@
           .then((response) => response.json())
           .then((data) => {
             if (data.success) {
-              const modal = bootstrap.Modal.getInstance(
+              let modal = new bootstrap.Modal(
                 document.getElementById("cancelOrderModal")
               );
               modal.hide();
@@ -852,19 +846,29 @@
                 }
               }
 
-              showToast("Order cancelled successfully");
-              setTimeout(() => {
+              Swal.fire({
+                icon: "success",
+                title: "Order cancelled successfully",
+                showConfirmButton: false,
+                timer: 1500,
+              }).then(() => {
                 window.location.reload();
-              }, 1500);
+              });
             } else {
-              showToast(
-                "Failed to cancel order: " + (data.message || "Unknown error")
-              );
+              Swal.fire({
+                icon: "error",
+                title: "Order Cancellation Failed",
+                text: data.message || "Unknown error",
+              });
             }
           })
           .catch((error) => {
             console.error("Error:", error);
-            showToast("An error occurred while cancelling your order");
+            Swal.fire({
+              icon: "error",
+              title: "Error",
+              text: "An error occurred while cancelling your order",
+            });
           });
       } else {
         form.reportValidity();
@@ -924,7 +928,7 @@
           .then((response) => response.json())
           .then((data) => {
             if (data.success) {
-              const modal = bootstrap.Modal.getInstance(
+              const modal = new bootstrap.Modal(
                 document.getElementById("returnRequestModal")
               );
               modal.hide();
@@ -950,20 +954,29 @@
                 }
               }
 
-              showToast("Return request submitted successfully");
-              setTimeout(() => {
+              Swal.fire({
+                icon: "success",
+                title: "Return request submitted successfully",
+                showConfirmButton: false,
+                timer: 1500,
+              }).then(() => {
                 window.location.reload();
-              }, 1500);
+              });
             } else {
-              showToast(
-                "Failed to submit return request: " +
-                  (data.message || "Unknown error")
-              );
+              Swal.fire({
+                icon: "error",
+                title: "Failed to submit return request",
+                text: data.message || "Unknown error",
+              });
             }
           })
           .catch((error) => {
             console.error("Error:", error);
-            showToast("An error occurred while submitting your return request");
+            Swal.fire({
+              icon: "error",
+              title: "An error occurred",
+              text: "An error occurred while submitting your return request.",
+            });
           });
       } else {
         form.reportValidity();
@@ -978,45 +991,20 @@
   // Confirm logout
   function confirmLogout(event) {
     event.preventDefault();
-    if (confirm("Are you sure you want to logout?")) {
-      window.location.href = "/logout";
-    }
-  }
 
-  // Show toast notification
-  function showToast(message) {
-    // Check if the toast container exists, if not create it
-    let toastContainer = document.querySelector(".toast-container");
-    if (!toastContainer) {
-      toastContainer = document.createElement("div");
-      toastContainer.className =
-        "toast-container position-fixed bottom-0 end-0 p-3";
-      document.body.appendChild(toastContainer);
-    }
-
-    const toastId = "toast-" + new Date().getTime();
-    const toastHTML = `
-      <div id="${toastId}" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-        <div class="toast-header">
-          <strong class="me-auto">Notification</strong>
-          <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-        </div>
-        <div class="toast-body">
-          ${message}
-        </div>
-      </div>
-    `;
-
-    toastContainer.insertAdjacentHTML("beforeend", toastHTML);
-    const toastElement = document.getElementById(toastId);
-    const toast = new bootstrap.Toast(toastElement);
-    toast.show();
-
-    // Remove toast after it's hidden
-    toastElement.addEventListener("hidden.bs.toast", function () {
-      toastElement.remove();
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You will be logged out of your account",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, logout",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        window.location.href = "/logout";
+      }
     });
   }
 </script>
-
 <%- include('../partials/footer.ejs') %>
