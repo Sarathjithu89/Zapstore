@@ -1,2 +1,526 @@
-<%-include('../partials/header.ejs') %> <% include('../partials/alerts.ejs') %>
-<%-include('../partials/footer.ejs') %>
+<%-include('../partials/header.ejs') %>
+<style>
+  /* Wishlist Page Custom Styles */
+
+  /* Banner Area Styling */
+  .banner-area.organic-breadcrumb {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #eee;
+    padding: 20px 0;
+    margin-bottom: 30px;
+  }
+
+  .banner-area h1 {
+    color: #333;
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+  }
+
+  .breadcrumb-banner .breadcrumb {
+    padding: 0;
+    background: transparent;
+    margin-bottom: 0;
+  }
+
+  .breadcrumb a {
+    font-size: 14px;
+    transition: all 0.3s ease;
+  }
+
+  .breadcrumb a:hover {
+    color: #ff6b6b;
+  }
+
+  /* Main Wishlist Table Styling */
+  .shopping-summery {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  .shopping-summery thead th {
+    font-weight: 600;
+    color: #555;
+    padding: 15px;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #eaeaea;
+  }
+
+  .shopping-summery tbody tr {
+    transition: all 0.3s ease;
+  }
+
+  .shopping-summery tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+  }
+
+  .shopping-summery td {
+    padding: 20px 15px;
+    vertical-align: middle;
+    border-bottom: 1px solid #eaeaea;
+  }
+
+  /* Product Image */
+  .product-thumbnail img {
+    max-width: 90px;
+    height: auto;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+    border: 1px solid #f0f0f0;
+  }
+
+  .product-thumbnail img:hover {
+    transform: scale(1.05);
+  }
+
+  /* Product Name */
+  .product-name h6 {
+    font-size: 16px;
+    margin-bottom: 5px;
+    line-height: 1.4;
+  }
+
+  .product-name h6 a {
+    color: #333;
+    transition: color 0.3s ease;
+  }
+
+  .product-name h6 a:hover {
+    color: #ff6b6b;
+    text-decoration: none;
+  }
+
+  .product-meta {
+    font-size: 13px;
+    color: #888;
+  }
+
+  .product-meta i {
+    font-size: 12px;
+  }
+
+  /* Price */
+  .price .fw-bold {
+    font-size: 16px;
+    color: #333;
+  }
+
+  /* Buttons */
+  .btn-primary {
+    background-color: #ff6b6b;
+    border-color: #ff6b6b;
+    transition: all 0.3s ease;
+  }
+
+  .btn-primary:hover {
+    background-color: #ff5252;
+    border-color: #ff5252;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .btn-outline-danger {
+    color: #ff6b6b;
+    border-color: #ff6b6b;
+    transition: all 0.3s ease;
+  }
+
+  .btn-outline-danger:hover {
+    background-color: #ff6b6b;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .btn-outline-secondary {
+    border-color: #ddd;
+    color: #666;
+    transition: all 0.3s ease;
+  }
+
+  .btn-outline-secondary:hover {
+    background-color: #f8f9fa;
+    color: #333;
+  }
+
+  .btn-outline-primary {
+    border-color: #ff6b6b;
+    color: #ff6b6b;
+    transition: all 0.3s ease;
+  }
+
+  .btn-outline-primary:hover {
+    background-color: #ff6b6b;
+    color: #fff;
+  }
+
+  /* Card Styling */
+  .card {
+    border: none;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+  }
+
+  .card:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+  }
+
+  .card-header {
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .card-footer {
+    border-top: 1px solid #f0f0f0;
+  }
+
+  /* Badge Styling */
+  .badge {
+    font-weight: 500;
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .badge.bg-primary {
+    background-color: #ff6b6b !important;
+  }
+
+  /* Empty Wishlist */
+  .py-5 img {
+    opacity: 0.6;
+    max-width: 100px;
+    margin-bottom: 15px;
+  }
+
+  .py-5 h5 {
+    color: #555;
+  }
+
+  .py-5 p {
+    max-width: 80%;
+    margin: 0 auto;
+    color: #888;
+  }
+
+  /* Responsive Adjustments */
+  @media (max-width: 992px) {
+    .shopping-summery thead th {
+      font-size: 13px;
+      padding: 12px 8px;
+    }
+
+    .product-name h6 {
+      font-size: 14px;
+    }
+
+    .product-meta {
+      font-size: 12px;
+    }
+
+    .btn-sm {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .shopping-summery {
+      min-width: 650px;
+    }
+
+    .table-responsive {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .banner-area h1 {
+      font-size: 1.75rem;
+    }
+  }
+
+  /* Animation for Add to Cart */
+  @keyframes pulse {
+    0% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.05);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  .btn-primary:active {
+    animation: pulse 0.3s ease-in-out;
+  }
+
+  /* SweetAlert Customization */
+  .swal2-popup {
+    border-radius: 15px !important;
+    padding: 20px !important;
+  }
+
+  .swal2-title {
+    font-size: 24px !important;
+    font-weight: 600 !important;
+  }
+
+  .swal2-content {
+    font-size: 16px !important;
+  }
+
+  /* Hover Effects */
+  .action button {
+    opacity: 0.85;
+    transition: all 0.3s ease;
+  }
+
+  .action button:hover {
+    opacity: 1;
+  }
+
+  /* Custom Icons */
+  .fa-tag,
+  .fa-building {
+    opacity: 0.6;
+  }
+
+  /* Additional Helper Classes */
+  .text-primary {
+    color: #ff6b6b !important;
+  }
+
+  .bg-light {
+    background-color: #f9f9f9 !important;
+  }
+</style>
+<%- include("../../views/partials/user/header") %>
+
+<!-- Start Banner Area -->
+<section class="banner-area organic-breadcrumb bg-light">
+  <div class="container">
+    <div
+      class="breadcrumb-banner d-flex flex-wrap align-items-center justify-content-between py-4"
+    >
+      <div class="col-lg-6">
+        <h1 class="display-6 fw-bold text-primary">My Wishlist</h1>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb mb-0">
+            <a href="/" class="text-decoration-none text-dark">Home</a>
+            <span class="mx-2"><i class="fa fa-angle-right"></i></span>
+            <a href="/wishlist" class="text-decoration-none text-primary"
+              >Wishlist</a
+            >
+          </ol>
+        </nav>
+      </div>
+      <div class="col-lg-4 d-none d-lg-block text-end">
+        <img
+          src="/api/placeholder/120/120"
+          alt="Wishlist icon"
+          class="img-fluid"
+        />
+      </div>
+    </div>
+  </div>
+</section>
+<!-- End Banner Area -->
+
+<main class="main my-5">
+  <div class="container">
+    <div class="row">
+      <div class="col-12">
+        <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+          <div class="card-header bg-white py-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <h5 class="mb-0 fw-bold">Saved Items</h5>
+              <%if(wishlist.length>0){%>
+              <span class="badge bg-primary rounded-pill px-3 py-2"
+                ><%= wishlist.length %> items</span
+              >
+              <%}%>
+            </div>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table
+                class="table shopping-summery text-center align-middle mb-0"
+              >
+                <thead class="bg-light">
+                  <tr>
+                    <th scope="col" width="15%">Image</th>
+                    <th scope="col" width="35%" class="text-start">Product</th>
+                    <th scope="col" width="15%">Price</th>
+                    <th scope="col" width="20%">Add to Cart</th>
+                    <th scope="col" width="15%">Remove</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <%if(wishlist.length>0){%> <%for(let product of wishlist){%>
+                  <tr>
+                    <td class="product-thumbnail">
+                      <a href="/productDetails?id=<%=product._id%>">
+                        <img
+                          src="<%= product.productImage[0] %>"
+                          alt="<%= product.productName %>"
+                          class="img-fluid rounded"
+                          style="max-height: 90px; width: auto"
+                        />
+                      </a>
+                    </td>
+                    <td class="product-name text-start">
+                      <h6 class="mb-1">
+                        <a
+                          href="/productDetails?id=<%=product._id%>"
+                          class="text-dark text-decoration-none fw-bold"
+                        >
+                          <%=product.productName%>
+                        </a>
+                      </h6>
+                      <div class="product-meta small text-muted">
+                        <span class="me-2"
+                          ><i class="fa fa-tag me-1"></i
+                          ><%=product.category.name%></span
+                        >
+                        <span
+                          ><i class="fa fa-building me-1"></i
+                          ><%=product.brand%></span
+                        >
+                      </div>
+                    </td>
+                    <td class="price">
+                      <span class="fw-bold text-dark"
+                        >₹<%=product.salePrice%></span
+                      >
+                    </td>
+                    <td class="text-center">
+                      <button
+                        onclick="addToCart('<%=product._id%>')"
+                        class="btn btn-primary btn-sm px-3 py-2 rounded-pill"
+                      >
+                        <i class="fa fa-shopping-cart me-1"></i> Add to Cart
+                      </button>
+                    </td>
+                    <td class="action">
+                      <button
+                        class="btn btn-outline-danger btn-sm rounded-circle"
+                        onclick="confirmRemove('<%=product._id%>')"
+                      >
+                        <i class="fa fa-trash"></i>
+                      </button>
+                    </td>
+                  </tr>
+                  <%}%> <%}else{%>
+                  <tr>
+                    <td colspan="5" class="py-5">
+                      <div class="text-center">
+                        <img
+                          src="/api/placeholder/120/120"
+                          alt="Empty wishlist"
+                          class="img-fluid mb-3"
+                        />
+                        <h5 class="fw-bold text-secondary">
+                          Your wishlist is empty
+                        </h5>
+                        <p class="text-muted">
+                          Items added to your wishlist will appear here
+                        </p>
+                        <a href="/shop" class="btn btn-primary px-4 py-2 mt-3">
+                          Continue Shopping
+                        </a>
+                      </div>
+                    </td>
+                  </tr>
+                  <%}%>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <%if(wishlist.length>0){%>
+          <div class="card-footer bg-white py-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <a href="/shop" class="btn btn-outline-secondary">
+                <i class="fa fa-arrow-left me-2"></i> Continue Shopping
+              </a>
+              <a href="/cart" class="btn btn-outline-primary">
+                Go to Cart <i class="fa fa-arrow-right ms-2"></i>
+              </a>
+            </div>
+          </div>
+          <%}%>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<%- include("../../views/partials/user/footer") %>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script
+  src="https://kit.fontawesome.com/a076d05399.js"
+  crossorigin="anonymous"
+></script>
+
+<script>
+  function confirmRemove(productId) {
+    Swal.fire({
+      title: "Remove from wishlist?",
+      text: "You won't be able to revert this action",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, remove it",
+      cancelButtonText: "Cancel",
+      buttonsStyling: true,
+      customClass: {
+        confirmButton: "btn btn-danger px-4",
+        cancelButton: "btn btn-light px-4 me-3",
+      },
+    }).then((result) => {
+      if (result.isConfirmed) {
+        window.location.href = `/removeFromWishList?productId=${productId}`;
+      }
+    });
+  }
+
+  function addToCart(productId) {
+    $.ajax({
+      url: "/addToCart",
+      method: "POST",
+      data: { productId: productId },
+      success: (response) => {
+        if (response.status) {
+          Swal.fire({
+            title: "Added to Cart",
+            text: response.message,
+            icon: "success",
+            timer: 2000,
+            showConfirmButton: false,
+          });
+        } else {
+          Swal.fire({
+            title: "Error",
+            text: response.message,
+            icon: "error",
+            timer: 2000,
+          });
+        }
+      },
+      error: (error) => {
+        console.error("AJAX Error:", error);
+        Swal.fire({
+          title: "Error",
+          text: "There was an error adding the product to your cart",
+          icon: "error",
+          timer: 2000,
+        });
+      },
+    });
+  }
+</script>
+
+<% include('../partials/alerts.ejs') %> <%-include('../partials/footer.ejs') %>

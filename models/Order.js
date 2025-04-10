@@ -2,6 +2,11 @@ const mongoose = require("mongoose");
 const { v4: uuidv4 } = require("uuid");
 const orderSchema = new mongoose.Schema(
   {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "user",
+      required: true,
+    },
     orderId: {
       type: String,
       default: () => uuidv4(),
@@ -56,6 +61,10 @@ const orderSchema = new mongoose.Schema(
         "Return Request",
         "Returned",
       ],
+    },
+    paymentMethod: {
+      type: String,
+      required: true,
     },
     couponApplied: {
       type: Boolean,

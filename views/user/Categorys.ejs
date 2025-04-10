@@ -857,7 +857,7 @@
                 </p>
                 <div class="product-card-actions">
                   <a
-                    href="/cart/add/<%= product._id %>?quantity=1"
+                    onclick="addtocart('<%= product._id %>')"
                     class="btn-add-cart"
                     >Add to cart</a
                   >
@@ -944,7 +944,71 @@
   </div>
 </div>
 <!-- Shop Page Content End -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+  //-----------------------
+
+  //mixins
+  const Toast = Swal.mixin({
+    toast: true,
+    position: "top-end",
+    showConfirmButton: false,
+    timer: 2000,
+    timerProgressBar: true,
+  });
+
+  const Alert = Swal.mixin({
+    // showConfirmButton: true,
+    // customClass: {
+    //   confirmButton: "swal2-confirm",
+    // },
+    toast: true,
+    position: "top-end",
+    showConfirmButton: false,
+    timer: 2000,
+    timerProgressBar: true,
+  });
+
+  //mixins end
+
+  // Add to cart function
+  function addtocart(productId) {
+    const Id = { id: productId };
+    fetch("/cart/add", {
+      method: "POST",
+      headers: { "Content-type": "application/json" },
+
+      body: JSON.stringify({ id: productId }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          Toast.fire({
+            icon: "success",
+            title: data.message || "Product added to cart",
+          });
+          // .then(() => {
+          //   window.location.reload();
+          // });
+        } else {
+          Alert.fire({
+            icon: "error",
+            title: "Oops...",
+            text: data.message || "Error adding product to cart",
+          });
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        Alert.fire({
+          icon: "error",
+          title: "Oops...",
+          text: "An unexpected error occurred. Please try again.",
+        });
+      });
+  }
+
+  //------------------------
   $(document).ready(function () {
     // Price range slider
     $("#slider-range").slider({

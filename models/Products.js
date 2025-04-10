@@ -32,7 +32,7 @@ const productSchema = new mongoose.Schema(
     },
     quantity: {
       type: Number,
-      default: true,
+      default: 0,
     },
     color: {
       type: String,
@@ -58,6 +58,10 @@ const productSchema = new mongoose.Schema(
       type: String,
       enum: ["Available", "Out of Stock", "Discontinued"],
       default: "Available",
+    },
+    sold: {
+      type: Number,
+      default: 0,
     },
     isDeleted: { type: Boolean, default: false },
     deletedAt: { type: Date, default: null },

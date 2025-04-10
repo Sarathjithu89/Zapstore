@@ -1,6 +1,9 @@
 const express = require("express");
 const userRouter = express.Router();
+const profileController = require("../controllers/user/profileController.js");
 const userController = require("../controllers/user/userController");
+const checkoutController = require("../controllers/user/checkoutController.js");
+const cartController = require("../controllers/user/cartController.js");
 const passport = require("passport");
 const { authToken } = require("../middleware/authToken");
 const { json } = require("body-parser");
@@ -26,8 +29,6 @@ userRouter.post("/forgotPassword", userController.forgotPassword);
 userRouter.post("/verifyForgotOtp", userController.verifyForgotOtp);
 userRouter.post("/resetPassword", userController.changePassword);
 userRouter.post("/resetPassword", userController.resetPassword);
-//checkout page
-userRouter.get("/checkout", authToken, userController.checkoutPage);
 
 //google signin routes
 userRouter.get(
@@ -52,37 +53,52 @@ userRouter.get("/shop", authToken, userController.getCategoryPage);
 userRouter.get("/category", authToken, userController.getCategoryPage);
 
 //profile routes
-userRouter.get("/userProfile", authToken, userController.getUserProfile);
+userRouter.get("/userProfile", authToken, profileController.getUserProfile);
 userRouter.post(
   "/uploadProfileImage",
   authToken,
   profileImageUpload.single("profileImage"),
-  userController.uploadProfileImage
+  profileController.uploadProfileImage
 );
 userRouter.post(
   "/removeProfileImage",
   authToken,
-  userController.removeProfileImage
+  profileController.removeProfileImage
 );
-userRouter.post("/profileUpdate", authToken, userController.profileUpdate);
+userRouter.post("/profileUpdate", authToken, profileController.profileUpdate);
 userRouter.post(
   "/changePasswordProfile",
   authToken,
-  userController.changePasswordProfile
+  profileController.changePasswordProfile
 );
 userRouter.get(
   "/forgotPasswordLogout",
   authToken,
-  userController.forgotPasswordLogout
+  profileController.forgotPasswordLogout
 );
 
 //address routes
-userRouter.get("/address", authToken, userController.getUserAddress);
-userRouter.post("/save-address", authToken, userController.saveAddress);
+userRouter.get("/address", authToken, profileController.getUserAddress);
+userRouter.post("/save-address", authToken, profileController.saveAddress);
 userRouter.post(
   "/setDefaultAddress",
   authToken,
-  userController.setDefaultAddress
+  profileController.setDefaultAddress
 );
-userRouter.post("/deleteAddress", authToken, userController.deleteAddress);
+userRouter.post("/deleteAddress", authToken, profileController.deleteAddress);
+
+//cart
+userRouter.post("/cart/add", authToken, cartController.addToCart);
+userRouter.get("/cart", authToken, cartController.viewCart);
+userRouter.post("/changeQuantity", authToken, cartController.changeQuantity);
+userRouter.get("/deleteItem", authToken, cartController.deleteItem);
+
+//checkout
+userRouter.get("/checkout", authToken, checkoutController.getCheckoutPage);
+userRouter.get("/checkStock", authToken, checkoutController.checkStock);
+userRouter.post("/placeOrder", authToken, checkoutController.placeOrder);
+
+//orders
+userRouter.get("/orders", authToken, profileController.getUserOrders);
+
 module.exports = userRouter;
