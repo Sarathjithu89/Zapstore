@@ -260,12 +260,12 @@ const generateInvoice = async (req, res) => {
       .fontSize(10)
       .fillColor("#000000")
       .text("Subtotal:", 360, y + 5)
-      .text(`₹${order.totalPrice.toFixed(2)}`, 530, y + 5, { align: "right" });
+      .text(`₹ ${order.totalPrice.toFixed(2)}`, 530, y + 5, { align: "right" });
 
     if (order.discount > 0) {
       doc
         .text("Discount:", 360, y + 20)
-        .text(`-₹${order.discount.toFixed(2)}`, 530, y + 20, {
+        .text(`-₹ ${order.discount.toFixed(2)}`, 530, y + 20, {
           align: "right",
         });
     }
@@ -274,7 +274,7 @@ const generateInvoice = async (req, res) => {
       .fontSize(12)
       .text("Total:", 360, y + (order.discount > 0 ? 40 : 25))
       .text(
-        `₹${order.finalAmount.toFixed(2)}`,
+        `₹ ${order.finalAmount.toFixed(2)}`,
         530,
         y + (order.discount > 0 ? 40 : 25),
         {
