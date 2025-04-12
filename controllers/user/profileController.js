@@ -5,9 +5,8 @@ const Address = require("../../models/Address.js");
 const sharp = require("sharp");
 const path = require("path");
 const fs = require("fs");
-const Order = require("../../models/Order.js");
-const Product = require("../../models/Products.js");
-
+const nodemailer = require("nodemailer");
+const crypto = require("crypto");
 const { securePassword } = require("./userController.js");
 
 //load the user profile
@@ -26,6 +25,7 @@ const getUserProfile = async (req, res) => {
     return res.redirect("/pageNotFound");
   }
 };
+
 //upload image funciton
 const uploadProfileImage = async (req, res) => {
   if (!req.file) {
@@ -34,7 +34,7 @@ const uploadProfileImage = async (req, res) => {
       .json({ success: false, message: "No file uploaded" });
   }
 
-  const userId = req.user.userId; // You must get this from middleware/session
+  const userId = req.user.userId;
 
   try {
     const PROFILEIMAGE_UPLOAD_DIR = path.join(
@@ -43,17 +43,9 @@ const uploadProfileImage = async (req, res) => {
     );
     const outputFilename = `cropped-${Date.now()}-${req.file.originalname}`;
     const outputPath = path.join(PROFILEIMAGE_UPLOAD_DIR, outputFilename);
-
-    // Crop and resize the image using sharp
     await sharp(req.file.path).resize(512, 512).toFile(outputPath);
-
-    // Delete original file
     fs.unlinkSync(req.file.path);
-
-    // Get the current user
     const user = await User.findById(userId);
-
-    // If user already had an uploaded image (not default), delete the old one
     if (
       user.profileImage &&
       !user.profileImage.includes("default/default-user-avatar.png")
@@ -66,8 +58,6 @@ const uploadProfileImage = async (req, res) => {
         fs.unlinkSync(oldImagePath);
       }
     }
-
-    // Update user's profileImage
     user.profileImage = `${outputFilename}`;
     await user.save();
 
@@ -82,8 +72,6 @@ const uploadProfileImage = async (req, res) => {
       .json({ success: false, message: "Image processing failed" });
   }
 };
-
-//remove profile image
 const removeProfileImage = async (req, res) => {
   const userId = req.user?.userId;
   const DEFAULT_PROFILE_IMAGE = "default/default-user-avatar.png";
@@ -98,8 +86,6 @@ const removeProfileImage = async (req, res) => {
       return res
         .status(404)
         .json({ success: false, message: "User not found" });
-
-    // Only delete if it's not the default image
     if (
       user.profileImage &&
       !user.profileImage.includes("default/default-user-avatar.png")
@@ -112,8 +98,6 @@ const removeProfileImage = async (req, res) => {
         fs.unlinkSync(oldImagePath);
       }
     }
-
-    // Set back to default
     user.profileImage = DEFAULT_PROFILE_IMAGE;
     await user.save();
 
@@ -127,7 +111,6 @@ const removeProfileImage = async (req, res) => {
 };
 
 //update Profile
-
 const profileUpdate = async (req, res) => {
   try {
     const { name, email, phone } = req.body;
@@ -162,7 +145,7 @@ const profileUpdate = async (req, res) => {
   }
 };
 
-//change password fome profile page
+//change password- profile page
 const changePasswordProfile = async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -248,10 +231,10 @@ const saveAddress = async (req, res) => {
       altPhone,
     } = req.body;
 
-    const userData = await User.findOne({ _id: user.userId }); //find user data
+    const userData = await User.findOne({ _id: user.userId });
     const phone = userData.phone;
 
-    let addressDoc = await Address.findOne({ userId: user.userId }); //find user address data
+    let addressDoc = await Address.findOne({ userId: user.userId });
 
     const newAddress = {
       addressType: type,
@@ -268,14 +251,12 @@ const saveAddress = async (req, res) => {
     };
 
     if (!addressDoc) {
-      // Create new address document for this user
       addressDoc = new Address({
         userId: user.userId,
         address: [newAddress],
       });
     } else {
       if (_id) {
-        // Update existing address
         const index = addressDoc.address.findIndex(
           (addr) => addr._id.toString() === _id
         );
@@ -290,12 +271,10 @@ const saveAddress = async (req, res) => {
             .json({ success: false, message: "Address not found" });
         }
       } else {
-        // Add new address
         addressDoc.address.push(newAddress);
       }
     }
 
-    // If this isDefault is true, make sure others are false
     if (isDefault) {
       addressDoc.address = addressDoc.address.map((addr, i) => ({
         ...addr.toObject(),
@@ -320,7 +299,6 @@ const setDefaultAddress = async (req, res) => {
     const addressId = req.body.addressId;
     const userId = req.user.userId;
     const addressDoc = await Address.findOne({ userId: userId });
-    //checking all address and making addressId isDefault=true and others false
     addressDoc.address = addressDoc.address.map((addr) => ({
       ...addr.toObject(),
       isDefault: addr._id.toString() === addressId,
@@ -372,90 +350,177 @@ const forgotPasswordLogout = async (req, res) => {
   }
 };
 
-//----------------------------order--------------------------------------------
+//change-email
 
-// get Orders
-const getUserOrders = async (req, res) => {
+const renderChangeEmailPage = async (req, res) => {
   try {
-    const userId = req.user?.userId;
+    const userId = req.user.userId;
+    const user = await User.findById(userId);
 
-    const orders = await Order.find({ userId: userId })
-      .populate({
-        path: "orderedItems.product",
-        select: "productName productImage",
-      })
-      .populate("address")
-      .sort({ createdAt: -1 }); // Sort by latest
+    if (!user) {
+      return res.redirect("/login");
+    }
 
-    res.render("orders.ejs", {
-      title: "Your Orders",
-      orders,
-      user: req.user,
+    res.render("changeemail.ejs", {
+      user,
+      title: "Change Email",
+      alerts: req.flash(),
     });
   } catch (error) {
-    console.error("Error fetching user orders:", error);
-    req.flash("error", "Failed to fetch your orders");
-    res.redirect("/userProfile");
+    console.error("Error rendering change email page:", error);
+    req.flash("error", "An error occurred. Please try again later.");
+    return res.redirect("/userProfile");
   }
 };
 
-// Controller to handle order cancellation
-const cancelOrder = async (req, res) => {
+const sendEmailVerification = async (req, res) => {
   try {
-    const { orderId, reason } = req.body;
-    const userId = req.user?.userId;
-
-    const order = await Order.findOne({ _id: orderId, userId: userId });
-
-    if (!order) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Order not found" });
+    const { currentPassword, newEmail } = req.body;
+    const userId = req.user.userId;
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: "user_not_found",
+        message: "User not found",
+      });
     }
-
-    if (order.status !== "Pending" && order.status !== "Processing") {
+    const isPasswordValid = await bcrypt.compare(
+      currentPassword,
+      user.password
+    );
+    if (!isPasswordValid) {
       return res.status(400).json({
         success: false,
-        message: "This order cannot be cancelled in its current status",
+        error: "invalid_password",
+        message: "Current password is incorrect",
       });
     }
-
-    order.status = "Cancelled";
-    order.cancelReason = reason;
-    order.cancelledAt = new Date();
-
-    for (const item of order.orderedItems) {
-      await Product.findByIdAndUpdate(item.product, {
-        $inc: { quantity: item.quantity, sold: -item.quantity },
+    let verificationCodes = {};
+    const existingUser = await User.findOne({ email: newEmail });
+    if (existingUser && existingUser._id.toString() !== userId) {
+      return res.status(400).json({
+        success: false,
+        error: "email_exists",
+        message: "This email is already in use",
       });
     }
+    const verificationCode = await crypto.randomInt(100000, 999999).toString();
+    verificationCodes[userId] = {
+      code: verificationCode,
+      email: newEmail,
+      expiresAt: Date.now() + 30 * 60 * 1000, // 30 minutes
+    };
 
-    // If payment was made, process refund
-    if (order.paymentStatus === "Paid") {
-      // Add amount to user wallet
-      const user = await User.findById(userId);
-      user.wallet = (user.wallet || 0) + order.finalAmount;
+    req.session.verificationCodes = verificationCodes;
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      port: 587,
+      secure: false,
+      requireTLS: true,
 
-      // Add wallet transaction record
-      user.walletHistory.push({
-        amount: order.finalAmount,
-        type: "credit",
-        description: `Refund for cancelled order #${order.orderId}`,
-        date: new Date(),
-      });
+      auth: {
+        user: process.env.EMAIL,
+        pass: process.env.PASSWORD,
+      },
+    });
 
-      await user.save();
-
-      // Update payment status in order
-      order.paymentStatus = "Refunded";
-    }
-
-    await order.save();
-
-    return res.json({ success: true, message: "Order cancelled successfully" });
+    await transporter.sendMail({
+      from: `"Zapstore" <${process.env.EMAIL}>`,
+      to: newEmail,
+      subject: "Email Verification Code",
+      html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e4e4e4; border-radius: 5px;">
+                  <h2 style="color: #487379; text-align: center;">Email Verification</h2>
+                  <p>Hello ${user.name},</p>
+                  <p>You've requested to change your email address. Please use the verification code below to complete this process:</p>
+                  <div style="background-color: #f6f6f6; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 5px; margin: 20px 0;">
+                      ${verificationCode}
+                  </div>
+                  <p>This code will expire in 30 minutes.</p>
+                  <p>If you didn't request this change, please ignore this email or contact our support team immediately.</p>
+                  <p style="margin-top: 30px; font-size: 12px; color: #777; text-align: center;">
+                      &copy; ${new Date().getFullYear()} Your Store. All rights reserved.
+                  </p>
+              </div>
+          `,
+    });
+    console.log(verificationCodes[userId]);
+    return res.status(200).json({
+      success: true,
+      message: "Verification code sent successfully",
+    });
   } catch (error) {
-    console.error("Error cancelling order:", error);
-    res.status(500).json({ success: false, message: "An error occurred" });
+    console.error("Error sending verification code:", error);
+    return res.status(500).json({
+      success: false,
+      message:
+        "An error occurred while sending the verification code. Please try again later.",
+    });
+  }
+};
+
+const updateEmail = async (req, res) => {
+  try {
+    const { currentPassword, newEmail, verificationCode } = req.body;
+    const userId = req.user.userId;
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: "user_not_found",
+        message: "User not found",
+      });
+    }
+    const isPasswordValid = await bcrypt.compare(
+      currentPassword,
+      user.password
+    );
+    if (!isPasswordValid) {
+      return res.status(400).json({
+        success: false,
+        error: "invalid_password",
+        message: "Current password is incorrect",
+      });
+    }
+    const verificationCodes = req.session.verificationCodes;
+    console.log(verificationCodes[userId]);
+    const storedVerification = verificationCodes[userId];
+    if (
+      !storedVerification ||
+      storedVerification.code !== verificationCode ||
+      storedVerification.email !== newEmail ||
+      Date.now() > storedVerification.expiresAt
+    ) {
+      return res.status(400).json({
+        success: false,
+        error: "invalid_code",
+        message: "Invalid or expired verification code",
+      });
+    }
+
+    user.email = newEmail;
+    await user.save();
+
+    req.session.destroy((err) => {
+      if (err) {
+        console.error("Error destroying session:", err);
+      }
+
+      return res.status(200).json({
+        success: true,
+        message:
+          "Email updated successfully. Please log in with your new email.",
+        requireRelogin: true,
+      });
+    });
+  } catch (error) {
+    console.error("Error updating email:", error);
+    return res.status(500).json({
+      success: false,
+      message:
+        "An error occurred while updating your email. Please try again later.",
+    });
   }
 };
 
@@ -470,6 +535,7 @@ module.exports = {
   deleteAddress,
   changePasswordProfile,
   forgotPasswordLogout,
-  getUserOrders,
-  cancelOrder,
+  sendEmailVerification,
+  updateEmail,
+  renderChangeEmailPage,
 };

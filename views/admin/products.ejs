@@ -15,6 +15,8 @@
   }
 
   .table th {
+    color: white;
+    text-align: center;
     white-space: nowrap;
   }
 
@@ -26,9 +28,24 @@
     font-weight: 700;
     color: #dc3545;
   }
+  .actions {
+    height: 150px;
+    width: 90px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  .actions button {
+    width: 75px;
+    margin: 2px;
+  }
+  .quantity {
+    text-align: center;
+  }
 </style>
-
-<main>
+<% data.reverse() %>
+<main id="main">
   <!-- Breadcrumb -->
   <div class="bg-white border-bottom py-2">
     <div class="container-fluid">
@@ -45,7 +62,7 @@
 
   <div class="container-fluid py-4">
     <div class="row justify-content-center">
-      <div class="col-lg-10">
+      <div class="col-lg-12">
         <!-- Search Form -->
         <div class="card shadow-sm mb-4">
           <div class="card-body">
@@ -127,7 +144,7 @@
                         >₹<%= data[i].regularPrice.toLocaleString() %></span
                       >
                     </td>
-                    <td>
+                    <td class="actions">
                       <% if(data[i].productOffer) { %>
                       <span class="offer-percentage"
                         ><%= data[i].productOffer %>%</span
@@ -156,12 +173,12 @@
                           onclick="addOffer('<%= data[i]._id %>')"
                           title="Add offer"
                         >
-                          <i class="bi bi-plus-circle"></i> Add Offer
+                          <i class="bi bi-plus-circle"></i>Add
                         </button>
                       </div>
                       <% } %>
                     </td>
-                    <td><%= data[i].quantity %></td>
+                    <td class="quantity"><%= data[i].quantity %></td>
                     <td>
                       <% if(data[i].isBlocked === false) { %>
                       <span class="badge bg-success">
@@ -173,7 +190,7 @@
                       </span>
                       <% } %>
                     </td>
-                    <td>
+                    <td class="actions">
                       <div
                         class="d-flex flex-wrap gap-1 justify-content-center"
                       >

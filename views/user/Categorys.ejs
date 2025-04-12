@@ -259,6 +259,9 @@
   }
 
   .badge-sale {
+    background: linear-gradient(45deg, #ff3c008e, #ff8a65);
+  }
+  .badge-out {
     background: linear-gradient(45deg, #ff3d00, #ff8a65);
   }
 
@@ -818,8 +821,10 @@
                 </a>
                 <% if (product.isNew) { %>
                 <span class="product-badge badge-new">New</span>
-                <% } else if (product.regularPrice > product.salePrice) { %>
+                <% } %> <%if (product.regularPrice > product.salePrice) { %>
                 <span class="product-badge badge-sale">Sale</span>
+                <% } %> <%if (product.quantity===0) { %>
+                <span class="product-badge badge-out">Out of stock</span>
                 <% } %>
               </div>
               <div class="product-card-body">

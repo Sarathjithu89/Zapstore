@@ -1,24 +1,4 @@
 <%- include('../partials/header.ejs') %>
-
-<!-- Start Banner Area -->
-<section class="banner-area organic-breadcrumb">
-  <div class="container">
-    <div
-      class="breadcrumb-banner d-flex flex-wrap align-items-center justify-content-end"
-    >
-      <div class="col-first">
-        <h1>Checkout</h1>
-        <nav class="d-flex align-items-center">
-          <a href="/">Home<span class="lnr lnr-arrow-right"></span></a>
-          <a href="/cart">Cart<span class="lnr lnr-arrow-right"></span></a>
-          <a href="/checkout">Checkout</a>
-        </nav>
-      </div>
-    </div>
-  </div>
-</section>
-<!-- End Banner Area -->
-
 <link
   href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
   rel="stylesheet"
@@ -47,7 +27,7 @@
   }
 
   .checkout-card:hover {
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    /* box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1); */
   }
 
   .section-title {
@@ -251,9 +231,95 @@
   .order {
     align-self: flex-end;
   }
+  /* Breadcrumb */
+  .shop-breadcrumb {
+    padding: 20px 0;
+    background-color: #f6f6f6;
+    margin-bottom: 40px;
+  }
+
+  .breadcrumb-content {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .breadcrumb-content h2 {
+    font-size: 30px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #333;
+  }
+
+  .breadcrumb-content ol {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: 14px;
+  }
+
+  .breadcrumb-content li + li:before {
+    content: "›";
+    padding: 0 8px;
+    color: #777;
+  }
+
+  .breadcrumb-content a {
+    color: #555;
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+
+  .breadcrumb-content a:hover {
+    color: #000000;
+  }
 </style>
 
-<div class="container checkout-container">
+<div class="header-bottom header-sticky d-none d-lg-block d-xl-block mb-0">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-12">
+        <!-- Begin Header Bottom Menu Area -->
+        <div class="hb-menu">
+          <nav>
+            <ul>
+              <li class="dropdown-holder">
+                <a href="/">Home</a>
+              </li>
+              <li class="megamenu-holder active">
+                <a href="/shop">Shop</a>
+              </li>
+              <li><a href="/about">About Us</a></li>
+              <li><a href="/contact">Contact</a></li>
+            </ul>
+          </nav>
+        </div>
+        <!-- Header Bottom Menu Area End Here -->
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Sticky Header Area End -->
+
+<!-- Begin Breadcrumb Area -->
+<div class="shop-breadcrumb">
+  <div class="container">
+    <div class="row">
+      <div class="col-12">
+        <div class="breadcrumb-content">
+          <ol>
+            <li><a href="/">Home</a></li>
+            <li><a href="/cart">cart</a></li>
+            <li>Checkout</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Breadcrumb Area End -->
+
+<div class="">
   <!-- Shipping Address Section -->
 
   <!-- Order Summary Section -->
@@ -318,7 +384,7 @@
             </select>
           </div>
 
-          <a href="/addAddressCheckout" class="btn add-address-btn mt-3">
+          <a onclick="addAddress()" class="btn add-address-btn mt-3">
             <i class="fas fa-plus-circle mr-2"></i>Add New Address
           </a>
 
@@ -393,7 +459,7 @@
 
             <div class="payment-method">
               <label class="d-flex align-items-center m-0">
-                <input type="radio" name="payment" value="cod" />
+                <input type="radio" name="payment" value="COD" />
                 <div class="ml-2 w-100">
                   <span
                     ><i class="fas fa-money-bill-wave mr-2"></i>Cash on
@@ -426,7 +492,7 @@
                   <span>
                     <i class="fas fa-wallet mr-2"></i>Wallet Payment
                     <span class="badge badge-light ml-1"
-                      >Balance: ₹<%= wallet.balance.toFixed(2) %></span
+                      >Balance: ₹<%= wallet.toFixed(2) %></span
                     >
                   </span>
                 </div>
@@ -512,7 +578,7 @@
           <div class="d-flex justify-content-between p-2 bg-light rounded mb-2">
             <h6 class="mb-0">Available Balance:</h6>
             <h6 class="mb-0 text-success">
-              ₹<span id="walletBalance"><%= wallet.balance.toFixed(2) %></span>
+              ₹<span id="walletBalance"><%= wallet.toFixed(2) %></span>
             </h6>
           </div>
           <div class="d-flex justify-content-between p-2 bg-light rounded">
@@ -541,6 +607,187 @@
     </div>
   </div>
 </div>
+
+<!-- modal -->
+<div
+  class="modal fade"
+  id="addressModal"
+  tabindex="-1"
+  aria-labelledby="addressModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addressModalLabel">Add New Address</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <!-- modal body -->
+      <div class="modal-body">
+        <form id="addressForm">
+          <input type="hidden" id="addressId" name="addressId" />
+          <div class="row">
+            <div class="col-md-6 form-group">
+              <label for="fullName"
+                >Full Name <span class="required">*</span></label
+              >
+              <input
+                type="text"
+                id="fullName"
+                name="fullName"
+                class="form-control"
+                required
+              />
+            </div>
+            <div class="col-md-6 form-group">
+              <label for="phone"
+                >Alternate Phone Number <span class="required">*</span></label
+              >
+              <div class="input-group">
+                <!-- <div class="input-group-prepend">
+                  <select
+                    class="form-control"
+                    id="countryCode"
+                    name="countryCode"
+                  >
+                    <option value="+91">+91</option>
+                    <option value="+1">+1</option>
+                    <option value="+44">+44</option>
+                    <option value="+61">+61</option>
+                    <option value="+81">+81</option>
+                  </select>
+                </div> -->
+                <input
+                  type="text"
+                  id="altPhone"
+                  name="altPhone"
+                  class="form-control"
+                  pattern="[0-9]{10}"
+                  title="Please enter Alternate phone number"
+                />
+              </div>
+            </div>
+            <div class="col-md-12 form-group">
+              <label for="addressLine"
+                >Address Line<span class="required">*</span></label
+              >
+              <input
+                type="text"
+                id="addressLine"
+                name="addressLine"
+                class="form-control"
+                placeholder="House No., Building Name"
+                required
+              />
+            </div>
+            <div class="col-md-12 form-group">
+              <label for="LandMark">Landmark</label>
+              <input
+                type="text"
+                id="LandMark"
+                name="landMark"
+                class="form-control"
+                placeholder="Landmark"
+              />
+            </div>
+
+            <div class="col-md-6 form-group">
+              <label for="city">City <span class="required">*</span></label>
+              <input
+                type="text"
+                id="city"
+                name="city"
+                class="form-control"
+                required
+              />
+            </div>
+            <div class="col-md-6 form-group">
+              <label for="state">State <span class="required">*</span></label>
+              <input
+                type="text"
+                id="state"
+                name="state"
+                class="form-control"
+                required
+              />
+            </div>
+            <div class="col-md-6 form-group">
+              <label for="pincode"
+                >Pincode <span class="required">*</span></label
+              >
+              <input
+                type="text"
+                id="pincode"
+                name="pincode"
+                class="form-control"
+                pattern="[0-9]{6}"
+                title="Please enter a valid 6-digit pincode"
+                required
+              />
+            </div>
+            <div class="col-md-6 form-group">
+              <label for="country"
+                >Country <span class="required">*</span></label
+              >
+              <select id="country" name="country" class="form-control" required>
+                <option value="India">India</option>
+                <option value="United States">United States</option>
+                <option value="United Kingdom">United Kingdom</option>
+                <option value="Canada">Canada</option>
+                <option value="Australia">Australia</option>
+              </select>
+            </div>
+            <div class="col-md-6 form-group">
+              <label for="addressType"
+                >Address Type <span class="required">*</span></label
+              >
+              <select
+                id="addressType"
+                name="addressType"
+                class="form-control"
+                required
+              >
+                <option value="Home">Home</option>
+                <option value="Work">Work</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="col-md-6 form-group">
+              <div class="form-check mt-5">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  id="isDefault"
+                  name="isDefault"
+                  style="height: 15px"
+                />
+                <label class="form-check-label" for="isDefault">
+                  Set as default address
+                </label>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <!-- modal body end -->
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+          Cancel
+        </button>
+        <button type="button" class="btn btn-success" onclick="saveAddress()">
+          Save Address
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- /modal -->
 
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
@@ -715,7 +962,7 @@
     };
 
     switch (paymentMethod.value) {
-      case "cod":
+      case "COD":
         processCODOrder(orderData);
         break;
       case "razorpay":
@@ -1016,6 +1263,87 @@
       });
     });
   });
+
+  function addAddress() {
+    const modalElement = document.getElementById("addressModal");
+    let addressModal = new bootstrap.Modal(modalElement);
+
+    document.getElementById("addressId").value = "";
+    document.getElementById("fullName").value = "";
+    document.getElementById("addressLine").value = "";
+    document.getElementById("LandMark").value = "";
+    document.getElementById("city").value = "";
+    document.getElementById("state").value = "";
+    document.getElementById("pincode").value = "";
+    document.getElementById("country").value = "";
+    document.getElementById("addressType").value = "";
+    document.getElementById("altPhone").value = "";
+    document.getElementById("isDefault").checked = "";
+    document.getElementById("addressModalLabel").textContent =
+      "Add New Address";
+    addressModal.show();
+  }
+
+  function saveAddress() {
+    const form = document.getElementById("addressForm");
+    if (form.checkValidity()) {
+      const formData = new FormData(form);
+      const addressData = {
+        _id: formData.get("addressId") || null,
+        fullName: formData.get("fullName"),
+        // phone: formData.get("phone"),
+        addressLine: formData.get("addressLine"),
+        landMark: formData.get("landMark"),
+        altPhone: formData.get("altPhone"),
+        city: formData.get("city"),
+        state: formData.get("state"),
+        pincode: formData.get("pincode"),
+        country: formData.get("country"),
+        type: formData.get("addressType"),
+        isDefault: document.getElementById("isDefault").checked,
+      };
+
+      fetch("/save-address", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(addressData),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.success) {
+            Swal.fire({
+              icon: "success",
+              title: "Success!",
+              text: data.message || "Address saved successfully",
+              timer: 2000,
+              showConfirmButton: false,
+            }).then(() => {
+              window.location.reload();
+            });
+          } else {
+            Swal.fire({
+              icon: "error",
+              title: "Oops...",
+              text: data.message || "There was an error saving your address",
+            });
+          }
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+          Swal.fire({
+            icon: "error",
+            title: "Oops...",
+            text: "An unexpected error occurred. Please try again.",
+          });
+        });
+
+      addressModal.hide();
+    } else {
+      form.reportValidity();
+    }
+  }
 
   // Update order summary on page load
   updateOrderSummary();

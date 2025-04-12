@@ -268,21 +268,93 @@
       margin-top: 30px;
     }
   }
+  /* Breadcrumb */
+  .shop-breadcrumb {
+    padding: 20px 0;
+    background-color: #f6f6f6;
+    margin-bottom: 40px;
+  }
+
+  .breadcrumb-content {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .breadcrumb-content h2 {
+    font-size: 30px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #333;
+  }
+
+  .breadcrumb-content ol {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: 14px;
+  }
+
+  .breadcrumb-content li + li:before {
+    content: "›";
+    padding: 0 8px;
+    color: #777;
+  }
+
+  .breadcrumb-content a {
+    color: #555;
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+
+  .breadcrumb-content a:hover {
+    color: #000000;
+  }
 </style>
 
-<div class="cart-container">
-  <div class="cart-header">
-    <div class="container">
-      <h1>Shopping Cart</h1>
-      <div class="breadcrumb">
-        <a href="/">Home</a>
-        <span>›</span>
-        <a href="/cart">Cart</a>
+<div class="header-bottom header-sticky d-none d-lg-block d-xl-block mb-0">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-12">
+        <!-- Begin Header Bottom Menu Area -->
+        <div class="hb-menu">
+          <nav>
+            <ul>
+              <li class="dropdown-holder">
+                <a href="/">Home</a>
+              </li>
+              <li class="megamenu-holder active">
+                <a href="/shop">Shop</a>
+              </li>
+              <li><a href="/about">About Us</a></li>
+              <li><a href="/contact">Contact</a></li>
+            </ul>
+          </nav>
+        </div>
+        <!-- Header Bottom Menu Area End Here -->
       </div>
     </div>
   </div>
+</div>
+<!-- Sticky Header Area End -->
 
+<!-- Begin Breadcrumb Area -->
+<div class="shop-breadcrumb">
   <div class="container">
+    <div class="row">
+      <div class="col-12">
+        <div class="breadcrumb-content">
+          <ol>
+            <li><a href="/">Home</a></li>
+            <li>Cart</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Breadcrumb Area End -->
+  <div class="container mb-5">
     <div class="row">
       <div class="col-lg-8 col-md-12">
         <div class="table-responsive">
@@ -310,7 +382,7 @@
                 </td>
                 <td class="product-details">
                   <h5>
-                    <a href="/productDetails?id=<%= item.product._id %>"
+                    <a href="/product?id=<%= item.product._id %>"
                       ><%= item.product.productName %></a
                     >
                   </h5>

@@ -192,6 +192,7 @@ const updateOrderStatus = async (req, res) => {
 
     if (status === "Delivered" && order.paymentMethod === "COD") {
       order.paymentStatus = "Paid";
+      order.deliveredAt = new Date();
     }
 
     // Add status history
@@ -209,6 +210,107 @@ const updateOrderStatus = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in updateOrderStatus:", error);
+    res.status(500).json({
+      status: false,
+      message: "Server error: " + error.message,
+    });
+  }
+};
+
+// Process return request
+
+const processReturn = async (req, res) => {
+  try {
+    const { orderId, returnAction, notes } = req.body;
+    console.log(orderId);
+    if (!mongoose.Types.ObjectId.isValid(orderId)) {
+      return res.status(400).json({
+        status: false,
+        message: "Invalid order ID",
+      });
+    }
+
+    const order = await Order.findById({ _id: orderId });
+
+    if (!order) {
+      return res.status(404).json({
+        status: false,
+        message: "Order not found",
+      });
+    }
+
+    if (order.status !== "Return Requested") {
+      return res.status(400).json({
+        status: false,
+        message: "This order is not in return request status",
+      });
+    }
+
+    if (returnAction === "approve") {
+      // Approve return
+      order.status = "Returned";
+
+      // Process refund to wallet
+      const user = await User.findById(order.userId);
+
+      if (user) {
+        // Add refund to wallet
+        user.wallet += order.finalAmount;
+
+        // Add wallet transaction
+        user.walletHistory.push({
+          amount: order.finalAmount,
+          type: "credit",
+          description: `Refund for returned order #${order.orderId}`,
+        });
+
+        await user.save();
+      }
+
+      // Update payment status
+      order.paymentStatus = "Refunded";
+
+      // Restore inventory
+      for (const item of order.orderedItems) {
+        await Product.findByIdAndUpdate(item.product, {
+          $inc: { stock: item.quantity },
+        });
+      }
+    } else {
+      // Reject return
+      order.status = "Delivered"; // Revert back to delivered status
+    }
+
+    // Add notes to return processing
+    order.returnDetails = {
+      ...order.returnDetails,
+      processedBy: req.session.adminId,
+      processedAt: new Date(),
+      adminNotes: notes,
+      approved: returnAction === "approve",
+    };
+
+    // Add to status history
+    order.statusHistory.push({
+      status: order.status,
+      updatedBy: req.session.admin.email,
+      date: new Date(),
+      notes: `Return ${returnAction === "approve" ? "approved" : "rejected"}${
+        notes ? ": " + notes : ""
+      }`,
+    });
+
+    await order.save();
+
+    res.json({
+      status: true,
+      message:
+        returnAction === "approve"
+          ? "Return request approved and refund processed"
+          : "Return request rejected",
+    });
+  } catch (error) {
+    console.error("Error in processReturn:", error);
     res.status(500).json({
       status: false,
       message: "Server error: " + error.message,
@@ -354,4 +456,5 @@ module.exports = {
   getOrderDetails,
   updateOrderStatus,
   exportOrders,
+  processReturn,
 };

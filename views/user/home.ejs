@@ -270,6 +270,21 @@
         .mobile-menu {
           z-index: 1000; /* Ensure mobile menu is below the dropdown */
         }
+
+        .stickeron {
+          position: absolute;
+          top: 10px;
+          right: 10px;
+          background-color: rgba(220, 53, 69, 0.9);
+          color: white;
+          font-size: 0.75rem;
+          font-weight: 700;
+          border-radius: 999px;
+          padding: 4px 8px;
+          text-transform: uppercase;
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+          z-index: 10;
+        }
       </style>
     </div>
 
@@ -430,10 +445,10 @@
                         alt="<%= product.productName %>"
                       />
                     </a>
-                    <% if (product.isNew) { %>
-                    <span class="sticker">New</span>
-                    <% } %>
                   </div>
+                  <% if (product.quantity === 0) { %>
+                  <span class="stickeron">Out of Stock</span>
+                  <% } %>
                   <div class="product_desc">
                     <div class="product_desc_info">
                       <h4>
@@ -541,7 +556,7 @@
                       />
                     </a>
                     <% if (product.isNew) { %>
-                    <span class="sticker">New</span>
+                    <span class="stickeron">New</span>
                     <% } %>
                   </div>
                   <div class="product_desc">
@@ -648,7 +663,7 @@
                       />
                     </a>
                     <% if (product.isNew) { %>
-                    <span class="sticker">New</span>
+                    <span class="stickeron">New</span>
                     <% } %>
                   </div>
                   <div class="product_desc">
@@ -794,7 +809,7 @@
                           />
                         </a>
                         <% if (product.isNew) { %>
-                        <span class="sticker">New</span>
+                        <span class="stickeron">New</span>
                         <% } %>
                       </div>
                       <div class="product_desc">
@@ -880,7 +895,7 @@
                           />
                         </a>
                         <% if (product.isNew) { %>
-                        <span class="sticker">New</span>
+                        <span class="stickeron">New</span>
                         <% } %>
                       </div>
                       <div class="product_desc">
@@ -966,7 +981,7 @@
                           />
                         </a>
                         <% if (product.isNew) { %>
-                        <span class="sticker">New</span>
+                        <span class="stickeron">New</span>
                         <% } %>
                       </div>
                       <div class="product_desc">
@@ -1072,7 +1087,7 @@
                       />
                     </a>
                     <% if (product.isNew) { %>
-                    <span class="sticker">New</span>
+                    <span class="stickeron">New</span>
                     <% } %>
                   </div>
                   <div class="product_desc">

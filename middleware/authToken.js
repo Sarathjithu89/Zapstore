@@ -5,33 +5,43 @@ const User = require("../models/User.js");
 const authToken = async (req, res, next) => {
   try {
     const token = req.cookies.token ? req.cookies.token : null;
-    if (token) {
-      let decoded;
-      try {
-        decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
-      } catch (error) {
-        console.log(error);
-        res.clearCookie("token");
-        next();
-      }
+
+    if (!token) {
+      return next();
+    }
+
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+
       const user = await User.findOne({
         _id: decoded.userId,
         is_blocked: false,
       });
+
       if (user) {
         req.user = decoded;
-        next();
+        return next();
       } else {
-        req.flash("error", "User is Blocked");
+        req.flash("error", "User is blocked or doesn't exist");
         res.clearCookie("token");
-        next();
+        return next();
       }
-    } else {
-      next();
+    } catch (error) {
+      console.log("Token error:", error.name);
+
+      if (error.name === "TokenExpiredError") {
+        req.flash("error", "Your session has expired. Please log in again.");
+      } else {
+        req.flash("error", "Authentication error");
+      }
+
+      res.clearCookie("token");
+      return next();
     }
   } catch (error) {
     console.log("Authentication Error", error);
-    next();
+    res.clearCookie("token");
+    return next();
   }
 };
 

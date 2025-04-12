@@ -962,6 +962,12 @@
             <span class="badge badge-new">New</span>
             <% } %> <% if (product.regularPrice > product.salePrice) { %>
             <span class="badge badge-sale">Sale</span>
+            <% } %> <% if (product.quantity === 0) { %>
+            <span
+              class="badge badge-out-of-stock"
+              style="background-color: rgba(255, 0, 0, 0.656)"
+              >Out of Stock</span
+            >
             <% } %>
           </div>
 
@@ -1072,7 +1078,7 @@
 
           <!-- Add to Cart Form -->
           <div class="product-actions">
-            <form action="/cart/add/<%= product._id %>" method="POST">
+            <form>
               <div class="qty-wrap">
                 <div class="qty-selector">
                   <label>Quantity</label>
@@ -1092,7 +1098,11 @@
                   </div>
                 </div>
               </div>
-              <button class="add-to-cart-btn" type="submit">
+              <button
+                type="button"
+                class="add-to-cart-btn"
+                onclick="addtocart('<%= product._id %>', event)"
+              >
                 <i class="fa fa-shopping-cart"></i> Add to cart
               </button>
             </form>
@@ -1301,11 +1311,7 @@
               <%= product.shortDescription %>
             </p>
             <div class="product-card-actions">
-              <a
-                href="/cart/add/<%= product._id %>?quantity=1"
-                class="btn-add-cart"
-                >Add to cart</a
-              >
+              <a onclick="addtocart('<%= product._id %>')">Add to cart</a>
               <button class="btn-wishlist" title="Add to Wishlist">
                 <i class="fa fa-heart-o"></i>
               </button>
@@ -1446,29 +1452,84 @@
     </div>
   </div>
 </div>
-
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <!-- JavaScript for Product Gallery -->
 <script>
+  //mixins
+  const Toast = Swal.mixin({
+    toast: true,
+    position: "top-end",
+    showConfirmButton: false,
+    timer: 2000,
+    timerProgressBar: true,
+  });
+
+  const Alert = Swal.mixin({
+    toast: true,
+    position: "top-end",
+    showConfirmButton: false,
+    timer: 2000,
+    timerProgressBar: true,
+  });
+
+  function addtocart(productId, event) {
+    if (event) {
+      event.preventDefault();
+    }
+
+    const quantityInput = document.querySelector(".qty-input");
+    const quantity = parseInt(quantityInput.value) || 1;
+
+    fetch("/cart/add", {
+      method: "POST",
+      headers: { "Content-type": "application/json" },
+      body: JSON.stringify({
+        id: productId,
+        quantity: quantity,
+      }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          Toast.fire({
+            icon: "success",
+            title: data.message || "Product added to cart",
+          });
+        } else {
+          Alert.fire({
+            icon: "error",
+            title: "Oops...",
+            text: data.message || "Error adding product to cart",
+          });
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        Alert.fire({
+          icon: "error",
+          title: "Oops...",
+          text: "An unexpected error occurred. Please try again.",
+        });
+      });
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
-    // Thumbnails click event
     const thumbs = document.querySelectorAll(".gallery-thumb");
     const mainImage = document.querySelector(".gallery-main img");
     const productImage = document.getElementById("productImage");
 
     thumbs.forEach((thumb) => {
       thumb.addEventListener("click", function () {
-        // Update active class
         thumbs.forEach((t) => t.classList.remove("active"));
         this.classList.add("active");
 
-        // Update main image
         const largeUrl = this.querySelector("img").getAttribute("data-large");
         mainImage.src = largeUrl;
         productImage.style.setProperty("--url", `url('${largeUrl}')`);
       });
     });
 
-    // Zoom effect
+    // Zoom
     if (productImage) {
       productImage.addEventListener("mouseenter", () => {
         productImage.style.setProperty("--display", "block");
@@ -1488,7 +1549,7 @@
       });
     }
 
-    // Quantity buttons
+    // Quantity
     const qtyInput = document.querySelector(".qty-input");
     const qtyBtnDec = document.querySelector(".qty-btn.dec");
     const qtyBtnInc = document.querySelector(".qty-btn.inc");
@@ -1505,7 +1566,6 @@
       qtyInput.value = qty + 1;
     });
 
-    // Tab functionality
     const tabLinks = document.querySelectorAll(".tab-link");
     const tabPanes = document.querySelectorAll(".tab-pane");
 
@@ -1513,11 +1573,10 @@
       tab.addEventListener("click", function (e) {
         e.preventDefault();
 
-        // Update active class on tabs
+        // Update active
         tabLinks.forEach((t) => t.classList.remove("active"));
         this.classList.add("active");
 
-        // Show active tab content
         const target = this.getAttribute("href").substring(1);
         tabPanes.forEach((pane) => {
           pane.classList.remove("active");

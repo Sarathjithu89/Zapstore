@@ -1,9 +1,8 @@
-// Import required models and packages
 const Cart = require("../../models/Cart.js");
 const Address = require("../../models/Address.js");
 const Product = require("../../models/Products.js");
 const Order = require("../../models/Order.js");
-const crypto = require("crypto");
+const User = require("../../models/User.js");
 
 //get checkout page
 const getCheckoutPage = async (req, res) => {
@@ -19,9 +18,9 @@ const getCheckoutPage = async (req, res) => {
 
     const cartItems = cart?.items || [];
 
+    const user = await User.findOne({ _id: userId });
     const userAddress = await Address.findOne({ userId: userId });
-    const wallet = { balance: 0 }; // maybe fetch actual wallet later
-
+    const wallet = user.wallet;
     let subtotal = 0;
     if (cartItems.length > 0) {
       subtotal = cartItems.reduce((acc, item) => acc + item.totalPrice, 0);
@@ -55,13 +54,11 @@ const checkStock = async (req, res) => {
 
     const stockStatus = [];
 
-    // Loop through each item in cart
     for (const item of cart.items) {
       const product = item.productId;
 
-      if (!product) continue; // If product was deleted
+      if (!product) continue;
 
-      // Check if product is blocked
       if (product.isBlocked) {
         stockStatus.push({
           productId: product._id,
@@ -81,7 +78,6 @@ const checkStock = async (req, res) => {
           item.quantity = newQuantity;
           item.totalPrice = newQuantity * product.salePrice;
         } else {
-          // Remove item from cart
           cart.items = cart.items.filter(
             (i) => i.productId._id.toString() !== product._id.toString()
           );
@@ -117,21 +113,21 @@ const checkStock = async (req, res) => {
   }
 };
 
-// Place order (Cash on Delivery)
+// Place order- Cash on Delivery
 const placeOrder = async (req, res) => {
   try {
     const { addressId, paymentMethod, couponCode } = req.body;
     const userId = req.user.userId;
 
-    // Validate address
     if (!addressId) {
       return res.status(400).json({
         success: false,
         message: "Shipping address is required",
       });
     }
+    const user = await User.findOne({ _id: userId });
+    const OrderHistory = user.OrderHistory;
 
-    // Fetch cart with populated product info
     const cart = await Cart.findOne({ userId }).populate("items.productId");
     const cartItems = cart?.items || [];
 
@@ -141,8 +137,6 @@ const placeOrder = async (req, res) => {
         message: "Your cart is empty",
       });
     }
-
-    // Get selected address
     const userAddress = await Address.findOne({ userId: userId });
     const shippingAddress = userAddress?.address?.id(addressId);
 
@@ -153,14 +147,12 @@ const placeOrder = async (req, res) => {
       });
     }
 
-    // Placeholder for coupon discount logic
     let couponDiscount = 0;
     const totalSubtotal = cartItems.reduce(
       (sum, item) => sum + item.totalPrice,
       0
     );
 
-    // Group cart items by seller
     const sellerGroups = {};
     for (const item of cartItems) {
       const product = item.productId;
@@ -173,8 +165,7 @@ const placeOrder = async (req, res) => {
     }
 
     const orderIds = [];
-
-    // Create orders for each seller
+    //seller
     for (const [sellerId, items] of Object.entries(sellerGroups)) {
       const subtotal = items.reduce((sum, item) => sum + item.totalPrice, 0);
       const shippingCost = 50;
@@ -200,16 +191,16 @@ const placeOrder = async (req, res) => {
 
       await order.save();
       orderIds.push(order.orderId);
+      OrderHistory.push(order._id);
+      await user.save();
 
-      // Update product stock
+      // Update  stock
       for (const item of items) {
         await Product.findByIdAndUpdate(item.productId._id, {
           $inc: { quantity: -item.quantity, sold: item.quantity },
         });
       }
     }
-    //update product
-
     // Clear cart
     await Cart.deleteOne({ userId });
 
@@ -230,7 +221,6 @@ const placeOrder = async (req, res) => {
 // Add address from checkout page
 const addAddressCheckout = (req, res) => {
   try {
-    // Render add address page with return URL set to checkout
     res.render("users/addAddress", { returnUrl: "/checkout" });
   } catch (error) {
     console.error("Error rendering add address page:", error);

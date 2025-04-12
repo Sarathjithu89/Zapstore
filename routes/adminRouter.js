@@ -109,10 +109,19 @@ adminRouter.get(
 
 // orders managment
 
-adminRouter.get("/orders", orderController.getAllOrders);
-adminRouter.get("/getOrderDetails/:id", orderController.getOrderDetails);
-adminRouter.post("/updateOrderStatus", orderController.updateOrderStatus);
-adminRouter.get("/exportOrders", orderController.exportOrders);
+adminRouter.get("/orders", adminAuth, orderController.getAllOrders);
+adminRouter.get(
+  "/getOrderDetails/:id",
+  adminAuth,
+  orderController.getOrderDetails
+);
+adminRouter.post(
+  "/updateOrderStatus",
+  adminAuth,
+  orderController.updateOrderStatus
+);
+adminRouter.get("/exportOrders", adminAuth, orderController.exportOrders);
+adminRouter.post("/processReturn", adminAuth, orderController.processReturn);
 
 //coupon routs
 // adminRouter.get("/coupons", adminAuth, couponController.getCoupons);

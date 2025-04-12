@@ -4,6 +4,7 @@ const profileController = require("../controllers/user/profileController.js");
 const userController = require("../controllers/user/userController");
 const checkoutController = require("../controllers/user/checkoutController.js");
 const cartController = require("../controllers/user/cartController.js");
+const orderController = require("../controllers/user/orderController.js");
 const passport = require("passport");
 const { authToken } = require("../middleware/authToken");
 const { json } = require("body-parser");
@@ -76,6 +77,18 @@ userRouter.get(
   authToken,
   profileController.forgotPasswordLogout
 );
+userRouter.get(
+  "/change-email",
+  authToken,
+  profileController.renderChangeEmailPage
+);
+userRouter.post(
+  "/sendEmailVerification",
+  authToken,
+  profileController.sendEmailVerification
+);
+
+userRouter.post("/updateEmail", authToken, profileController.updateEmail);
 
 //address routes
 userRouter.get("/address", authToken, profileController.getUserAddress);
@@ -99,7 +112,10 @@ userRouter.get("/checkStock", authToken, checkoutController.checkStock);
 userRouter.post("/placeOrder", authToken, checkoutController.placeOrder);
 
 //orders
-userRouter.get("/orders", authToken, profileController.getUserOrders);
-userRouter.post("/cancelOrder", authToken, profileController.cancelOrder);
+userRouter.get("/orders", authToken, orderController.getUserOrders);
+userRouter.post("/cancelOrder", authToken, orderController.cancelOrder);
+userRouter.get("/invoice/:orderId", authToken, orderController.generateInvoice);
+userRouter.post("/requestReturn", authToken, orderController.requestReturn);
+userRouter.get("/order/:id", authToken, orderController.getOrderDetails);
 
 module.exports = userRouter;

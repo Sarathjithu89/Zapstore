@@ -5,6 +5,12 @@
   rel="stylesheet"
   href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"
 />
+<style>
+  .table-th th {
+    text-align: center;
+    color: white;
+  }
+</style>
 
 <main id="main">
   <!-- Breadcrumbs-->
@@ -67,7 +73,7 @@
           <div class="card-body p-0">
             <div class="table-responsive">
               <table class="table table-hover mb-0" aria-label="Orders table">
-                <thead class="bg-primary text-white">
+                <thead class="bg-primary table-th">
                   <tr>
                     <th scope="col">Order ID</th>
                     <th scope="col">Customer</th>
@@ -117,7 +123,7 @@
                       <span class="badge bg-success">Delivered</span>
                       <% } else if(order.status === 'Cancelled') { %>
                       <span class="badge bg-danger">Cancelled</span>
-                      <% } else if(order.status === 'Return Request') { %>
+                      <% } else if(order.status === 'Return Requested') { %>
                       <span class="badge bg-secondary">Return Request</span>
                       <% } else if(order.status === 'Returned') { %>
                       <span class="badge bg-info">Returned</span>
@@ -141,7 +147,7 @@
                           <i class="bi bi-arrow-repeat"></i>
                         </button>
 
-                        <% if(order.status === 'Return Request') { %>
+                        <% if(order.status === 'Return Requested') { %>
                         <button
                           class="btn btn-sm btn-warning ms-1"
                           onclick="processReturnRequest('<%= order._id %>')"

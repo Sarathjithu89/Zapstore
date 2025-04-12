@@ -14,6 +14,13 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    walletHistory: [
+      {
+        amount: { type: Number },
+        type: { type: String, enum: ["credit", "debit"] },
+        description: { type: String },
+      },
+    ],
     wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: "Wishlist" }],
     OrderHistory: [
       {

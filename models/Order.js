@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const { v4: uuidv4 } = require("uuid");
+// const { v4: uuidv4 } = require("uuid");
 const orderSchema = new mongoose.Schema(
   {
     userId: {
@@ -9,7 +9,7 @@ const orderSchema = new mongoose.Schema(
     },
     orderId: {
       type: String,
-      default: () => uuidv4(),
+      default: () => crypto.randomUUID(),
       unique: true,
     },
     orderedItems: [
@@ -57,7 +57,7 @@ const orderSchema = new mongoose.Schema(
         "Shipped",
         "Delivered",
         "Cancelled",
-        "Return Request",
+        "Return Requested",
         "Returned",
       ],
     },
@@ -73,6 +73,12 @@ const orderSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    deliveredAt: {
+      type: Date,
+    },
+    returnReason: { type: String },
+    returnComments: { type: String },
+    returnRequestedAt: { type: Date },
     statusHistory: [
       {
         status: {
