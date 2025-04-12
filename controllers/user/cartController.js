@@ -67,12 +67,23 @@ const addToCart = async (req, res) => {
     }
     const user = await User.findOne({ _id: userId });
     const userCart = user.cart;
-
-    const product = await Product.findById(productId);
+    const product = await Product.findById(productId).populate("category");
     if (!product) {
       return res
         .status(404)
         .json({ success: false, message: "Product not found" });
+    }
+
+    if (product.isBlocked) {
+      return res
+        .status(400)
+        .json({ success: false, message: "This product is not available" });
+    }
+    if (!product.category.isListed) {
+      return res.status(400).json({
+        success: false,
+        message: "Category currently unlisted,not available",
+      });
     }
 
     if (product.quantity < quantity || product.status !== "Available") {
@@ -81,7 +92,6 @@ const addToCart = async (req, res) => {
         .json({ success: false, message: "Not enough stock available" });
     }
 
-    // Find user cart
     let cart = await Cart.findOne({ userId });
     const itemPrice = product.salePrice;
     const totalItemPrice = itemPrice * parseInt(quantity);

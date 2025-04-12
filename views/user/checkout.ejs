@@ -370,15 +370,25 @@
               Address</label
             >
             <select id="existingAddress" class="form-control address-select">
-              <option selected>Select an address</option>
               <% if (userAddress && userAddress.address.length > 0) { %> <%
-              userAddress.address.forEach((address) => { %>
+              userAddress.address.forEach((address) => { %> <%
+              if(address.isDefault){ %>
               <option value="<%= address._id %>">
                 <%= address.addressType %> - <%= address.name %>, <%=
                 address.streetAddress %>, <%= address.city %>, <%= address.state
                 %>, <%= address.country %>, &#10; <%= address.phone %>
               </option>
-              <% }); %> <% } else { %>
+              <% }; %> <% }); %> <% } else { %>
+              <option disabled>No addresses available</option>
+              <% } %> <% if (userAddress && userAddress.address.length > 0) { %>
+              <% userAddress.address.forEach((address) => { %> <%
+              if(!address.isDefault){ %>
+              <option value="<%= address._id %>">
+                <%= address.addressType %> - <%= address.name %>, <%=
+                address.streetAddress %>, <%= address.city %>, <%= address.state
+                %>, <%= address.country %>, &#10; <%= address.phone %>
+              </option>
+              <% }; %> <% }); %> <% } else { %>
               <option disabled>No addresses available</option>
               <% } %>
             </select>
@@ -986,16 +996,8 @@
       .then((data) => {
         console.log("Server response:", data);
         if (data.success) {
-          Swal.fire({
-            title: "Order Placed Successfully!",
-            text: `Order IDs: ${data.orderIds.join(", ")}`,
-            icon: "success",
-            confirmButtonText: "View Orders",
-          }).then((result) => {
-            if (result.isConfirmed) {
-              window.location.href = "/orders";
-            }
-          });
+          // Redirect to order success page instead of showing modal
+          window.location.href = "/ordersuccess";
         } else {
           Swal.fire(
             "Error",
@@ -1014,9 +1016,8 @@
       });
   }
 
-  function processRazorpayOrder(orderData) {
-    // First create order on server
-    fetch("/create-razorpay-order", {
+  function processCODOrder(orderData) {
+    fetch("/placeOrder", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -1025,34 +1026,14 @@
     })
       .then((response) => response.json())
       .then((data) => {
+        console.log("Server response:", data);
         if (data.success) {
-          const options = {
-            key: data.razorpayKeyId, // Your Razorpay Key ID
-            amount: data.amount,
-            currency: data.currency,
-            name: "PC Monarch",
-            image: "img/pc-logo.png",
-            description: "Purchase Description",
-            order_id: data.orderId,
-            handler: function (response) {
-              // Handle successful payment
-              verifyPayment(response, orderData);
-            },
-            prefill: {
-              name: data.customerName,
-              email: data.customerEmail,
-              contact: data.customerPhone,
-            },
-            theme: {
-              color: "#F37254",
-            },
-          };
-          const rzp = new Razorpay(options);
-          rzp.open();
+          // Redirect to order success page instead of showing modal
+          window.location.href = "/ordersuccess";
         } else {
           Swal.fire(
             "Error",
-            data.message || "An error occurred while creating the order",
+            data.message || "An error occurred while placing the order",
             "error"
           );
         }
@@ -1061,7 +1042,7 @@
         console.error("Error:", error);
         Swal.fire(
           "Error",
-          "An error occurred while processing the payment",
+          "An error occurred while placing the order",
           "error"
         );
       });
@@ -1081,16 +1062,8 @@
       .then((response) => response.json())
       .then((data) => {
         if (data.success) {
-          Swal.fire({
-            title: "Payment Successful!",
-            text: `Order IDs: ${data.orderIds.join(", ")}`,
-            icon: "success",
-            confirmButtonText: "View Orders",
-          }).then((result) => {
-            if (result.isConfirmed) {
-              window.location.href = "/orders";
-            }
-          });
+          // Redirect to order success page instead of showing modal
+          window.location.href = "/ordersuccess";
         } else {
           Swal.fire(
             "Error",
@@ -1109,75 +1082,6 @@
       });
   }
 
-  function showShippingCharge() {
-    Swal.fire({
-      title: "Shipping Charge",
-      text: "Shipping charge is ₹ 50.00 For All Orders",
-      icon: "info",
-      confirmButtonText: "OK",
-    });
-  }
-
-  function checkWalletBalance() {
-    const walletBalance = parseFloat(
-      document.getElementById("walletBalance").textContent
-    );
-    const payableAmount = parseFloat(
-      document.getElementById("grandTotal").textContent
-    );
-
-    document.getElementById("payableAmount").textContent =
-      payableAmount.toFixed(2);
-
-    const walletPaymentModal = new bootstrap.Modal(
-      document.getElementById("walletPaymentModal")
-    );
-    const insufficientFunds = document.getElementById("insufficientFunds");
-    const confirmWalletPayment = document.getElementById(
-      "confirmWalletPayment"
-    );
-
-    if (walletBalance < payableAmount) {
-      insufficientFunds.style.display = "block";
-      confirmWalletPayment.style.display = "none";
-    } else {
-      insufficientFunds.style.display = "none";
-      confirmWalletPayment.style.display = "block";
-    }
-
-    walletPaymentModal.show();
-  }
-
-  function processWalletOrder(orderData) {
-    const walletBalance = parseFloat(
-      document.getElementById("walletBalance").textContent
-    );
-    const payableAmount = parseFloat(
-      document.getElementById("grandTotal").textContent
-    );
-
-    document.getElementById("payableAmount").textContent =
-      payableAmount.toFixed(2);
-
-    const walletPaymentModal = new bootstrap.Modal(
-      document.getElementById("walletPaymentModal")
-    );
-    const insufficientFunds = document.getElementById("insufficientFunds");
-    const confirmWalletPayment = document.getElementById(
-      "confirmWalletPayment"
-    );
-
-    if (walletBalance < payableAmount) {
-      insufficientFunds.style.display = "block";
-      confirmWalletPayment.style.display = "none";
-    } else {
-      insufficientFunds.style.display = "none";
-      confirmWalletPayment.style.display = "block";
-    }
-
-    walletPaymentModal.show();
-  }
-
   function placeWalletOrder(orderData) {
     fetch("/place-wallet-order", {
       method: "POST",
@@ -1189,16 +1093,8 @@
       .then((response) => response.json())
       .then((data) => {
         if (data.success) {
-          Swal.fire({
-            title: "Order Placed Successfully!",
-            text: `Order IDs: ${data.orderIds.join(", ")}`,
-            icon: "success",
-            confirmButtonText: "View Orders",
-          }).then((result) => {
-            if (result.isConfirmed) {
-              window.location.href = "/orders";
-            }
-          });
+          // Redirect to order success page instead of showing modal
+          window.location.href = "/ordersuccess";
         } else {
           Swal.fire(
             "Error",

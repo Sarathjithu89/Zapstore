@@ -294,7 +294,7 @@ const generateInvoice = async (req, res) => {
     doc.fontSize(12).text("Thank you for your business!", { align: "center" });
 
     // Footer
-    const footerY = doc.page.height - 40;
+    const footerY = doc.page.height - 30;
     doc
       .moveTo(50, footerY - 10)
       .lineTo(550, footerY - 10)
@@ -370,10 +370,77 @@ const getOrderDetails = async (req, res) => {
   }
 };
 
+const orderSuccess = async (req, res) => {
+  try {
+    // Get order details from session
+    const orderSuccess = req.session.orderSuccess;
+
+    if (
+      !orderSuccess ||
+      !orderSuccess.orderIds ||
+      orderSuccess.orderIds.length === 0
+    ) {
+      return res.redirect("/orders");
+    }
+
+    const userId = req.user.userId;
+    const user = await User.findById(userId);
+
+    // Fetch orders with populated product information
+    const orders = await Order.find({
+      orderId: { $in: orderSuccess.orderIds },
+    }).populate({
+      path: "orderedItems.product",
+      populate: {
+        path: "category",
+      },
+    });
+
+    if (!orders || orders.length === 0) {
+      return res.redirect("/orders");
+    }
+
+    // Get shipping address
+    const shippingAddress = orders[0].address;
+
+    // Calculate total amounts
+    let subtotal = 0;
+    let discount = 0;
+    let shipping = orders.length * 50; // Each order has shipping cost of 50
+
+    orders.forEach((order) => {
+      subtotal += order.totalPrice;
+      discount += order.discount;
+    });
+
+    const totalAmount = {
+      subtotal,
+      discount,
+      shipping,
+      total: subtotal + shipping - discount,
+    };
+
+    // Clear the session data to prevent revisiting
+    req.session.orderSuccess = null;
+
+    // Render the success page with order details
+    res.render("ordersuccess.ejs", {
+      orders,
+      userEmail: user.email,
+      shippingAddress,
+      totalAmount,
+    });
+  } catch (error) {
+    console.error("Error rendering order success page:", error);
+    res.redirect("/orders");
+  }
+};
+
 module.exports = {
   getUserOrders,
   cancelOrder,
   generateInvoice,
   requestReturn,
   getOrderDetails,
+  orderSuccess,
 };

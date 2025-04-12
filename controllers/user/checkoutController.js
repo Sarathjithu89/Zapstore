@@ -204,6 +204,12 @@ const placeOrder = async (req, res) => {
     // Clear cart
     await Cart.deleteOne({ userId });
 
+    req.session.orderSuccess = {
+      orderIds: orderIds,
+      paymentMethod: paymentMethod,
+      couponApplied: !!couponCode,
+    };
+
     return res.json({
       success: true,
       message: "Order placed successfully",

@@ -117,5 +117,5 @@ userRouter.post("/cancelOrder", authToken, orderController.cancelOrder);
 userRouter.get("/invoice/:orderId", authToken, orderController.generateInvoice);
 userRouter.post("/requestReturn", authToken, orderController.requestReturn);
 userRouter.get("/order/:id", authToken, orderController.getOrderDetails);
-
+userRouter.get("/ordersuccess", authToken, orderController.orderSuccess);
 module.exports = userRouter;
