@@ -3,7 +3,7 @@ const Product = require("../../models/Products.js");
 
 const categoryInfo = async (req, res) => {
   try {
-    const admin = req.session.admin;
+    const admin = req.admin;
     const page = parseInt(req.query.page) || 1;
     const limit = 4;
     const skip = (page - 1) * limit;
@@ -26,7 +26,7 @@ const categoryInfo = async (req, res) => {
     });
   } catch (error) {
     console.log("category Error", error);
-    return res.redirect("/pageerror");
+    return res.redirect("admin/pageerror");
   }
 };
 
@@ -137,7 +137,7 @@ const getListCategory = async (req, res) => {
     await Category.updateOne({ _id: id }, { $set: { isListed: false } });
     res.redirect("/admin/category");
   } catch (error) {
-    res.redirect("/pageerror");
+    res.redirect("admin/pageerror");
   }
 };
 //unlist category
@@ -148,7 +148,7 @@ const getUnListCategory = async (req, res) => {
     res.redirect("/admin/category");
   } catch (error) {
     console.log(error);
-    res.redirect("/pageerror");
+    res.redirect("admin/pageerror");
   }
 };
 
@@ -160,7 +160,7 @@ const getEditCategory = async (req, res) => {
     return res.render("edit-category.ejs", { category: category });
   } catch (error) {
     console.log(error);
-    res.redirect("/pageerror");
+    res.redirect("admin/pageerror");
   }
 };
 

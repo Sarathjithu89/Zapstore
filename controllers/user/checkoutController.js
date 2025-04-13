@@ -3,24 +3,41 @@ const Address = require("../../models/Address.js");
 const Product = require("../../models/Products.js");
 const Order = require("../../models/Order.js");
 const User = require("../../models/User.js");
-
+const Wallet = require("../../models/Wallet.js");
 //get checkout page
 const getCheckoutPage = async (req, res) => {
   try {
     const userId = req.user.userId;
 
-    const cart = await Cart.findOne({ userId: userId }).populate({
-      path: "items.productId",
-      populate: {
-        path: "category",
-      },
-    });
+    let users = await User.findOne({ _id: userId });
+    if (!users.wallet) {
+      let wallet = new Wallet({
+        user: userId,
+        balance: 0,
+      });
+      await wallet.save();
+      users.wallet = wallet._id;
+      await users.save();
+    }
 
-    const cartItems = cart?.items || [];
+    const user = await User.findOne({ _id: userId })
+      .populate({
+        path: "cart",
+        populate: {
+          path: "items.productId",
+          populate: {
+            path: "category",
+          },
+        },
+      })
+      .populate({ path: "wallet" });
 
-    const user = await User.findOne({ _id: userId });
     const userAddress = await Address.findOne({ userId: userId });
+    const cartItems =
+      user.cart && user.cart.length > 0 ? user.cart[0].items || [] : [];
+
     const wallet = user.wallet;
+
     let subtotal = 0;
     if (cartItems.length > 0) {
       subtotal = cartItems.reduce((acc, item) => acc + item.totalPrice, 0);
@@ -237,9 +254,116 @@ const addAddressCheckout = (req, res) => {
   }
 };
 
+const WalletOrder = async (req, res) => {
+  try {
+    const { orderId, amount } = req.body;
+    const userId = req.user.userId;
+
+    if (!orderId || !amount || amount <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid request parameters",
+      });
+    }
+
+    // Start a session for transaction consistency
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      // Get wallet and check balance
+      const wallet = await Wallet.findOne({ user: userId }).session(session);
+
+      if (!wallet) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(404).json({
+          success: false,
+          message: "Wallet not found",
+        });
+      }
+
+      if (wallet.balance < amount) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({
+          success: false,
+          message: "Insufficient balance",
+        });
+      }
+
+      // Get order and validate
+      const order = await Order.findById(orderId).session(session);
+
+      if (!order) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(404).json({
+          success: false,
+          message: "Order not found",
+        });
+      }
+
+      if (!order.user.equals(userId)) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(403).json({
+          success: false,
+          message: "Unauthorized access to order",
+        });
+      }
+
+      // Update wallet balance
+      wallet.balance -= Number(amount);
+      wallet.updatedAt = new Date();
+      await wallet.save({ session });
+
+      // Create transaction record
+      const transaction = new Transaction({
+        user: userId,
+        amount: Number(amount),
+        type: "debit",
+        description: `Payment for order #${order.orderNumber}`,
+        orderId: order._id,
+      });
+
+      await transaction.save({ session });
+
+      // Update order payment status
+      order.paymentStatus = "paid";
+      order.paymentMethod = "wallet";
+      order.paidAmount = amount;
+      order.paidAt = new Date();
+      await order.save({ session });
+
+      // Commit transaction
+      await session.commitTransaction();
+      session.endSession();
+
+      return res.status(200).json({
+        success: true,
+        message: "Payment successful!",
+        orderId: order._id,
+      });
+    } catch (error) {
+      // Abort transaction on error
+      await session.abortTransaction();
+      session.endSession();
+      throw error;
+    }
+  } catch (error) {
+    console.error("Wallet payment error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Payment processing failed",
+    });
+  }
+};
+
 module.exports = {
   getCheckoutPage,
   checkStock,
   placeOrder,
   addAddressCheckout,
+  WalletOrder,
 };

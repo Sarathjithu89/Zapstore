@@ -1,0 +1,277 @@
+<%- include('../partials2/header.ejs') %>
+<style>
+  .badge-add {
+    background-color: #28a745;
+    color: white;
+  }
+  .badge-remove {
+    background-color: #dc3545;
+    color: white;
+  }
+  .badge-set {
+    background-color: #17a2b8;
+    color: white;
+  }
+  .history-card {
+    border-left: 4px solid #ced4da;
+    margin-bottom: 15px;
+    transition: all 0.2s;
+  }
+  .history-card:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  .history-card.add {
+    border-left-color: #28a745;
+  }
+  .history-card.remove {
+    border-left-color: #dc3545;
+  }
+  .history-card.set {
+    border-left-color: #17a2b8;
+  }
+</style>
+
+<main id="main">
+  <!-- Breadcrumb -->
+  <div class="bg-white border-bottom py-2">
+    <div class="container-fluid">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb m-0 py-2">
+          <li class="breadcrumb-item">
+            <a href="/admin/dashboard" class="text-decoration-none">Home</a>
+          </li>
+          <li class="breadcrumb-item">
+            <a href="/admin/inventory" class="text-decoration-none"
+              >Inventory</a
+            >
+          </li>
+          <li class="breadcrumb-item active" aria-current="page">History</li>
+        </ol>
+      </nav>
+    </div>
+  </div>
+
+  <div class="container-fluid py-4">
+    <div class="row">
+      <div class="col-md-4 mb-4">
+        <div class="card shadow-sm">
+          <div class="card-header bg-primary text-white">
+            <h5 class="card-title mb-0">Product Information</h5>
+          </div>
+          <div class="card-body">
+            <div class="text-center mb-3">
+              <% if(product.productImage && product.productImage.length > 0) {
+              %>
+              <img
+                src="/uploads/product-images/<%= product.productImage[0] %>"
+                alt="<%= product.productName %>"
+                class="img-fluid"
+                style="max-height: 150px; object-fit: contain"
+              />
+              <% } else { %>
+              <img
+                src="/placeholder.svg"
+                alt="No image available"
+                class="img-fluid"
+                style="max-height: 150px"
+              />
+              <% } %>
+            </div>
+
+            <h5 class="card-title text-center mb-3">
+              <%= product.productName %>
+            </h5>
+
+            <div class="row">
+              <div class="col-6">
+                <p class="mb-2"><strong>Product #:</strong></p>
+                <p class="mb-2"><strong>Category:</strong></p>
+                <p class="mb-2"><strong>Brand:</strong></p>
+                <p class="mb-2"><strong>Current Stock:</strong></p>
+                <p class="mb-2"><strong>Status:</strong></p>
+                <p class="mb-2"><strong>Total Sold:</strong></p>
+              </div>
+              <div class="col-6">
+                <p class="mb-2"><%= product.productNumber %></p>
+                <p class="mb-2">
+                  <%= product.category ? product.category.name : 'N/A' %>
+                </p>
+                <p class="mb-2"><%= product.brand %></p>
+                <p
+                  class="mb-2 fw-bold <%= product.quantity < 10 ? 'text-danger' : '' %>"
+                >
+                  <%= product.quantity %>
+                </p>
+                <p class="mb-2">
+                  <span
+                    class="badge <%= product.status === 'Available' ? 'bg-success' : product.status === 'Out of Stock' ? 'bg-danger' : 'bg-warning' %>"
+                  >
+                    <%= product.status %>
+                  </span>
+                </p>
+                <p class="mb-2"><%= product.sold %></p>
+              </div>
+            </div>
+
+            <div class="d-grid gap-2 mt-3">
+              <a href="/admin/inventory" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Inventory
+              </a>
+              <button
+                class="btn btn-info"
+                onclick="updateQuantity('<%= product._id %>', <%= product.quantity %>)"
+              >
+                <i class="bi bi-pencil"></i> Update Quantity
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-8">
+        <div class="card shadow-sm">
+          <div
+            class="card-header bg-primary text-white d-flex justify-content-between align-items-center"
+          >
+            <h5 class="card-title mb-0">Inventory History</h5>
+            <button
+              class="btn btn-light btn-sm"
+              onclick="printInventoryHistory()"
+            >
+              <i class="bi bi-printer"></i> Print
+            </button>
+          </div>
+          <div class="card-body">
+            <% if(logs && logs.length > 0) { %>
+            <div class="timeline">
+              <% logs.forEach(log => { %>
+              <div class="history-card p-3 <%= log.adjustmentType %>">
+                <div class="d-flex justify-content-between align-items-center">
+                  <span class="badge badge-<%= log.adjustmentType %> p-2">
+                    <%= log.adjustmentType === 'add' ? 'ADDED' :
+                    log.adjustmentType === 'remove' ? 'REMOVED' : 'UPDATED' %>
+                  </span>
+                  <small class="text-muted"
+                    ><%= new Date(log.createdAt).toLocaleString() %></small
+                  >
+                </div>
+
+                <div class="mt-2">
+                  <% if(log.adjustmentType === 'add') { %>
+                  <p>
+                    <strong>Added <%= log.quantity %></strong> units to
+                    inventory
+                  </p>
+                  <% } else if(log.adjustmentType === 'remove') { %>
+                  <p>
+                    <strong>Removed <%= log.quantity %></strong> units from
+                    inventory
+                  </p>
+                  <% } else { %>
+                  <p>
+                    <strong>Set quantity to <%= log.newQuantity %></strong>
+                    units
+                  </p>
+                  <% } %>
+
+                  <p>
+                    <span class="text-muted"
+                      >Previous: <%= log.previousQuantity %></span
+                    >
+                    <i class="bi bi-arrow-right mx-2"></i>
+                    <span class="fw-bold">New: <%= log.newQuantity %></span>
+                  </p>
+
+                  <p><strong>Reason:</strong> <%= log.reason %></p>
+
+                  <% if(log.performedBy) { %>
+                  <p class="text-muted mb-0">
+                    <small
+                      >Updated by: <%= log.performedBy.username ||
+                      log.performedBy.email %></small
+                    >
+                  </p>
+                  <% } %>
+                </div>
+              </div>
+              <% }); %>
+            </div>
+            <% } else { %>
+            <div class="alert alert-info">
+              <i class="bi bi-info-circle me-2"></i>
+              No inventory history found for this product.
+            </div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+  async function updateQuantity(productId, currentQuantity) {
+    const { value: quantity } = await Swal.fire({
+      title: "Update Quantity",
+      input: "number",
+      inputLabel: "Current Stock",
+      inputPlaceholder: "Enter new quantity",
+      inputValue: currentQuantity,
+      inputAttributes: {
+        min: 0,
+        step: 1,
+      },
+      showCancelButton: true,
+      inputValidator: (value) => {
+        if (!value || value < 0) {
+          return "Please enter a valid quantity (0 or greater)";
+        }
+      },
+    });
+
+    if (quantity) {
+      updateProductQuantity(productId, quantity);
+    }
+  }
+
+  function updateProductQuantity(productId, quantity) {
+    $.ajax({
+      url: "/admin/updateProductQuantity",
+      method: "post",
+      data: {
+        productId: productId,
+        quantity: quantity,
+      },
+      success: (response) => {
+        if (response.status) {
+          Swal.fire("Success", "Quantity updated successfully", "success").then(
+            () => {
+              location.reload();
+            }
+          );
+        } else {
+          Swal.fire(
+            "Error",
+            response.message || "Failed to update quantity",
+            "error"
+          );
+        }
+      },
+      error: (error) => {
+        console.error("Error:", error);
+        Swal.fire("Error", "An unexpected error occurred", "error");
+      },
+    });
+  }
+
+  function printInventoryHistory() {
+    window.print();
+  }
+</script>
+
+<%- include('../partials/alerts.ejs') %> <%- include('../partials2/footer.ejs')
+%>

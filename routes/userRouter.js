@@ -5,6 +5,7 @@ const userController = require("../controllers/user/userController");
 const checkoutController = require("../controllers/user/checkoutController.js");
 const cartController = require("../controllers/user/cartController.js");
 const orderController = require("../controllers/user/orderController.js");
+const walletController = require("../controllers/user/walletController.js");
 const passport = require("passport");
 const { authToken } = require("../middleware/authToken");
 const { json } = require("body-parser");
@@ -110,6 +111,7 @@ userRouter.get("/deleteItem", authToken, cartController.deleteItem);
 userRouter.get("/checkout", authToken, checkoutController.getCheckoutPage);
 userRouter.get("/checkStock", authToken, checkoutController.checkStock);
 userRouter.post("/placeOrder", authToken, checkoutController.placeOrder);
+userRouter.post("/walletOrder", authToken, checkoutController.WalletOrder);
 
 //orders
 userRouter.get("/orders", authToken, orderController.getUserOrders);
@@ -118,4 +120,14 @@ userRouter.get("/invoice/:orderId", authToken, orderController.generateInvoice);
 userRouter.post("/requestReturn", authToken, orderController.requestReturn);
 userRouter.get("/order/:id", authToken, orderController.getOrderDetails);
 userRouter.get("/ordersuccess", authToken, orderController.orderSuccess);
+
+//wallet
+userRouter.get("/wallet", authToken, walletController.getWallet);
+userRouter.post("/addToWallet", authToken, walletController.addMoney);
+userRouter.get("/payment", authToken, walletController.getPaymentPage);
+userRouter.post("/verify-payment", authToken, walletController.verifyPayment);
+userRouter.post("/withdraw", authToken, walletController.withdrawMoney);
+
+userRouter.post("/refund", authToken, walletController.refundToWallet);
+
 module.exports = userRouter;

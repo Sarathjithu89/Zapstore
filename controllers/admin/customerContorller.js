@@ -2,13 +2,13 @@ const User = require("../../models/User");
 
 const customerInfo = async (req, res) => {
   try {
-    const admin=req.session.admin;
+    const admin = req.admin;
     let search = [];
     if (req.query.search) {
       search = req.query.search ? req.query.search.trim() : "";
     }
-    const page =parseInt(req.query.page)||1 ;
-    
+    const page = parseInt(req.query.page) || 1;
+
     const limit = 4;
     const userData = await User.find({
       isAdmin: false,
@@ -29,9 +29,9 @@ const customerInfo = async (req, res) => {
         { email: { $regex: ".*" + search + ".*" } },
       ],
     }).countDocuments();
-   
+
     res.render("userlisting.ejs", {
-      admin:admin,
+      admin: admin,
       data: userData,
       totalPages: Math.ceil(count / limit),
       currentPage: page,
@@ -49,7 +49,7 @@ const custormerBlocked = async (req, res) => {
     return res.redirect("/admin/users");
   } catch (error) {
     console.log("Customer Block error", error);
-    return res.redirect("/pageerror");
+    return res.redirect("admin/pageerror");
   }
 };
 const custormerUnblocked = async (req, res) => {
@@ -61,7 +61,7 @@ const custormerUnblocked = async (req, res) => {
     return res.redirect("/admin/users");
   } catch (error) {
     console.log("unblock error", error);
-    return res.redirect("/pageerror");
+    return res.redirect("admin/pageerror");
   }
 };
 

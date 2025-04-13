@@ -2,6 +2,8 @@ const Order = require("../../models/Order.js");
 const User = require("../../models/User.js");
 const Product = require("../../models/Products.js");
 const mongoose = require("mongoose");
+const Wallet = require("../../models/Wallet.js");
+const Transaction = require("../../models/Transactions.js");
 const { createObjectCsvWriter } = require("csv-writer");
 const path = require("path");
 const fs = require("fs");
@@ -198,7 +200,7 @@ const updateOrderStatus = async (req, res) => {
     // Add status history
     order.statusHistory.push({
       status: status,
-      updatedBy: req.session.admin.email ? req.session.admin.email : "Admin",
+      updatedBy: req.admin.email ? req.admin.email : "Admin",
       date: new Date(),
     });
 
@@ -222,7 +224,7 @@ const updateOrderStatus = async (req, res) => {
 const processReturn = async (req, res) => {
   try {
     const { orderId, returnAction, notes } = req.body;
-    console.log(orderId);
+
     if (!mongoose.Types.ObjectId.isValid(orderId)) {
       return res.status(400).json({
         status: false,
@@ -246,69 +248,124 @@ const processReturn = async (req, res) => {
       });
     }
 
-    if (returnAction === "approve") {
-      // Approve return
-      order.status = "Returned";
+    // Start a MongoDB session for transaction
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-      // Process refund to wallet
-      const user = await User.findById(order.userId);
+    try {
+      if (returnAction === "approve") {
+        // Approve return
+        order.status = "Returned";
 
-      if (user) {
-        // Add refund to wallet
-        user.wallet += order.finalAmount;
+        // Process refund to wallet
+        const user = await User.findById(order.userId).session(session);
 
-        // Add wallet transaction
-        user.walletHistory.push({
-          amount: order.finalAmount,
-          type: "credit",
-          description: `Refund for returned order #${order.orderId}`,
-        });
+        if (user) {
+          // Find the user's wallet
+          const wallet = await Wallet.findOne({ user: user._id }).session(
+            session
+          );
 
-        await user.save();
+          if (!wallet) {
+            // Create wallet if it doesn't exist
+            const newWallet = new Wallet({
+              user: user._id,
+              balance: order.finalAmount,
+            });
+            await newWallet.save({ session });
+
+            // Update user with wallet reference
+            user.wallet = newWallet._id;
+            await user.save({ session });
+
+            // Create a transaction record
+            await Transaction.create(
+              [
+                {
+                  wallet: newWallet._id,
+                  amount: order.finalAmount,
+                  type: "credit",
+                  description: `Refund for returned order #${order.orderId}`,
+                  orderId: order._id,
+                },
+              ],
+              { session }
+            );
+          } else {
+            // Update existing wallet
+            wallet.balance += order.finalAmount;
+            await wallet.save({ session });
+
+            // Create a transaction record
+            await Transaction.create(
+              [
+                {
+                  wallet: wallet._id,
+                  amount: order.finalAmount,
+                  type: "credit",
+                  description: `Refund for returned order #${order.orderId}`,
+                  orderId: order._id,
+                },
+              ],
+              { session }
+            );
+          }
+        }
+
+        // Update payment status
+        order.paymentStatus = "Refunded";
+
+        // Restore inventory
+        for (const item of order.orderedItems) {
+          await Product.findByIdAndUpdate(
+            item.product,
+            { $inc: { stock: item.quantity } },
+            { session }
+          );
+        }
+      } else {
+        // Reject return
+        order.status = "Delivered"; // Revert back to delivered status
       }
 
-      // Update payment status
-      order.paymentStatus = "Refunded";
+      // Add notes to return processing
+      order.returnDetails = {
+        ...order.returnDetails,
+        processedBy: req.admin.email,
+        processedAt: new Date(),
+        adminNotes: notes,
+        approved: returnAction === "approve",
+      };
 
-      // Restore inventory
-      for (const item of order.orderedItems) {
-        await Product.findByIdAndUpdate(item.product, {
-          $inc: { stock: item.quantity },
-        });
-      }
-    } else {
-      // Reject return
-      order.status = "Delivered"; // Revert back to delivered status
+      // Add to status history
+      order.statusHistory.push({
+        status: order.status,
+        updatedBy: req.admin.email,
+        date: new Date(),
+        notes: `Return ${returnAction === "approve" ? "approved" : "rejected"}${
+          notes ? ": " + notes : ""
+        }`,
+      });
+
+      await order.save({ session });
+
+      // Commit the transaction
+      await session.commitTransaction();
+      session.endSession();
+
+      res.json({
+        status: true,
+        message:
+          returnAction === "approve"
+            ? "Return request approved and refund processed"
+            : "Return request rejected",
+      });
+    } catch (error) {
+      // Abort transaction on error
+      await session.abortTransaction();
+      session.endSession();
+      throw error;
     }
-
-    // Add notes to return processing
-    order.returnDetails = {
-      ...order.returnDetails,
-      processedBy: req.session.adminId,
-      processedAt: new Date(),
-      adminNotes: notes,
-      approved: returnAction === "approve",
-    };
-
-    // Add to status history
-    order.statusHistory.push({
-      status: order.status,
-      updatedBy: req.session.admin.email,
-      date: new Date(),
-      notes: `Return ${returnAction === "approve" ? "approved" : "rejected"}${
-        notes ? ": " + notes : ""
-      }`,
-    });
-
-    await order.save();
-
-    res.json({
-      status: true,
-      message:
-        returnAction === "approve"
-          ? "Return request approved and refund processed"
-          : "Return request rejected",
-    });
   } catch (error) {
     console.error("Error in processReturn:", error);
     res.status(500).json({

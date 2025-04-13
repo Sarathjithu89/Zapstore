@@ -89,7 +89,6 @@ const requestReturn = async (req, res) => {
   try {
     const { orderId, reason, comments } = req.body;
     const userId = req.user?.userId;
-    console.log(orderId);
 
     const order = await Order.findOne({ _id: orderId, userId: userId });
 

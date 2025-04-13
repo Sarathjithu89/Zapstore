@@ -3,7 +3,7 @@ const Product = require("../../models/Products.js");
 
 const getBrandPage = async (req, res) => {
   try {
-    const admin = req.session.admin;
+    const admin = req.admin;
     const page = parseInt(req.query.page) || 1;
     const limit = 4;
     const skip = (page - 1) * limit;
@@ -23,7 +23,7 @@ const getBrandPage = async (req, res) => {
       totalBrands: totalBrands,
     });
   } catch (error) {
-    res.redirect("/pageerror");
+    res.redirect("admin/pageerror");
   }
 };
 
@@ -68,7 +68,7 @@ const blockBrand = async (req, res) => {
     req.flash("success", "Brand Blocked successfully");
     res.redirect("/admin/brands");
   } catch (error) {
-    res.redirect("/pageerror");
+    res.redirect("admin/pageerror");
   }
 };
 const unBlockBrand = async (req, res) => {
@@ -78,7 +78,7 @@ const unBlockBrand = async (req, res) => {
     req.flash("success", "Brand Unblocked successfully");
     res.redirect("/admin/brands");
   } catch (error) {
-    res.redirect("/pageerror");
+    res.redirect("admin/pageerror");
   }
 };
 const deleteBrand = async (req, res) => {
@@ -92,7 +92,7 @@ const deleteBrand = async (req, res) => {
     res.redirect("/admin/brands");
   } catch (error) {
     console.log("Error Deleting Brand", error);
-    res.redirect("/pageerror");
+    res.redirect("admin/pageerror");
   }
 };
 

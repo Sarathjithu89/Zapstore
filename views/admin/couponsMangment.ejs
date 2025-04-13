@@ -1,0 +1,517 @@
+<%- include('../partials2/header.ejs') %>
+<style>
+  /* Minimal custom styles */
+  .coupon-badge {
+    font-size: 1rem;
+    padding: 5px 10px;
+    border-radius: 4px;
+    transition: transform 0.2s;
+  }
+
+  .coupon-badge:hover {
+    transform: scale(1.05);
+  }
+
+  .table th {
+    color: white;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .price-value {
+    font-weight: 600;
+  }
+
+  .actions {
+    width: 120px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .actions button {
+    width: 85px;
+    margin: 2px;
+  }
+
+  .expiry-date {
+    text-align: center;
+  }
+
+  .expiry-warning {
+    color: #dc3545;
+    font-weight: 500;
+  }
+</style>
+
+<main id="main">
+  <!-- Breadcrumb -->
+  <div class="bg-white border-bottom py-2">
+    <div class="container-fluid">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb m-0 py-2">
+          <li class="breadcrumb-item">
+            <a href="/admin/dashboard" class="text-decoration-none">Home</a>
+          </li>
+          <li class="breadcrumb-item active" aria-current="page">Coupons</li>
+        </ol>
+      </nav>
+    </div>
+  </div>
+
+  <div class="container-fluid py-4">
+    <div class="row justify-content-center">
+      <div class="col-lg-12">
+        <!-- Header with Add Coupon Button -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h2 class="h4 mb-0">Coupon Management</h2>
+          <button class="btn btn-primary" onclick="openAddCouponModal()">
+            <i class="bi bi-plus-circle me-1"></i> Add New Coupon
+          </button>
+        </div>
+
+        <!-- Search Form -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-body">
+            <form action="" method="get" class="d-flex justify-content-center">
+              <div class="input-group" style="max-width: 500px">
+                <input
+                  type="text"
+                  class="form-control"
+                  placeholder="Search coupons by name"
+                  name="search"
+                  aria-label="Search coupons"
+                />
+                <button class="btn btn-primary" type="submit">
+                  <i class="bi bi-search me-1"></i> Search
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Coupons Table -->
+        <div class="card shadow-sm">
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table
+                class="table table-hover align-middle mb-0"
+                aria-label="Coupons table"
+              >
+                <thead class="bg-primary text-white">
+                  <tr>
+                    <th scope="col">Coupon Name</th>
+                    <th scope="col">Discount Amount</th>
+                    <th scope="col">Minimum Purchase</th>
+                    <th scope="col">Expiry Date</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Used By</th>
+                    <th scope="col">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% for(let i=0; i < coupons.length; i++) { %>
+                  <tr>
+                    <td>
+                      <span
+                        class="coupon-badge bg-info bg-opacity-25 text-dark"
+                      >
+                        <%= coupons[i].name %>
+                      </span>
+                    </td>
+                    <td>
+                      <span class="price-value"
+                        >₹<%= coupons[i].offerPrice.toLocaleString() %></span
+                      >
+                    </td>
+                    <td>
+                      <span class="price-value"
+                        >₹<%= coupons[i].minimumPrice.toLocaleString() %></span
+                      >
+                    </td>
+                    <td class="expiry-date">
+                      <% const expiryDate = new Date(coupons[i].expireOn); const
+                      now = new Date(); const daysLeft = Math.ceil((expiryDate -
+                      now) / (1000 * 60 * 60 * 24)); const expiredClass =
+                      daysLeft <= 0 ? 'expiry-warning' : ''; %>
+                      <span class="<%= expiredClass %>">
+                        <%= expiryDate.toLocaleDateString('en-IN', { day:
+                        '2-digit', month: 'short', year: 'numeric' }) %> <%
+                        if(daysLeft <= 5 && daysLeft > 0) { %>
+                        <small class="d-block text-warning"
+                          >(<%= daysLeft %> days left)</small
+                        >
+                        <% } else if(daysLeft <= 0) { %>
+                        <small class="d-block expiry-warning">(Expired)</small>
+                        <% } %>
+                      </span>
+                    </td>
+                    <td>
+                      <% if(coupons[i].isListed === true) { %>
+                      <span class="badge bg-success">
+                        <i class="bi bi-check-circle me-1"></i>Active
+                      </span>
+                      <% } else { %>
+                      <span class="badge bg-danger">
+                        <i class="bi bi-x-circle me-1"></i>Inactive
+                      </span>
+                      <% } %>
+                    </td>
+                    <td>
+                      <span class="badge bg-secondary">
+                        <%= coupons[i].UserId ? coupons[i].UserId.length : 0 %>
+                        users
+                      </span>
+                      <% if(coupons[i].UserId && coupons[i].UserId.length > 0) {
+                      %>
+                      <button
+                        class="btn btn-sm btn-outline-info ms-2"
+                        onclick="viewUsers('<%= coupons[i]._id %>')"
+                      >
+                        <i class="bi bi-eye"></i>
+                      </button>
+                      <% } %>
+                    </td>
+                    <td class="actions">
+                      <div
+                        class="d-flex flex-wrap gap-1 justify-content-center"
+                      >
+                        <% if(coupons[i].isListed === true) { %>
+                        <button
+                          class="btn btn-sm btn-danger"
+                          title="Deactivate coupon"
+                          onclick="confirmToggleStatus(event, '<%= coupons[i]._id %>', false)"
+                        >
+                          <i class="bi bi-slash-circle"></i> Deactivate
+                        </button>
+                        <% } else { %>
+                        <button
+                          class="btn btn-sm btn-success"
+                          title="Activate coupon"
+                          onclick="confirmToggleStatus(event, '<%= coupons[i]._id %>', true)"
+                        >
+                          <i class="bi bi-check-circle"></i> Activate
+                        </button>
+                        <% } %>
+
+                        <button
+                          class="btn btn-sm btn-info"
+                          title="Edit coupon"
+                          onclick="editCoupon('<%= coupons[i]._id %>', '<%= coupons[i].name %>', parseInt('<%= coupons[i].offerPrice %>'), parseInt('<%= coupons[i].minimumPrice %>'), '<%= coupons[i].expireOn.toISOString().split('T')[0] %>')"
+                        >
+                          <i class="bi bi-pencil"></i> Edit
+                        </button>
+
+                        <button
+                          class="btn btn-sm btn-danger"
+                          title="Delete coupon"
+                          onclick="confirmDelete('<%= coupons[i]._id %>')"
+                        >
+                          <i class="bi bi-trash"></i> Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  <% } %> <% if(coupons.length === 0) { %>
+                  <tr>
+                    <td colspan="7" class="text-center py-4">
+                      <div class="alert alert-info mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        No coupons found. Click "Add New Coupon" to create one.
+                      </div>
+                    </td>
+                  </tr>
+                  <% } %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="mt-4"><%- include("../partials2/pagination.ejs") %></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add/Edit Coupon Modal -->
+  <div
+    class="modal fade"
+    id="couponModal"
+    tabindex="-1"
+    aria-labelledby="couponModalLabel"
+    aria-hidden="true"
+  >
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="couponModalLabel">Add New Coupon</h5>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="Close"
+          ></button>
+        </div>
+        <form id="couponForm" action="/admin/add-coupon" method="POST">
+          <div class="modal-body">
+            <input type="hidden" id="couponId" name="couponId" />
+
+            <div class="mb-3">
+              <label for="couponName" class="form-label">Coupon Name</label>
+              <input
+                type="text"
+                class="form-control"
+                id="couponName"
+                name="name"
+                required
+              />
+              <small class="form-text text-muted"
+                >Enter a unique coupon code (e.g., SUMMER2025)</small
+              >
+            </div>
+
+            <div class="mb-3">
+              <label for="offerPrice" class="form-label"
+                >Discount Amount (₹)</label
+              >
+              <input
+                type="number"
+                class="form-control"
+                id="offerPrice"
+                name="offerPrice"
+                min="1"
+                required
+              />
+              <small class="form-text text-muted"
+                >The amount to be discounted from the order total</small
+              >
+            </div>
+
+            <div class="mb-3">
+              <label for="minimumPrice" class="form-label"
+                >Minimum Purchase (₹)</label
+              >
+              <input
+                type="number"
+                class="form-control"
+                id="minimumPrice"
+                name="minimumPrice"
+                min="0"
+                required
+              />
+              <small class="form-text text-muted"
+                >Minimum order total required to apply this coupon</small
+              >
+            </div>
+
+            <div class="mb-3">
+              <label for="expireOn" class="form-label">Expiry Date</label>
+              <input
+                type="date"
+                class="form-control"
+                id="expireOn"
+                name="expireOn"
+                required
+              />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Cancel
+            </button>
+            <button type="submit" class="btn btn-primary">Save Coupon</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Users Modal -->
+  <div
+    class="modal fade"
+    id="usersModal"
+    tabindex="-1"
+    aria-labelledby="usersModalLabel"
+    aria-hidden="true"
+  >
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="usersModalLabel">
+            Users Who Used This Coupon
+          </h5>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="Close"
+          ></button>
+        </div>
+        <div class="modal-body">
+          <div class="table-responsive">
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>User ID</th>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Used On</th>
+                </tr>
+              </thead>
+              <tbody id="usersTableBody">
+                <!-- User data will be loaded here via AJAX -->
+              </tbody>
+            </table>
+          </div>
+          <div id="noUsersMessage" class="alert alert-info d-none">
+            No users have used this coupon yet.
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            data-bs-dismiss="modal"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+  // Set minimum date for expiry date picker to today
+  document.addEventListener("DOMContentLoaded", function () {
+    const today = new Date().toISOString().split("T")[0];
+    document.getElementById("expireOn").min = today;
+  });
+
+  // Open modal to add new coupon
+  function openAddCouponModal() {
+    document.getElementById("couponModalLabel").textContent = "Add New Coupon";
+    document.getElementById("couponForm").reset();
+    document.getElementById("couponId").value = "";
+    document.getElementById("couponForm").action = "/admin/add-coupon";
+
+    const couponModal = new bootstrap.Modal(
+      document.getElementById("couponModal")
+    );
+    couponModal.show();
+  }
+
+  // Open modal to edit existing coupon
+  function editCoupon(id, name, offerPrice, minimumPrice, expireOn) {
+    document.getElementById("couponModalLabel").textContent = "Edit Coupon";
+    document.getElementById("couponId").value = id;
+    document.getElementById("couponName").value = name;
+    document.getElementById("offerPrice").value = offerPrice;
+    document.getElementById("minimumPrice").value = minimumPrice;
+    document.getElementById("expireOn").value = expireOn;
+    document.getElementById("couponForm").action = "/admin/edit-coupon";
+
+    const couponModal = new bootstrap.Modal(
+      document.getElementById("couponModal")
+    );
+    couponModal.show();
+  }
+
+  // Toggle coupon active status
+  function confirmToggleStatus(event, couponId, activate) {
+    event.preventDefault();
+    const action = activate ? "activate" : "deactivate";
+    const icon = activate ? "info" : "warning";
+    const buttonColor = activate ? "#28a745" : "#d33";
+
+    Swal.fire({
+      title: `Are you sure?`,
+      text: `You are about to ${action} this coupon!`,
+      icon: icon,
+      showCancelButton: true,
+      confirmButtonColor: buttonColor,
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: `Yes, ${action} it!`,
+    }).then((result) => {
+      if (result.isConfirmed) {
+        window.location.href = `/admin/toggle-coupon-status?id=${couponId}`;
+      }
+    });
+  }
+
+  // Delete coupon
+  function confirmDelete(couponId) {
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You will not be able to recover this coupon!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, delete it!",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        window.location.href = `/admin/delete-coupon/${couponId}`;
+      }
+    });
+  }
+
+  // View users who used a coupon
+  function viewUsers(couponId) {
+    // In a real implementation, this would fetch user data from the server
+    // For demonstration, we're using mock data
+    const usersTableBody = document.getElementById("usersTableBody");
+    const noUsersMessage = document.getElementById("noUsersMessage");
+
+    // Clear previous content
+    usersTableBody.innerHTML = "";
+
+    // Sample AJAX call - replace with your actual implementation
+    $.ajax({
+      url: `/admin/coupon-users/${couponId}`,
+      method: "GET",
+      success: (response) => {
+        if (response && response.users && response.users.length > 0) {
+          noUsersMessage.classList.add("d-none");
+          response.users.forEach((user) => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+              <td>${user._id}</td>
+              <td>${user.name}</td>
+              <td>${user.email}</td>
+              <td>${new Date(user.usedOn).toLocaleDateString("en-IN")}</td>
+            `;
+            usersTableBody.appendChild(row);
+          });
+        } else {
+          noUsersMessage.classList.remove("d-none");
+        }
+      },
+      error: (error) => {
+        console.error("Error:", error);
+        noUsersMessage.classList.remove("d-none");
+        noUsersMessage.textContent =
+          "Error loading user data. Please try again.";
+      },
+    });
+
+    const usersModal = new bootstrap.Modal(
+      document.getElementById("usersModal")
+    );
+    usersModal.show();
+  }
+</script>
+
+<%- include('../partials/alerts.ejs') %> <%- include('../partials2/footer.ejs')
+%>

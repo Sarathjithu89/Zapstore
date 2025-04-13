@@ -1,219 +1,114 @@
-const Coupon = require("../../models/Coupon");
-const User = require("../../models/User");
+const Coupon = require("../../models/Coupon.js");
+const User = require("../../models/User.js");
 
+//get coupons
 const getCoupons = async (req, res) => {
   try {
-    const admin = req.session.admin;
-    const search = req.query.search || "";
     const page = parseInt(req.query.page) || 1;
     const limit = 10;
+    const skip = (page - 1) * limit;
+    const searchQuery = req.query.search
+      ? { name: { $regex: req.query.search, $options: "i" } }
+      : {};
 
-    const coupons = await Coupon.find({
-      name: { $regex: new RegExp(".*" + search + ".*", "i") },
-    })
+    const coupons = await Coupon.find(searchQuery)
       .sort({ createdAt: -1 })
-      .limit(limit)
-      .skip((page - 1) * limit);
+      .skip(skip)
+      .limit(limit);
 
-    const count = await Coupon.find({
-      name: { $regex: new RegExp(".*" + search + ".*", "i") },
-    }).countDocuments();
+    const totalCoupons = await Coupon.countDocuments(searchQuery);
+    const totalPages = Math.ceil(totalCoupons / limit);
 
-    const formattedCoupons = coupons.map((coupon) => {
-      const isExpired = new Date(coupon.expireOn) < new Date();
-      return {
-        _id: coupon._id,
-        code: coupon.name,
-        description: `Discount coupon with minimum purchase of ₹${coupon.minimumPrice}`,
-        discountType: "fixed",
-        discountValue: coupon.offerPrice,
-        minPurchase: coupon.minimumPrice,
-        maxDiscount: null,
-        usageLimit: null,
-        expiryDate: coupon.expireOn,
-        isActive: coupon.isList && !isExpired,
-        usedCount: coupon.UserId.length,
-      };
-    });
-
-    res.render("coupons.ejs", {
-      coupons: formattedCoupons,
+    res.render("admin/couponsMangment.ejs", {
+      coupons,
       currentPage: page,
-      totalPages: Math.ceil(count / limit),
-      admin: admin,
+      totalPages,
+      totalItems: totalCoupons,
     });
   } catch (error) {
-    console.log("Get coupons error", error);
-    return res.redirect("/admin/pageerror");
+    console.error("Error fetching coupons:", error);
+    req.flash("error", "Failed to load coupons");
+    res.redirect("/admin/dashboard.ejs");
   }
 };
 
-// Render add coupon page
-const getAddCouponPage = async (req, res) => {
-  try {
-    const admin = req.session.admin;
-    res.render("addCoupon.ejs", { admin });
-  } catch (error) {
-    console.log("Get add coupon page error", error);
-    return res.redirect("/admin/pageerror");
-  }
-};
-
-// Add new coupon
+//Add coupon
 const addCoupon = async (req, res) => {
   try {
-    const { name, expireOn, offerPrice, minimumPrice } = req.body;
-
-    // check coupon data
-    if (!name || !expireOn || !offerPrice || !minimumPrice) {
-      req.session.message = {
-        type: "error",
-        message: "All fields are required",
-      };
-      return res.redirect("/admin/addCoupon");
-    }
-    const existingCoupon = await Coupon.findOne({
-      name: { $regex: new RegExp("^" + name + "$", "i") },
-    });
+    const { name, offerPrice, minimumPrice, expireOn } = req.body;
+    const existingCoupon = await Coupon.findOne({ name });
     if (existingCoupon) {
-      req.session.message = {
-        type: "error",
-        message: "Coupon code already exists",
-      };
-      return res.redirect("/admin/addCoupon");
+      req.flash("error", "A coupon with this name already exists");
+      return res.redirect("/admin/coupons.ejs");
     }
-
-    // Validate expiry date
-    const expireDate = new Date(expireOn);
-    if (expireDate <= new Date()) {
-      req.session.message = {
-        type: "error",
-        message: "Expiry date must be in the future",
-      };
-      return res.redirect("/admin/addCoupon");
-    }
-
-    // Create new coupon
     const newCoupon = new Coupon({
-      name: name.toUpperCase().trim(),
-      expireOn: expireDate,
-      offerPrice: Number(offerPrice),
-      minimumPrice: Number(minimumPrice),
-      isList: true,
-      UserId: [],
+      name,
+      offerPrice,
+      minimumPrice,
+      expireOn,
+      isListed: true,
     });
 
     await newCoupon.save();
 
-    req.session.message = {
-      type: "success",
-      message: "Coupon added successfully",
-    };
-    res.redirect("/admin/coupons");
+    req.flash("success", "Coupon added successfully");
+    res.redirect("/admin/coupons.ejs");
   } catch (error) {
-    console.log("Add coupon error", error);
-    req.session.message = {
-      type: "error",
-      message: "Failed to add coupon",
-    };
-    return res.redirect("/admin/addCoupon");
+    console.error("Error adding coupon:", error);
+    req.flash("error", "Failed to add coupon");
+    res.redirect("/admin/coupons.ejs");
   }
 };
 
-// Render edit coupon page
-const getEditCouponPage = async (req, res) => {
+//Edit coupon
+const editCoupon = async (req, res) => {
   try {
-    const admin = req.session.admin;
-    const couponId = req.params.id;
-
-    const coupon = await Coupon.findById(couponId);
-    if (!coupon) {
-      req.session.message = {
-        type: "error",
-        message: "Coupon not found",
-      };
-      return res.redirect("/admin/coupons");
-    }
-
-    res.render("admin/editCoupon", { admin, coupon });
-  } catch (error) {
-    console.log("Get edit coupon page error", error);
-    return res.redirect("/admin/pageerror");
-  }
-};
-
-// Update coupon
-const updateCoupon = async (req, res) => {
-  try {
-    const couponId = req.params.id;
-    const { name, expireOn, offerPrice, minimumPrice } = req.body;
-
-    // Validate coupon data
-    if (!name || !expireOn || !offerPrice || !minimumPrice) {
-      req.session.message = {
-        type: "error",
-        message: "All fields are required",
-      };
-      return res.redirect(`/admin/editCoupon/${couponId}`);
-    }
-
+    const { couponId, name, offerPrice, minimumPrice, expireOn } = req.body;
     const existingCoupon = await Coupon.findOne({
-      name: { $regex: new RegExp("^" + name + "$", "i") },
+      name,
       _id: { $ne: couponId },
     });
 
     if (existingCoupon) {
-      req.session.message = {
-        type: "error",
-        message: "Coupon code already exists",
-      };
-      return res.redirect(`/admin/editCoupon/${couponId}`);
+      req.flash("error", "Another coupon with this name already exists");
+      return res.redirect("/admin/coupons.ejs");
     }
-
-    // Update coupon
     await Coupon.findByIdAndUpdate(couponId, {
-      name: name.toUpperCase().trim(),
-      expireOn: new Date(expireOn),
-      offerPrice: Number(offerPrice),
-      minimumPrice: Number(minimumPrice),
+      name,
+      offerPrice,
+      minimumPrice,
+      expireOn,
     });
 
-    req.session.message = {
-      type: "success",
-      message: "Coupon updated successfully",
-    };
+    req.flash("success", "Coupon updated successfully");
     res.redirect("/admin/coupons");
   } catch (error) {
-    console.log("Update coupon error", error);
-    req.session.message = {
-      type: "error",
-      message: "Failed to update coupon",
-    };
-    return res.redirect(`/admin/editCoupon/${req.params.id}`);
+    console.error("Error updating coupon:", error);
+    req.flash("error", "Failed to update coupon");
+    res.redirect("/admin/coupons.ejs");
   }
 };
 
-// Toggle coupon listing
 const toggleCouponStatus = async (req, res) => {
   try {
-    const { couponId, active } = req.body;
+    const couponId = req.query.id;
+    const coupon = await Coupon.findById(couponId);
 
-    const isActive = active === "true" || active === true;
+    if (!coupon) {
+      req.flash("error", "Coupon not found");
+      return res.redirect("/admin/coupons.ejs");
+    }
 
-    await Coupon.findByIdAndUpdate(couponId, {
-      isList: isActive,
-    });
+    coupon.isListed = !coupon.isListed;
+    await coupon.save();
 
-    return res.json({
-      status: true,
-      message: `Coupon ${isActive ? "activated" : "deactivated"} successfully`,
-    });
+    const statusMessage = coupon.isListed ? "activated" : "deactivated";
+    req.flash("success", `Coupon ${statusMessage} successfully`);
+    res.redirect("/admin/coupons.ejs");
   } catch (error) {
-    console.log("Toggle coupon status error", error);
-    return res.json({
-      status: false,
-      message: "Failed to update coupon status",
-    });
+    console.error("Error toggling coupon status:", error);
+    req.flash("error", "Failed to update coupon status");
+    res.redirect("/admin/coupons.ejs");
   }
 };
 
@@ -224,103 +119,53 @@ const deleteCoupon = async (req, res) => {
 
     await Coupon.findByIdAndDelete(couponId);
 
-    return res.json({
-      status: true,
-      message: "Coupon deleted successfully",
-    });
+    req.flash("success", "Coupon deleted successfully");
+    res.redirect("/admin/coupons.ejs");
   } catch (error) {
-    console.log("Delete coupon error", error);
-    return res.json({
-      status: false,
-      message: "Failed to delete coupon",
-    });
+    console.error("Error deleting coupon:", error);
+    req.flash("error", "Failed to delete coupon");
+    res.redirect("/admin/coupons.ejs");
   }
 };
 
-const applyCoupon = async (userId, couponCode) => {
+//users who used a coupon
+const getCouponUsers = async (req, res) => {
   try {
-    if (!userId || !couponCode) return false;
+    const couponId = req.params.id;
 
-    const result = await Coupon.updateOne(
-      { name: { $regex: new RegExp("^" + couponCode + "$", "i") } },
-      { $addToSet: { UserId: userId } }
-    );
-
-    return result.modifiedCount > 0;
-  } catch (error) {
-    console.log("Apply coupon error", error);
-    return false;
-  }
-};
-// Validate coupon (for checkout process)
-
-const validateCoupon = async (req, res) => {
-  try {
-    const { couponCode, total, userId } = req.body;
-
-    if (!couponCode || !total || !userId) {
-      return res.json({
-        status: false,
-        message: "Invalid request parameters",
-      });
-    }
-
-    // Find coupon (case insensitive)
-    const coupon = await Coupon.findOne({
-      name: { $regex: new RegExp("^" + couponCode + "$", "i") },
-      isList: true,
-      expireOn: { $gt: new Date() },
-    });
+    const coupon = await Coupon.findById(couponId).populate("UserId");
 
     if (!coupon) {
-      return res.json({
-        status: false,
-        message: "Invalid or expired coupon code",
+      return res.status(404).json({
+        success: false,
+        message: "Coupon not found",
       });
     }
-
-    // Check if user has already used this coupon
-    if (coupon.UserId.includes(userId)) {
-      return res.json({
-        status: false,
-        message: "You have already used this coupon",
-      });
-    }
-
-    // Check minimum purchase requirement
-    if (total < coupon.minimumPrice) {
-      return res.json({
-        status: false,
-        message: `Minimum purchase of ₹${coupon.minimumPrice.toLocaleString()} required for this coupon`,
-      });
-    }
-
-    return res.json({
-      status: true,
-      coupon: {
-        id: coupon._id,
-        code: coupon.name,
-        discountValue: coupon.offerPrice,
-        minPurchase: coupon.minimumPrice,
-      },
+    //maping the users
+    const users = coupon.UserId.map((user) => {
+      return {
+        _id: user._id,
+        name: user.name || "User",
+        email: user.email || "No email",
+        usedOn: user.updatedAt || new Date(),
+      };
     });
+
+    res.json({ success: true, users });
   } catch (error) {
-    console.log("Validate coupon error", error);
-    return res.json({
-      status: false,
-      message: "Failed to validate coupon",
+    console.error("Error getting coupon users:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to get coupon users",
     });
   }
 };
 
 module.exports = {
   getCoupons,
-  getAddCouponPage,
   addCoupon,
-  getEditCouponPage,
-  updateCoupon,
+  editCoupon,
   toggleCouponStatus,
   deleteCoupon,
-  validateCoupon,
-  applyCoupon,
+  getCouponUsers,
 };

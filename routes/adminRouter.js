@@ -7,12 +7,13 @@ const categoryController = require("../controllers/admin/categoryController.js")
 const brandController = require("../controllers/admin/brandController.js");
 const productController = require("../controllers/admin/productController.js");
 const orderController = require("../controllers/admin/orderController.js");
+const inventoryController = require("../controllers/admin/inventoryController.js");
 const couponController = require("../controllers/admin/couponController.js");
 
 const { BrandUploads, ProductUploads } = require("../uility/multer.js");
 
 //admin login routes
-adminRouter.get("/", adminController.loadLogin);
+adminRouter.get("/", adminAuth, adminController.loadLogin);
 adminRouter.post("/login", adminController.adminLogin);
 adminRouter.get("/logout", adminController.adminLogout);
 adminRouter.get("/dashboard", adminAuth, adminController.loadDashboard);
@@ -123,20 +124,44 @@ adminRouter.post(
 adminRouter.get("/exportOrders", adminAuth, orderController.exportOrders);
 adminRouter.post("/processReturn", adminAuth, orderController.processReturn);
 
-//coupon routs
-// adminRouter.get("/coupons", adminAuth, couponController.getCoupons);
-// adminRouter.get("/addCoupon", adminAuth, couponController.getAddCouponPage);
-// adminRouter.post("/addCoupon", adminAuth, couponController.addCoupon);
-// adminRouter.get(
-//   "/editCoupon/:id",
-//   adminAuth,
-//   couponController.getEditCouponPage
-// );
-// adminRouter.post("/editCoupon/:id", adminAuth, couponController.updateCoupon);
-// adminRouter.post(
-//   "/toggleCouponStatus",
-//   adminAuth,
-//   couponController.toggleCouponStatus
-// );
-// adminRouter.post("/deleteCoupon/:id", adminAuth, couponController.deleteCoupon);
+//inventory
+
+adminRouter.get("/inventory", adminAuth, inventoryController.getInventoryPage);
+adminRouter.post(
+  "/updateProductQuantity",
+  adminAuth,
+  inventoryController.updateProductQuantity
+);
+adminRouter.post(
+  "/updateProductStatus",
+  adminAuth,
+  inventoryController.updateProductStatus
+);
+adminRouter.post(
+  "/adjustInventory",
+  adminAuth,
+  inventoryController.adjustInventory
+);
+adminRouter.get(
+  "/inventoryHistory/:id",
+  adminAuth,
+  inventoryController.getInventoryHistory
+);
+
+//coupons
+adminRouter.get("/coupons", adminAuth, couponController.getCoupons);
+adminRouter.post("/add-coupon", adminAuth, couponController.addCoupon);
+adminRouter.post("/edit-coupon", adminAuth, couponController.editCoupon);
+adminRouter.get(
+  "/toggle-coupon-status",
+  adminAuth,
+  couponController.toggleCouponStatus
+);
+adminRouter.get("/delete-coupon/:id", adminAuth, couponController.deleteCoupon);
+adminRouter.get(
+  "/coupon-users/:id",
+  adminAuth,
+  couponController.getCouponUsers
+);
+
 module.exports = adminRouter;

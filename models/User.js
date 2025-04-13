@@ -1,3 +1,4 @@
+// User.js
 const mongoose = require("mongoose");
 const userSchema = new mongoose.Schema(
   {
@@ -10,57 +11,22 @@ const userSchema = new mongoose.Schema(
     is_blocked: { type: Boolean, default: false },
     isAdmin: { type: Boolean, default: false },
     cart: [{ type: mongoose.Schema.Types.ObjectId, ref: "Cart" }],
-    wallet: {
-      type: Number,
-      default: 0,
-    },
-    walletHistory: [
-      {
-        amount: { type: Number },
-        type: { type: String, enum: ["credit", "debit"] },
-        description: { type: String },
-      },
-    ],
+    wallet: { type: mongoose.Schema.Types.ObjectId, ref: "Wallet" },
     wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: "Wishlist" }],
-    OrderHistory: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Order",
-      },
-    ],
-    profileImage: {
-      type: String,
-      default: "default/default-user-avatar.png",
-    },
-    referalCode: {
-      type: String,
-    },
-    redeemed: {
-      type: Boolean,
-    },
-    redeemedUsers: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "user",
-      },
-    ],
+    OrderHistory: [{ type: mongoose.Schema.Types.ObjectId, ref: "Order" }],
+    profileImage: { type: String, default: "default/default-user-avatar.png" },
+    referalCode: { type: String },
+    redeemed: { type: Boolean },
+    redeemedUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     searchHistory: [
       {
-        category: {
-          type: mongoose.Types.ObjectId,
-          ref: "Category",
-        },
-        brand: {
-          type: String,
-        },
-        SearchOn: {
-          type: Date,
-          default: Date.now,
-        },
+        category: { type: mongoose.Types.ObjectId, ref: "Category" },
+        brand: { type: String },
+        SearchOn: { type: Date, default: Date.now },
       },
     ],
   },
   { timestamps: true }
 );
 
-module.exports = mongoose.model("user", userSchema);
+module.exports = mongoose.model("User", userSchema);

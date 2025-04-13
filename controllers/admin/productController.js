@@ -8,7 +8,7 @@ const sharp = require("sharp");
 
 const getProductAddPage = async (req, res) => {
   try {
-    const admin = req.session.admin;
+    const admin = req.admin;
     const category = await Category.find({ isListed: true });
     const brand = await Brand.find({ isBlocked: false });
     res.render("addproduct.ejs", {
@@ -83,7 +83,7 @@ const addProducts = async (req, res) => {
 
 const getProducts = async (req, res) => {
   try {
-    const admin = req.session.admin;
+    const admin = req.admin;
     const search = req.query.search || "";
     const page = parseInt(req.query.page) || 1;
     const limit = 4;
@@ -244,7 +244,7 @@ const toggleProductBlock = async (req, res) => {
 
 const getEditProduct = async (req, res) => {
   try {
-    const admin = req.session.admin;
+    const admin = req.admin;
     const id = req.params.id;
     const product = await Product.findOne({ _id: id, isDeleted: false });
     const category = await Category.find({});

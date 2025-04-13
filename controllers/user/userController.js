@@ -1,15 +1,14 @@
-const nodemailer = require("nodemailer");
-const dotenv = require("dotenv").config();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const Product = require("../../models/Products.js");
 const User = require("../../models/User.js");
 const Category = require("../../models/Category.js");
-const Address = require("../../models/Address.js");
-const sharp = require("sharp");
-const path = require("path");
-const fs = require("fs");
 const Cart = require("../../models/Cart.js");
+const { createJwtToken } = require("../../config/jwt.js");
+const {
+  sendVerificationEmail,
+  generateOtp,
+} = require("../../uility/nodemailer.js");
 
 /*-----------------------------------------Loading Pages----------------------------------------------------*/
 
@@ -606,55 +605,6 @@ const securePassword = async (password) => {
     return false;
   }
 };
-
-//otp generation function
-function generateOtp() {
-  var digits = "0123456789";
-  let OTP = "";
-  for (let i = 0; i < 6; i++) {
-    OTP += digits[Math.floor(Math.random() * 10)];
-  }
-  return OTP;
-}
-//email verification function
-async function sendVerificationEmail(emailData) {
-  try {
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      port: 587,
-      secure: false,
-      requireTLS: true,
-
-      auth: {
-        user: process.env.EMAIL,
-        pass: process.env.PASSWORD,
-      },
-    });
-    const mailOptions = {
-      from: process.env.EMAIL,
-      to: emailData.to,
-      subject: emailData.subject,
-      text: emailData.text,
-      html: `<p>${emailData.text}</p>`,
-    };
-    const info = await transporter.sendMail(mailOptions);
-    if (info.accepted && info.accepted.length > 0) {
-      return true;
-    }
-    console.log("Email rejected by server", info.rejected);
-    return false;
-  } catch (error) {
-    console.log(error);
-    return false;
-  }
-}
-//ceate JWT token function
-function createJwtToken(payLoad) {
-  const token = jwt.sign(payLoad, process.env.JWT_SECRET_KEY, {
-    expiresIn: "8hr",
-  });
-  return token;
-}
 
 module.exports = {
   securePassword,

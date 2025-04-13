@@ -19,14 +19,14 @@ const couponSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
-    isList: {
+    isListed: {
       type: Boolean,
       default: true,
     },
     UserId: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "user",
+        ref: "User",
       },
     ],
   },

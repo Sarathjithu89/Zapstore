@@ -1,0 +1,518 @@
+<%- include('../partials2/header.ejs') %>
+<style>
+  /* Minimal custom styles */
+  .product-image {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 4px;
+    transition: transform 0.2s;
+  }
+
+  .product-image:hover {
+    transform: scale(1.2);
+    z-index: 10;
+  }
+
+  .table th {
+    color: white;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .quantity-value {
+    font-weight: 600;
+  }
+
+  .low-stock {
+    font-weight: 700;
+    color: #dc3545;
+  }
+
+  .actions {
+    height: 150px;
+    width: 90px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .actions button {
+    width: 75px;
+    margin: 2px;
+  }
+
+  .quantity {
+    text-align: center;
+  }
+
+  .status-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+</style>
+<% data.reverse() %>
+<main id="main">
+  <!-- Breadcrumb -->
+  <div class="bg-white border-bottom py-2">
+    <div class="container-fluid">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb m-0 py-2">
+          <li class="breadcrumb-item">
+            <a href="/admin/dashboard" class="text-decoration-none">Home</a>
+          </li>
+          <li class="breadcrumb-item active" aria-current="page">Inventory</li>
+        </ol>
+      </nav>
+    </div>
+  </div>
+
+  <div class="container-fluid py-4">
+    <div class="row justify-content-center">
+      <div class="col-lg-12">
+        <!-- Search Form -->
+        <div class="card shadow-sm mb-4">
+          <div class="card-body">
+            <form action="" method="get" class="d-flex justify-content-center">
+              <div class="input-group" style="max-width: 500px">
+                <input
+                  type="text"
+                  class="form-control"
+                  placeholder="Search by product name or number"
+                  name="search"
+                  aria-label="Search inventory"
+                />
+                <button class="btn btn-primary" type="submit">
+                  <i class="bi bi-search me-1"></i> Search
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Inventory Table -->
+        <div class="card shadow-sm">
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table
+                class="table table-hover align-middle mb-0"
+                aria-label="Inventory table"
+              >
+                <thead class="bg-primary text-white">
+                  <tr>
+                    <th scope="col">Image</th>
+                    <th scope="col">Product Name</th>
+                    <th scope="col">Product #</th>
+                    <th scope="col">Category</th>
+                    <th scope="col">Quantity</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Sold</th>
+                    <th scope="col">Last Updated</th>
+                    <th scope="col">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% for(let i=data.length-1; i>=0; i--) { %>
+                  <tr>
+                    <td>
+                      <div
+                        class="d-flex flex-wrap gap-1 justify-content-center"
+                      >
+                        <% if(data[i].productImage &&
+                        data[i].productImage.length > 0) { %> <%
+                        data[i].productImage.forEach(image => { %>
+                        <img
+                          src="/uploads/product-images/<%= image %>"
+                          alt="<%= data[i].productName %>"
+                          class="product-image"
+                        />
+                        <% }); %> <% } else { %>
+                        <img
+                          src="/placeholder.svg"
+                          alt="No image available"
+                          class="product-image"
+                        />
+                        <% } %>
+                      </div>
+                    </td>
+                    <td><%= data[i].productName %></td>
+                    <td><%= data[i].productNumber %></td>
+                    <td>
+                      <%= data[i].category ? data[i].category.name : 'N/A' %>
+                    </td>
+                    <td class="quantity">
+                      <span
+                        class="quantity-value <%= data[i].quantity < 10 ? 'low-stock' : '' %>"
+                      >
+                        <%= data[i].quantity %>
+                      </span>
+                      <div class="mt-2">
+                        <button
+                          class="btn btn-sm btn-info"
+                          onclick="updateQuantity('<%= data[i]._id %>', <%= data[i].quantity %>)"
+                          title="Update quantity"
+                        >
+                          <i class="bi bi-pencil"></i> Update
+                        </button>
+                      </div>
+                    </td>
+                    <td>
+                      <span
+                        class="status-badge <%= data[i].status === 'Available' ? 'bg-success' : data[i].status === 'Out of Stock' ? 'bg-danger' : 'bg-warning' %>"
+                      >
+                        <%= data[i].status %>
+                      </span>
+                      <div class="mt-2">
+                        <button
+                          class="btn btn-sm btn-info"
+                          onclick="updateStatus('<%= data[i]._id %>', '<%= data[i].status %>')"
+                          title="Change status"
+                        >
+                          <i class="bi bi-arrow-repeat"></i> Change
+                        </button>
+                      </div>
+                    </td>
+                    <td><%= data[i].sold %></td>
+                    <td>
+                      <%= new Date(data[i].updatedAt).toLocaleDateString() %>
+                    </td>
+                    <td class="actions">
+                      <div
+                        class="d-flex flex-wrap gap-1 justify-content-center"
+                      >
+                        <button
+                          class="btn btn-sm btn-success"
+                          title="Restock product"
+                          onclick="restockProduct('<%= data[i]._id %>', <%= data[i].quantity %>)"
+                        >
+                          <i class="bi bi-plus-circle"></i> Restock
+                        </button>
+
+                        <button
+                          class="btn btn-sm btn-warning"
+                          title="Adjust inventory"
+                          onclick="adjustInventory('<%= data[i]._id %>', <%= data[i].quantity %>)"
+                        >
+                          <i class="bi bi-sliders"></i> Adjust
+                        </button>
+
+                        <button
+                          class="btn btn-sm btn-info"
+                          title="View history"
+                          onclick="viewInventoryHistory('<%= data[i]._id %>')"
+                        >
+                          <i class="bi bi-clock-history"></i> History
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  <% } %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="mt-4"><%- include("../partials2/pagination.ejs") %></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+  async function updateQuantity(productId, currentQuantity) {
+    const { value: quantity } = await Swal.fire({
+      title: "Update Quantity",
+      input: "number",
+      inputLabel: "Current Stock",
+      inputPlaceholder: "Enter new quantity",
+      inputValue: currentQuantity,
+      inputAttributes: {
+        min: 0,
+        step: 1,
+      },
+      showCancelButton: true,
+      inputValidator: (value) => {
+        if (!value || value < 0) {
+          return "Please enter a valid quantity (0 or greater)";
+        }
+      },
+    });
+
+    if (quantity) {
+      updateProductQuantity(productId, quantity);
+    }
+  }
+
+  function updateProductQuantity(productId, quantity) {
+    $.ajax({
+      url: "/admin/updateProductQuantity",
+      method: "post",
+      data: {
+        productId: productId,
+        quantity: quantity,
+      },
+      success: (response) => {
+        if (response.status) {
+          Swal.fire("Success", "Quantity updated successfully", "success").then(
+            () => {
+              location.reload();
+            }
+          );
+        } else {
+          Swal.fire(
+            "Error",
+            response.message || "Failed to update quantity",
+            "error"
+          );
+        }
+      },
+      error: (error) => {
+        console.error("Error:", error);
+        Swal.fire("Error", "An unexpected error occurred", "error");
+      },
+    });
+  }
+
+  async function updateStatus(productId, currentStatus) {
+    const { value: status } = await Swal.fire({
+      title: "Update Status",
+      input: "select",
+      inputOptions: {
+        Available: "Available",
+        "Out of Stock": "Out of Stock",
+        Discontinued: "Discontinued",
+      },
+      inputPlaceholder: "Select status",
+      inputValue: currentStatus,
+      showCancelButton: true,
+    });
+
+    if (status) {
+      changeProductStatus(productId, status);
+    }
+  }
+
+  function changeProductStatus(productId, status) {
+    $.ajax({
+      url: "/admin/updateProductStatus",
+      method: "post",
+      data: {
+        productId: productId,
+        status: status,
+      },
+      success: (response) => {
+        if (response.status) {
+          Swal.fire("Success", "Status updated successfully", "success").then(
+            () => {
+              location.reload();
+            }
+          );
+        } else {
+          Swal.fire(
+            "Error",
+            response.message || "Failed to update status",
+            "error"
+          );
+        }
+      },
+      error: (error) => {
+        console.error("Error:", error);
+        Swal.fire("Error", "An unexpected error occurred", "error");
+      },
+    });
+  }
+
+  async function restockProduct(productId, currentQuantity) {
+    const { value: quantity } = await Swal.fire({
+      title: "Restock Product",
+      input: "number",
+      inputLabel: "Add Quantity",
+      inputPlaceholder: "Enter quantity to add",
+      inputAttributes: {
+        min: 1,
+        step: 1,
+      },
+      showCancelButton: true,
+      inputValidator: (value) => {
+        if (!value || value < 1) {
+          return "Please enter a valid quantity (1 or greater)";
+        }
+      },
+    });
+
+    if (quantity) {
+      const newQuantity = parseInt(currentQuantity) + parseInt(quantity);
+      updateProductQuantity(productId, newQuantity);
+    }
+  }
+
+  async function adjustInventory(productId, currentQuantity) {
+    const { value: adjustment } = await Swal.fire({
+      title: "Adjust Inventory",
+      html: `
+        <div class="mb-3">
+          <label class="form-label">Current Quantity: ${currentQuantity}</label>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Adjustment Type:</label>
+          <select id="adjustment-type" class="form-select">
+            <option value="add">Add to inventory</option>
+            <option value="remove">Remove from inventory</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Quantity:</label>
+          <input id="adjustment-quantity" type="number" class="form-control" min="1" value="1">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Reason:</label>
+          <select id="adjustment-reason" class="form-select">
+            <option value="Restock">Restock</option>
+            <option value="Damage">Damage</option>
+            <option value="Return">Return</option>
+            <option value="Correction">Inventory Correction</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div id="other-reason-container" class="mb-3 d-none">
+          <label class="form-label">Specify Reason:</label>
+          <input id="other-reason" type="text" class="form-control">
+        </div>
+      `,
+      focusConfirm: false,
+      preConfirm: () => {
+        const type = document.getElementById("adjustment-type").value;
+        const qty = document.getElementById("adjustment-quantity").value;
+        const reason = document.getElementById("adjustment-reason").value;
+        const otherReason = document.getElementById("other-reason").value;
+
+        if (!qty || qty < 1) {
+          Swal.showValidationMessage("Please enter a valid quantity");
+          return false;
+        }
+
+        if (reason === "Other" && !otherReason) {
+          Swal.showValidationMessage("Please specify the reason");
+          return false;
+        }
+
+        if (type === "remove" && parseInt(qty) > currentQuantity) {
+          Swal.showValidationMessage(
+            `Cannot remove more than current quantity (${currentQuantity})`
+          );
+          return false;
+        }
+
+        return {
+          type,
+          quantity: parseInt(qty),
+          reason: reason === "Other" ? otherReason : reason,
+        };
+      },
+      didOpen: () => {
+        const reasonSelect = document.getElementById("adjustment-reason");
+        const otherContainer = document.getElementById(
+          "other-reason-container"
+        );
+
+        reasonSelect.addEventListener("change", () => {
+          if (reasonSelect.value === "Other") {
+            otherContainer.classList.remove("d-none");
+          } else {
+            otherContainer.classList.add("d-none");
+          }
+        });
+      },
+      showCancelButton: true,
+    });
+
+    if (adjustment) {
+      const newQuantity =
+        adjustment.type === "add"
+          ? currentQuantity + adjustment.quantity
+          : currentQuantity - adjustment.quantity;
+
+      adjustProductInventory(
+        productId,
+        newQuantity,
+        adjustment.reason,
+        adjustment.type,
+        adjustment.quantity
+      );
+    }
+  }
+
+  function adjustProductInventory(
+    productId,
+    newQuantity,
+    reason,
+    adjustmentType,
+    adjustmentQuantity
+  ) {
+    $.ajax({
+      url: "/admin/adjustInventory",
+      method: "post",
+      data: {
+        productId: productId,
+        quantity: newQuantity,
+        reason: reason,
+        adjustmentType: adjustmentType,
+        adjustmentQuantity: adjustmentQuantity,
+      },
+      success: (response) => {
+        if (response.status) {
+          Swal.fire(
+            "Success",
+            "Inventory adjusted successfully",
+            "success"
+          ).then(() => {
+            location.reload();
+          });
+        } else {
+          Swal.fire(
+            "Error",
+            response.message || "Failed to adjust inventory",
+            "error"
+          );
+        }
+      },
+      error: (error) => {
+        console.error("Error:", error);
+        Swal.fire("Error", "An unexpected error occurred", "error");
+      },
+    });
+  }
+
+  function viewInventoryHistory(productId) {
+    window.location.href = `/admin/inventoryHistory/${productId}`;
+  }
+
+  // Add event listener to show/hide other reason field
+  document.addEventListener("DOMContentLoaded", function () {
+    const reasonSelect = document.getElementById("adjustment-reason");
+    if (reasonSelect) {
+      reasonSelect.addEventListener("change", function () {
+        const otherContainer = document.getElementById(
+          "other-reason-container"
+        );
+        if (this.value === "Other") {
+          otherContainer.classList.remove("d-none");
+        } else {
+          otherContainer.classList.add("d-none");
+        }
+      });
+    }
+  });
+</script>
+
+<%- include('../partials/alerts.ejs') %> <%- include('../partials2/footer.ejs')
+%>
