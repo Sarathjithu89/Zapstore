@@ -1016,38 +1016,6 @@
       });
   }
 
-  function processCODOrder(orderData) {
-    fetch("/placeOrder", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(orderData),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("Server response:", data);
-        if (data.success) {
-          // Redirect to order success page instead of showing modal
-          window.location.href = "/ordersuccess";
-        } else {
-          Swal.fire(
-            "Error",
-            data.message || "An error occurred while placing the order",
-            "error"
-          );
-        }
-      })
-      .catch((error) => {
-        console.error("Error:", error);
-        Swal.fire(
-          "Error",
-          "An error occurred while placing the order",
-          "error"
-        );
-      });
-  }
-
   function verifyPayment(paymentResponse, orderData) {
     fetch("/verify-payment", {
       method: "POST",
@@ -1082,35 +1050,61 @@
       });
   }
 
+  //palce wallet order
   function placeWalletOrder(orderData) {
-    fetch("/walletOrder", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(orderData),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.success) {
-          // Redirect to order success page instead of showing modal
-          window.location.href = "/ordersuccess";
-        } else {
+    const grandTotal = parseFloat(
+      document.getElementById("grandTotal").textContent
+    );
+    const walletBalance = parseFloat(
+      document.getElementById("walletBalance").textContent
+    );
+
+    document.getElementById("payableAmount").textContent =
+      grandTotal.toFixed(2);
+
+    if (walletBalance < grandTotal) {
+      document.getElementById("insufficientFunds").style.display = "block";
+      document.getElementById("confirmWalletPayment").style.display = "none";
+    } else {
+      document.getElementById("insufficientFunds").style.display = "none";
+      document.getElementById("confirmWalletPayment").style.display = "block";
+    }
+
+    const modalElement = document.getElementById("walletPaymentModal");
+    const walletModal = new bootstrap.Modal(modalElement);
+    walletModal.show();
+
+    //confirm payment
+    document.getElementById("confirmWalletPayment").onclick = function () {
+      fetch("/palceWalletOrder", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ ...orderData, amount: grandTotal }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.success) {
+            window.location.href = "/ordersuccess";
+          } else {
+            Swal.fire(
+              "Error",
+              data.message || "An error occurred while processing you order",
+              "error"
+            );
+          }
+        })
+        .catch((error) => {
+          console.error("Error", error);
           Swal.fire(
             "Error",
-            data.message || "An error occurred while placing the order",
+            "An error occurred while processing the Order",
             "error"
           );
-        }
-      })
-      .catch((error) => {
-        console.error("Error:", error);
-        Swal.fire(
-          "Error",
-          "An error occurred while processing the payment",
-          "error"
-        );
-      });
+        });
+    };
+    walletModal.hide();
   }
 
   // Event listeners for document elements

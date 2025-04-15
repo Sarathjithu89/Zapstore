@@ -75,7 +75,7 @@ const updateProductQuantity = async (req, res) => {
       previousQuantity: previousQuantity,
       newQuantity: parsedQuantity,
       reason: "Manual quantity update",
-      performedBy: req.admin.email,
+      performedBy: req.admin._id,
     }).save();
 
     return res.json({
@@ -123,7 +123,7 @@ const updateProductStatus = async (req, res) => {
         previousQuantity: previousQuantity,
         newQuantity: 0,
         reason: "Status changed to Out of Stock",
-        performedBy: req.admin.email,
+        performedBy: req.admin._id,
       }).save();
     }
 
@@ -141,7 +141,7 @@ const updateProductStatus = async (req, res) => {
         previousQuantity: 0,
         newQuantity: 1,
         reason: "Status changed to Available",
-        performedBy: req.admin.email,
+        performedBy: req.admin._id,
       }).save();
     }
 
@@ -196,8 +196,7 @@ const adjustInventory = async (req, res) => {
       previousQuantity: previousQuantity,
       newQuantity: parsedQuantity,
       reason: reason,
-      performedBy: req.admin.email,
-      eam,
+      performedBy: req.admin._id,
     }).save();
 
     return res.json({
@@ -246,7 +245,7 @@ const restockProduct = async (req, res) => {
       previousQuantity: previousQuantity,
       newQuantity: newQuantity,
       reason: reason || "Restock inventory",
-      performedBy: req.admin.email,
+      performedBy: req.admin._id,
     }).save();
 
     return res.json({
@@ -424,7 +423,7 @@ const bulkUpdateInventory = async (req, res) => {
         previousQuantity: previousQuantity,
         newQuantity: newQuantity,
         reason: "Bulk inventory update",
-        performedBy: req.admin.email,
+        performedBy: req.admin._id,
       }).save();
 
       updates.push({

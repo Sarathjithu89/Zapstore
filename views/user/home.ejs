@@ -503,6 +503,7 @@
                           font-size: 12px;
                           text-transform: uppercase;
                         "
+                        onclick="addtowishlist('<%= product._id %>')"
                       >
                         <i class="fa fa-heart-o"></i>
                       </button>
@@ -613,6 +614,7 @@
                           font-size: 12px;
                           text-transform: uppercase;
                         "
+                        onclick="addtowishlist('<%= product._id %>')"
                       >
                         <i class="fa fa-heart-o"></i>
                       </button>
@@ -720,6 +722,7 @@
                           font-size: 12px;
                           text-transform: uppercase;
                         "
+                        onclick="addtowishlist('<%= product._id %>')"
                       >
                         <i class="fa fa-heart-o"></i>
                       </button>
@@ -867,6 +870,7 @@
                               font-size: 12px;
                               text-transform: uppercase;
                             "
+                            onclick="addtowishlist('<%= product._id %>')"
                           >
                             <i class="fa fa-heart-o"></i>
                           </button>
@@ -953,6 +957,7 @@
                               font-size: 12px;
                               text-transform: uppercase;
                             "
+                            onclick="addtowishlist('<%= product._id %>')"
                           >
                             <i class="fa fa-heart-o"></i>
                           </button>
@@ -1039,6 +1044,7 @@
                               font-size: 12px;
                               text-transform: uppercase;
                             "
+                            onclick="addtowishlist('<%= product._id  %>')"
                           >
                             <i class="fa fa-heart-o"></i>
                           </button>
@@ -1144,6 +1150,7 @@
                           font-size: 12px;
                           text-transform: uppercase;
                         "
+                        onclick="addtocart('<%= product._id %>')"
                       >
                         <i class="fa fa-heart-o"></i>
                       </button>
@@ -1192,7 +1199,6 @@
 
   // Add to cart function
   function addtocart(productId) {
-    const Id = { id: productId };
     fetch("/cart/add", {
       method: "POST",
       headers: { "Content-type": "application/json" },
@@ -1205,6 +1211,42 @@
           Toast.fire({
             icon: "success",
             title: data.message || "Product added to cart",
+          });
+          // .then(() => {
+          //   window.location.reload();
+          // });
+        } else {
+          Alert.fire({
+            icon: "error",
+            title: "Oops...",
+            text: data.message || "Error adding product to cart",
+          });
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        Alert.fire({
+          icon: "error",
+          title: "Oops...",
+          text: "An unexpected error occurred. Please try again.",
+        });
+      });
+  }
+
+  function addtowishlist(productId) {
+    console.log("wishlist");
+    fetch("/addtowishlisht", {
+      method: "POST",
+      headers: { "Content-type": "application/json" },
+
+      body: JSON.stringify({ productId }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          Toast.fire({
+            icon: "success",
+            title: data.message || "Product added to wishlist",
           });
           // .then(() => {
           //   window.location.reload();

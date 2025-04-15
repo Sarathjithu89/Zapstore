@@ -10,6 +10,7 @@ const passport = require("passport");
 const { authToken } = require("../middleware/authToken");
 const { json } = require("body-parser");
 const { profileImageUpload } = require("../uility/multer.js");
+const wishlistController = require("../controllers/user/wishlistController.js");
 
 userRouter.get("/pageNotFound", userController.pageNotFound);
 //user login
@@ -111,7 +112,7 @@ userRouter.get("/deleteItem", authToken, cartController.deleteItem);
 userRouter.get("/checkout", authToken, checkoutController.getCheckoutPage);
 userRouter.get("/checkStock", authToken, checkoutController.checkStock);
 userRouter.post("/placeOrder", authToken, checkoutController.placeOrder);
-userRouter.post("/walletOrder", authToken, checkoutController.WalletOrder);
+userRouter.post("/palceWalletOrder", authToken, checkoutController.WalletOrder);
 
 //orders
 userRouter.get("/orders", authToken, orderController.getUserOrders);
@@ -127,7 +128,13 @@ userRouter.post("/addToWallet", authToken, walletController.addMoney);
 userRouter.get("/payment", authToken, walletController.getPaymentPage);
 userRouter.post("/verify-payment", authToken, walletController.verifyPayment);
 userRouter.post("/withdraw", authToken, walletController.withdrawMoney);
-
 userRouter.post("/refund", authToken, walletController.refundToWallet);
+
+//wishlist
+
+userRouter.get("/wishlist", authToken, wishlistController.getWishlist);
+userRouter.post("/addtowishlisht", authToken, wishlistController.addToWishlist);
+userRouter.post("/remove", authToken, wishlistController.removeFromWishlist);
+userRouter.post("/move-to-cart", authToken, wishlistController.moveToCart);
 
 module.exports = userRouter;

@@ -168,26 +168,34 @@ const updateOrderStatus = async (req, res) => {
     if (status === "Cancelled" && order.status !== "Cancelled") {
       if (order.paymentMethod !== "COD" && order.paymentStatus === "Paid") {
         const user = await User.findById(order.userId);
-
-        if (user) {
-          user.wallet += order.finalAmount;
-          user.walletHistory.push({
-            amount: order.finalAmount,
-            type: "credit",
-            description: `Refund for cancelled order #${order.orderId}`,
+        const wallet = await Wallet.findOne({ user: user._id });
+        if (!wallet) {
+          wallet = new Wallet({
+            user: user._id,
+            balance: 0,
           });
-
-          await user.save();
         }
 
-        order.paymentStatus = "Refunded";
+        wallet.balance = (wallet.balance || 0) + order.finalAmount;
+        const Transaction = new Transaction({
+          wallet: wallet._id,
+          amount: order.finalAmount,
+          type: "credit",
+          description: `Refund for cancelled order #${order.orderId}`,
+          orderId: order._id,
+        });
+
+        await wallet.save();
+        await Transaction.save();
       }
 
-      for (const item of order.orderedItems) {
-        await Product.findByIdAndUpdate(item.product, {
-          $inc: { stock: item.quantity },
-        });
-      }
+      order.paymentStatus = "Refunded";
+    }
+
+    for (const item of order.orderedItems) {
+      await Product.findByIdAndUpdate(item.product, {
+        $inc: { stock: item.quantity },
+      });
     }
 
     order.status = status;
@@ -200,7 +208,7 @@ const updateOrderStatus = async (req, res) => {
     // Add status history
     order.statusHistory.push({
       status: status,
-      updatedBy: req.admin.email ? req.admin.email : "Admin",
+      updatedBy: `Admin:${req.admin.email}`,
       date: new Date(),
     });
 

@@ -2,7 +2,7 @@ const User = require("../../models/User.js");
 const Cart = require("../../models/Cart.js");
 const Product = require("../../models/Products.js");
 const { json } = require("body-parser");
-
+const Wishlist = require("../../models/Wishlist.js");
 //View the shopping cart
 
 const viewCart = async (req, res) => {
@@ -65,8 +65,8 @@ const addToCart = async (req, res) => {
         .status(401)
         .json({ success: false, message: "Please login to add items to cart" });
     }
-    const user = await User.findOne({ _id: userId });
-    const userCart = user.cart;
+    const user = await User.findById(userId);
+
     const product = await Product.findById(productId).populate("category");
     if (!product) {
       return res
@@ -74,15 +74,10 @@ const addToCart = async (req, res) => {
         .json({ success: false, message: "Product not found" });
     }
 
-    if (product.isBlocked) {
-      return res
-        .status(400)
-        .json({ success: false, message: "This product is not available" });
-    }
-    if (!product.category.isListed) {
+    if (product.isBlocked || !product.category.isListed) {
       return res.status(400).json({
         success: false,
-        message: "Category currently unlisted,not available",
+        message: "Product or category is not available",
       });
     }
 
@@ -94,7 +89,7 @@ const addToCart = async (req, res) => {
 
     let cart = await Cart.findOne({ userId });
     const itemPrice = product.salePrice;
-    const totalItemPrice = itemPrice * parseInt(quantity);
+    const totalItemPrice = itemPrice * quantity;
 
     if (!cart) {
       cart = new Cart({
@@ -102,7 +97,7 @@ const addToCart = async (req, res) => {
         items: [
           {
             productId,
-            quantity: parseInt(quantity),
+            quantity,
             price: itemPrice,
             totalPrice: totalItemPrice,
           },
@@ -113,8 +108,10 @@ const addToCart = async (req, res) => {
         (item) => item.productId.toString() === productId
       );
       if (existingItemIndex >= 0) {
+        const existingItem = cart.itmes[existingItemIndex];
         const newQuantity =
           cart.items[existingItemIndex].quantity + parseInt(quantity);
+
         if (newQuantity > 5) {
           //limit 5 per user
           return res.json({
@@ -130,9 +127,8 @@ const addToCart = async (req, res) => {
           });
         }
 
-        cart.items[existingItemIndex].quantity = newQuantity;
-        cart.items[existingItemIndex].totalPrice =
-          cart.items[existingItemIndex].price * newQuantity;
+        existingItem.quantity = newQuantity;
+        existingItem.totalPrice = existingItem.price * newQuantity;
       } else {
         cart.items.push({
           productId,
@@ -144,8 +140,19 @@ const addToCart = async (req, res) => {
     }
 
     await cart.save();
-    userCart.push(cart._id);
-    await user.save();
+
+    const wishlist = await Wishlist.findOne({ userId: userId });
+    if (wishlist) {
+      wishlist.products = wishlist.products.filter(
+        (item) => item.productId.toString() !== productId
+      );
+      await wishlist.save();
+    }
+
+    if (!user.cart.includes(cart._id)) {
+      user.cart.push(cart._id);
+      await user.save();
+    }
 
     res.status(200).json({
       success: true,

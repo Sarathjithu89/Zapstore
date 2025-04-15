@@ -3,6 +3,8 @@ const User = require("../../models/User.js");
 //const fs = require("fs");
 const Order = require("../../models/Order.js");
 const PDFDocument = require("pdfkit");
+const Transactions = require("../../models/Transactions.js");
+const Wallet = require("../../models/Wallet.js");
 
 // get Orders
 const getUserOrders = async (req, res) => {
@@ -61,19 +63,33 @@ const cancelOrder = async (req, res) => {
     }
 
     if (order.paymentStatus === "Paid") {
-      const user = await User.findById(userId);
-      user.wallet = (user.wallet || 0) + order.finalAmount;
+      const wallet = await Wallet.findOne({ user: userId });
 
-      user.walletHistory.push({
+      if (!wallet) {
+        wallet = new Wallet({
+          user: userId,
+          balance: 0,
+        });
+      }
+      wallet.balance = (wallet.balance || 0) + order.finalAmount;
+
+      const Transaction = new Transactions({
+        wallet: wallet._id,
         amount: order.finalAmount,
         type: "credit",
         description: `Refund for cancelled order #${order.orderId}`,
-        date: new Date(),
+        orderId: order._id,
       });
 
-      await user.save();
+      await wallet.save();
+      await Transaction.save();
 
       order.paymentStatus = "Refunded";
+      order.statusHistory.push({
+        status: order.status,
+        updatedBy: `user:${req.user.email}`,
+        date: new Date(),
+      });
     }
 
     await order.save();
@@ -420,7 +436,7 @@ const orderSuccess = async (req, res) => {
     };
 
     // Clear the session data to prevent revisiting
-    req.session.orderSuccess = null;
+    delete req.session.orderSuccess;
 
     // Render the success page with order details
     res.render("ordersuccess.ejs", {

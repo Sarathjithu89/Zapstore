@@ -4,6 +4,9 @@ const Product = require("../../models/Products.js");
 const Order = require("../../models/Order.js");
 const User = require("../../models/User.js");
 const Wallet = require("../../models/Wallet.js");
+const mongoose = require("mongoose");
+const Coupon = require("../../models/Coupon.js");
+const Transaction = require("../../models/Transactions.js");
 //get checkout page
 const getCheckoutPage = async (req, res) => {
   try {
@@ -33,6 +36,7 @@ const getCheckoutPage = async (req, res) => {
       .populate({ path: "wallet" });
 
     const userAddress = await Address.findOne({ userId: userId });
+
     const cartItems =
       user.cart && user.cart.length > 0 ? user.cart[0].items || [] : [];
 
@@ -185,7 +189,7 @@ const placeOrder = async (req, res) => {
     //seller
     for (const [sellerId, items] of Object.entries(sellerGroups)) {
       const subtotal = items.reduce((sum, item) => sum + item.totalPrice, 0);
-      const shippingCost = 50;
+      const shippingCost = 50; //fixed
       const sellerDiscount = (subtotal / totalSubtotal) * couponDiscount;
       const totalAmount = subtotal + shippingCost - sellerDiscount;
 
@@ -256,30 +260,30 @@ const addAddressCheckout = (req, res) => {
 
 const WalletOrder = async (req, res) => {
   try {
-    const { orderId, amount } = req.body;
+    const { addressId, couponCode, amount } = req.body;
     const userId = req.user.userId;
 
-    if (!orderId || !amount || amount <= 0) {
+    if (!addressId || !amount || amount <= 0) {
       return res.status(400).json({
         success: false,
         message: "Invalid request parameters",
       });
     }
-
-    // Start a session for transaction consistency
+    const orderIds = [];
     const session = await mongoose.startSession();
     session.startTransaction();
-
     try {
-      // Get wallet and check balance
       const wallet = await Wallet.findOne({ user: userId }).session(session);
+
+      const user = await User.findOne({ _id: userId }).session(session);
+      const OrderHistory = user.OrderHistory;
 
       if (!wallet) {
         await session.abortTransaction();
         session.endSession();
         return res.status(404).json({
           success: false,
-          message: "Wallet not found",
+          message: "Wallet not Found",
         });
       }
 
@@ -288,74 +292,132 @@ const WalletOrder = async (req, res) => {
         session.endSession();
         return res.status(400).json({
           success: false,
-          message: "Insufficient balance",
+          message: "Insufficient Balance",
         });
       }
 
-      // Get order and validate
-      const order = await Order.findById(orderId).session(session);
+      const cart = await Cart.findOne({ userId: userId })
+        .populate("items.productId")
+        .session(session);
 
-      if (!order) {
+      if (!cart || cart.items.length === 0) {
         await session.abortTransaction();
         session.endSession();
-        return res.status(404).json({
+        return res.status(400).json({
           success: false,
-          message: "Order not found",
+          message: "Your cart is Empty",
         });
       }
 
-      if (!order.user.equals(userId)) {
+      const userAddress = await Address.findOne({
+        userId: userId,
+      }).session(session);
+
+      if (!userAddress) {
         await session.abortTransaction();
         session.endSession();
-        return res.status(403).json({
+        return res.status(400).json({
           success: false,
-          message: "Unauthorized access to order",
+          message: "Shipping address not found",
         });
       }
 
-      // Update wallet balance
+      const shippingAddress = userAddress.address.id(addressId);
+      let discount = 0;
+      if (couponCode) {
+        const coupon = await Coupon.findOne({
+          name: couponCode,
+          isListed: true,
+          expireOn: { $gt: new Date() },
+        }).session(session);
+
+        if (coupon) {
+          discount = coupon.offerPrice;
+        }
+      }
+
+      let subtotal = 0;
+      const orderedItems = cart.items.map((item) => {
+        subtotal += item.totalPrice;
+        return {
+          product: item.productId,
+          quantity: item.quantity,
+          price: item.price,
+        };
+      });
+
+      const shippingCost = 50; // fixed
+      const grandTotal = subtotal - discount + shippingCost;
+
+      //order
+      const newOrder = new Order({
+        userId: userId,
+        orderedItems,
+        address: shippingAddress,
+        paymentMethod: "Wallet",
+        paymentStatus: "Paid",
+        status: "Pending",
+        totalPrice: subtotal,
+        discount,
+        finalAmount: grandTotal,
+        invoiceDate: new Date(),
+        couponApplied: !!couponCode,
+      });
+
+      await newOrder.save({ session });
+      orderIds.push(newOrder.orderId);
+      OrderHistory.push(newOrder._id);
+      await user.save({ session });
+
       wallet.balance -= Number(amount);
-      wallet.updatedAt = new Date();
       await wallet.save({ session });
 
-      // Create transaction record
       const transaction = new Transaction({
-        user: userId,
+        wallet: wallet._id,
         amount: Number(amount),
         type: "debit",
-        description: `Payment for order #${order.orderNumber}`,
-        orderId: order._id,
+        description: `Payment for order #${newOrder.orderId}`,
+        orderId: newOrder._id,
       });
 
       await transaction.save({ session });
 
-      // Update order payment status
-      order.paymentStatus = "paid";
-      order.paymentMethod = "wallet";
-      order.paidAmount = amount;
-      order.paidAt = new Date();
-      await order.save({ session });
+      for (const item of cart.items) {
+        await Product.updateOne(
+          { _id: item.productId._id },
+          { $inc: { quantity: -item.quantity } },
+          { session }
+        );
+      }
 
-      // Commit transaction
+      cart.items = [];
+      await cart.save({ session });
+
       await session.commitTransaction();
       session.endSession();
 
+      //for order success page
+      req.session.orderSuccess = {
+        orderIds: orderIds,
+        paymentMethod: newOrder.paymentMethod,
+        couponApplied: !!couponCode,
+      };
+
       return res.status(200).json({
         success: true,
-        message: "Payment successful!",
-        orderId: order._id,
+        message: "Order placed successfully!",
+        orderIds,
       });
     } catch (error) {
-      // Abort transaction on error
       await session.abortTransaction();
       session.endSession();
       throw error;
     }
   } catch (error) {
-    console.error("Wallet payment error:", error);
+    console.log("Wallet order error:", error);
     return res.status(500).json({
       success: false,
-      message: "Payment processing failed",
+      message: "Order processing failed",
     });
   }
 };
