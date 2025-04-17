@@ -9,6 +9,10 @@ const sharp = require("sharp");
 const getProductAddPage = async (req, res) => {
   try {
     const admin = req.admin;
+    if (!admin) {
+      req.flash("error", "session expired please Login");
+      return res.redirect("/admin");
+    }
     const category = await Category.find({ isListed: true });
     const brand = await Brand.find({ isBlocked: false });
     res.render("addproduct.ejs", {
@@ -84,6 +88,10 @@ const addProducts = async (req, res) => {
 const getProducts = async (req, res) => {
   try {
     const admin = req.admin;
+    if (!admin) {
+      req.flash("error", "session expired please Login");
+      return res.redirect("/admin");
+    }
     const search = req.query.search || "";
     const page = parseInt(req.query.page) || 1;
     const limit = 4;
@@ -150,26 +158,28 @@ const addProductOffer = async (req, res) => {
       });
     }
 
-    if (findCategory.categoryOffer > percentage) {
+    if (findCategory.categoryOffer >= percentage) {
       return res.json({
         status: false,
-        message: "This product category already has a category offer",
+        message: `This product category already has a category offer,Please add offer greater than ${findCategory.categoryOffer}% to add Product offer`,
       });
     }
 
     // Calculate new sale price correctly based on regular price
-    findProduct.salePrice =
-      findProduct.regularPrice -
-      Math.floor(findProduct.regularPrice * (percentage / 100));
-    findProduct.productOffer = parseInt(percentage);
+    if (percentage > findCategory.categoryOffer) {
+      findProduct.salePrice =
+        findProduct.regularPrice -
+        Math.floor(findProduct.regularPrice * (percentage / 100));
+      findProduct.productOffer = parseInt(percentage);
 
-    await findProduct.save();
+      await findProduct.save();
+    }
 
     // Only set category offer to 0 if we're changing the category settings
-    if (findCategory.categoryOffer > 0) {
-      findCategory.categoryOffer = 0;
-      await findCategory.save();
-    }
+    // if (findCategory.categoryOffer > 0) {
+    //   findCategory.categoryOffer = 0;
+    //   await findCategory.save();
+    // }
 
     return res.json({ status: true });
   } catch (error) {
@@ -187,6 +197,7 @@ const removeProductOffer = async (req, res) => {
       _id: productId,
       isDeleted: false,
     });
+
     if (!findProduct) {
       return res.status(404).json({
         status: false,
@@ -194,11 +205,11 @@ const removeProductOffer = async (req, res) => {
       });
     }
 
-    // Reset the sale price based on regular price
+    // Reset the sale price
     findProduct.salePrice = findProduct.regularPrice;
     findProduct.productOffer = 0;
 
-    // If there's a category offer, apply it after removing product offer
+    // apply category offer if exist
     const findCategory = await Category.findOne({ _id: findProduct.category });
     if (findCategory && findCategory.categoryOffer > 0) {
       findProduct.salePrice =
@@ -300,7 +311,7 @@ const updateProduct = async (req, res) => {
       return res.redirect(`/admin/editProduct/${id}`);
     }
 
-    if (parseFloat(salePrice) >= parseFloat(regularPrice)) {
+    if (parseFloat(salePrice) > parseFloat(regularPrice)) {
       req.flash("error", "Sale price must be lower than the regular price.");
       return res.redirect(`/admin/editProduct/${id}`);
     }

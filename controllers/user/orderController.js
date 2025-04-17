@@ -361,7 +361,7 @@ const getOrderDetails = async (req, res) => {
       createdAt: order.createdAt,
       deliveredAt: order.deliveredAt,
       paymentMethod: order.paymentMethod,
-      paymentStatus: order.paymentStatus,
+      paymentStatus: order.paymentStatus || "Not Paid",
       totalPrice: order.totalPrice,
       discount: order.discount || 0,
       couponApplied: order.couponCode ? true : false,

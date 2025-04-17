@@ -157,7 +157,8 @@
     color: #333;
   }
   .discount-value {
-    color: #ff5c5c;
+    /* color: #ff5c5c; */
+    color: #40a100e3;
   }
   .shipping-label {
     display: flex;
@@ -248,6 +249,9 @@
   .coupon-btn:hover {
     background-color: #45a049;
   }
+  a{
+    text-decoration: none;
+  }
 
   @media (max-width: 992px) {
     .cart-table th:nth-child(1),
@@ -296,7 +300,7 @@
   }
 
   .breadcrumb-content li + li:before {
-    content: "›";
+    content: "/";
     padding: 0 8px;
     color: #777;
   }
@@ -391,11 +395,11 @@
                 </td>
                 <td class="product-price">
                   ₹<span id="subTotal<%= item.product._id %>"
-                    ><%= item.totalPrice %></span
+                    ><%= item.totalPrice.toLocaleString('en-IN') %></span
                   >
                   <div class="price-per-item">
                     ₹<span id="price<%= item.product._id %>"
-                      ><%= item.product.salePrice %></span
+                      ><%= item.product.salePrice.toLocaleString('en-IN') %></span
                     >
                     / item
                   </div>
@@ -452,14 +456,21 @@
           <h3 class="summary-title">Order Summary</h3>
 
           <div class="summary-row">
-            <span class="summary-label">Subtotal</span>
-            <span class="summary-value">₹ <%= grandTotal %></span>
+            <span class="summary-label">Total</span>
+            <span class="summary-value">₹ <%= totalproductPrice.toLocaleString('en-IN') %></span>
           </div>
+          
 
-          <div class="summary-row">
-            <span class="summary-label">Coupon Discount</span>
-            <span class="discount-value">(-) ₹0.00</span>
-          </div>
+          
+          
+            <div class="summary-row">
+              <span class="summary-label">Discount ( <%= Number((offerdiscount/totalproductPrice)*100).toLocaleString() %>% ) </span>
+
+              <span class="discount-value">(-) ₹<%= Number(offerdiscount).toLocaleString('en-IN', { minimumFractionDigits: 2 }) %></span>
+
+              
+            </div>
+            
 
           <div class="summary-row">
             <div class="shipping-label">
@@ -472,20 +483,17 @@
           </div>
 
           <div class="total-row">
-            <span class="total-label">Total</span>
-            <span class="total-value">₹ <%= grandTotal %></span>
+            <span class="total-label">Grand Total</span>
+            <% Number(grandTotal) %>
+            <span class="total-value" id="total">₹ <%= grandTotal.toFixed("en-IN") %></span>
           </div>
 
           <% if (cartItems && cartItems.length > 0) { %>
           <a href="/checkout" class="checkout-btn">Proceed to Checkout</a>
           <a href="/shop" class="continue-shopping">Continue Shopping</a>
 
-          <!-- Uncomment to enable coupon functionality
-                        <div class="coupon-container">
-                            <input type="text" class="coupon-input" placeholder="Enter coupon code">
-                            <button class="coupon-btn">Apply</button>
-                        </div>
-                        -->
+
+                       
           <% } else { %>
           <a href="/shop" class="checkout-btn">Start Shopping</a>
           <% } %>
@@ -521,6 +529,7 @@
         return;
       }
     }
+
 
     $.ajax({
       url: "/changeQuantity",
@@ -560,10 +569,9 @@
           method: "GET",
           success: (response) => {
             if (response.status) {
-              Swal.fire("Removed!", response.message, "success");
-              location.reload(); // Refresh the page after removing the item
+              Swal.fire({icon: "success", title:"Removed!",text:response.message,showConfirmButton: false,timer: 1200} ).then(()=>location.reload());
             } else {
-              Swal.fire("Error", response.message, "error");
+              Swal.fire({icon: "error", title:"Error!",text:response.message,showConfirmButton: false,timer: 1500} )
             }
           },
           error: (error) => {
@@ -582,7 +590,7 @@
   function viewShippingCharge() {
     Swal.fire({
       title: "Shipping Information",
-      text: "Shipping is free at the current moment!",
+      text: "standard Shipping fee of ₹50 Rupees",
       icon: "info",
       confirmButtonText: "OK",
       confirmButtonColor: "#4d82ea",

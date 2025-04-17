@@ -10,6 +10,11 @@ const fs = require("fs");
 
 const getAllOrders = async (req, res) => {
   try {
+    const admin = req.admin;
+    if (!admin) {
+      req.flash("error", "session expired please Login");
+      return res.redirect("/admin");
+    }
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;

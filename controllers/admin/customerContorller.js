@@ -3,6 +3,11 @@ const User = require("../../models/User");
 const customerInfo = async (req, res) => {
   try {
     const admin = req.admin;
+
+    if (!admin) {
+      req.flash("error", "session expired please Login");
+      return res.redirect("/admin");
+    }
     let search = [];
     if (req.query.search) {
       search = req.query.search ? req.query.search.trim() : "";

@@ -7,6 +7,7 @@ const Wallet = require("../../models/Wallet.js");
 const mongoose = require("mongoose");
 const Coupon = require("../../models/Coupon.js");
 const Transaction = require("../../models/Transactions.js");
+//const { default: items } = require("razorpay/dist/types/items.js");
 //get checkout page
 const getCheckoutPage = async (req, res) => {
   try {
@@ -41,11 +42,39 @@ const getCheckoutPage = async (req, res) => {
       user.cart && user.cart.length > 0 ? user.cart[0].items || [] : [];
 
     const wallet = user.wallet;
+    // const totalCategoryOffer = user.cart.flatMap((item) => {
+    //   return item.items
+    //     .map(
+    //       (itm) =>
+    //         itm.productId?.salePrice -
+    //         (itm.productId?.salePrice *
+    //           itm.productId?.category?.categoryOffer) /
+    //           100
+    //     )
+    //     .reduce((sum, offer) => sum + offer, 0);
+    // });
+    // const totalProductOffer = user.cart.flatMap((item) => {
+    //   return item.items.map(
+    //     (itm) =>
+    //       itm.productId?.salePrice -
+    //       (itm.productId?.salePrice * itm.productId?.productOffer) / 100
+    //   );
+    // });
+
+    // console.log(totalCategoryOffer);
+    // console.log(totalProductOffer);
 
     let subtotal = 0;
     if (cartItems.length > 0) {
       subtotal = cartItems.reduce((acc, item) => acc + item.totalPrice, 0);
     }
+
+    // const offerdiscount =
+    //   totalCategoryOffer > totalProductOffer
+    //     ? totalCategoryOffer
+    //     : totalProductOffer;
+
+    // subtotal = (subtotal - subtotal * offerdiscount) / 100;
 
     res.render("checkout.ejs", {
       cartItems,
@@ -137,7 +166,7 @@ const checkStock = async (req, res) => {
 // Place order- Cash on Delivery
 const placeOrder = async (req, res) => {
   try {
-    const { addressId, paymentMethod, couponCode } = req.body;
+    const { addressId, paymentMethod, couponCode, paymentId } = req.body;
     const userId = req.user.userId;
 
     if (!addressId) {

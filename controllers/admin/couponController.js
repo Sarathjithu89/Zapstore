@@ -4,6 +4,11 @@ const User = require("../../models/User.js");
 //get coupons
 const getCoupons = async (req, res) => {
   try {
+    const admin = req.admin;
+    if (!admin) {
+      req.flash("error", "session expired please Login");
+      return res.redirect("/admin");
+    }
     const page = parseInt(req.query.page) || 1;
     const limit = 10;
     const skip = (page - 1) * limit;
@@ -39,7 +44,7 @@ const addCoupon = async (req, res) => {
     const existingCoupon = await Coupon.findOne({ name });
     if (existingCoupon) {
       req.flash("error", "A coupon with this name already exists");
-      return res.redirect("/admin/coupons.ejs");
+      return res.redirect("/admin/coupons");
     }
     const newCoupon = new Coupon({
       name,
@@ -52,11 +57,11 @@ const addCoupon = async (req, res) => {
     await newCoupon.save();
 
     req.flash("success", "Coupon added successfully");
-    res.redirect("/admin/coupons.ejs");
+    res.redirect("/admin/coupons");
   } catch (error) {
     console.error("Error adding coupon:", error);
     req.flash("error", "Failed to add coupon");
-    res.redirect("/admin/coupons.ejs");
+    res.redirect("/admin/coupons");
   }
 };
 
@@ -71,7 +76,7 @@ const editCoupon = async (req, res) => {
 
     if (existingCoupon) {
       req.flash("error", "Another coupon with this name already exists");
-      return res.redirect("/admin/coupons.ejs");
+      return res.redirect("/admin/coupons");
     }
     await Coupon.findByIdAndUpdate(couponId, {
       name,
@@ -85,7 +90,7 @@ const editCoupon = async (req, res) => {
   } catch (error) {
     console.error("Error updating coupon:", error);
     req.flash("error", "Failed to update coupon");
-    res.redirect("/admin/coupons.ejs");
+    res.redirect("/admin/coupons");
   }
 };
 
@@ -96,7 +101,7 @@ const toggleCouponStatus = async (req, res) => {
 
     if (!coupon) {
       req.flash("error", "Coupon not found");
-      return res.redirect("/admin/coupons.ejs");
+      return res.redirect("/admin/couponsMangment.ejs");
     }
 
     coupon.isListed = !coupon.isListed;
@@ -104,11 +109,11 @@ const toggleCouponStatus = async (req, res) => {
 
     const statusMessage = coupon.isListed ? "activated" : "deactivated";
     req.flash("success", `Coupon ${statusMessage} successfully`);
-    res.redirect("/admin/coupons.ejs");
+    res.redirect("/admin/coupons");
   } catch (error) {
     console.error("Error toggling coupon status:", error);
     req.flash("error", "Failed to update coupon status");
-    res.redirect("/admin/coupons.ejs");
+    res.redirect("/admin/coupons");
   }
 };
 
@@ -120,11 +125,11 @@ const deleteCoupon = async (req, res) => {
     await Coupon.findByIdAndDelete(couponId);
 
     req.flash("success", "Coupon deleted successfully");
-    res.redirect("/admin/coupons.ejs");
+    res.redirect("/admin/coupons");
   } catch (error) {
     console.error("Error deleting coupon:", error);
     req.flash("error", "Failed to delete coupon");
-    res.redirect("/admin/coupons.ejs");
+    res.redirect("/admin/coupons");
   }
 };
 

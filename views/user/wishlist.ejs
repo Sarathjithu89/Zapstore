@@ -497,8 +497,7 @@
       confirmButtonText: "Yes, remove it",
     }).then((result) => {
       if (result.isConfirmed) {
-        // Send request to server
-        fetch("/wishlist/remove", {
+        fetch("/removeFromWishlist", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -508,15 +507,13 @@
           .then((response) => response.json())
           .then((data) => {
             if (data.success) {
-              // Remove the item from DOM
               const item = document.querySelector(
                 `.wishlist-item[data-id="${productId}"]`
               );
               if (item) {
                 item.remove();
               }
-
-              // Check if wishlist is now empty
+              // Check wishlist
               const remainingItems =
                 document.querySelectorAll(".wishlist-item");
               if (remainingItems.length === 0) {
@@ -532,7 +529,6 @@
                 </div>
               `;
               }
-
               Swal.fire({
                 icon: "success",
                 title: "Removed!",
@@ -560,7 +556,7 @@
     });
   }
 
-  // Add to cart functionality
+  // Add to cart
   function addToCart(productId) {
     console.log(productId);
     fetch("/cart/add", {
@@ -583,11 +579,6 @@
             showConfirmButton: false,
             timer: 1500,
           });
-
-          // Update cart count if you have one in navbar
-          if (typeof updateCartCount === "function") {
-            updateCartCount(data.cartCount);
-          }
         } else {
           Swal.fire({
             icon: "error",
@@ -596,7 +587,7 @@
           });
         }
       })
-      .then(() => window.location.reload())
+      .then(() => setTimeout(() => window.location.reload(), 1500))
       .catch((error) => {
         console.error("Error:", error);
         Swal.fire({

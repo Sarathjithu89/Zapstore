@@ -4,6 +4,11 @@ const Product = require("../../models/Products.js");
 const getBrandPage = async (req, res) => {
   try {
     const admin = req.admin;
+
+    if (!admin) {
+      req.flash("error", "session expired please Login");
+      return res.redirect("/admin");
+    }
     const page = parseInt(req.query.page) || 1;
     const limit = 4;
     const skip = (page - 1) * limit;

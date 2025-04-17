@@ -6,6 +6,7 @@ const checkoutController = require("../controllers/user/checkoutController.js");
 const cartController = require("../controllers/user/cartController.js");
 const orderController = require("../controllers/user/orderController.js");
 const walletController = require("../controllers/user/walletController.js");
+const couponController = require("../controllers/user/couponController.js");
 const passport = require("passport");
 const { authToken } = require("../middleware/authToken");
 const { json } = require("body-parser");
@@ -103,8 +104,8 @@ userRouter.post(
 userRouter.post("/deleteAddress", authToken, profileController.deleteAddress);
 
 //cart
-userRouter.post("/cart/add", authToken, cartController.addToCart);
 userRouter.get("/cart", authToken, cartController.viewCart);
+userRouter.post("/cart/add", authToken, cartController.addToCart);
 userRouter.post("/changeQuantity", authToken, cartController.changeQuantity);
 userRouter.get("/deleteItem", authToken, cartController.deleteItem);
 
@@ -134,7 +135,15 @@ userRouter.post("/refund", authToken, walletController.refundToWallet);
 
 userRouter.get("/wishlist", authToken, wishlistController.getWishlist);
 userRouter.post("/addtowishlisht", authToken, wishlistController.addToWishlist);
-userRouter.post("/remove", authToken, wishlistController.removeFromWishlist);
-userRouter.post("/move-to-cart", authToken, wishlistController.moveToCart);
+userRouter.post(
+  "/removeFromWishlist",
+  authToken,
+  wishlistController.removeFromWishlist
+);
+
+//coupons
+userRouter.get("/mycoupons", authToken, couponController.getMyCoupons);
+userRouter.post("/apply-coupon", authToken, couponController.applyCoupon);
+userRouter.post("/remove-coupon", authToken, couponController.removeCoupon);
 
 module.exports = userRouter;

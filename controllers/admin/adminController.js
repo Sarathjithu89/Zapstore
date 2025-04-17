@@ -57,6 +57,7 @@ const loadDashboard = async (req, res) => {
       res.redirect("admin/pageerror");
     }
   } else {
+    req.flash("error", "session expired please Login");
     return res.redirect("/admin");
   }
 };

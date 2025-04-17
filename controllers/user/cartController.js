@@ -7,43 +7,71 @@ const Wishlist = require("../../models/Wishlist.js");
 
 const viewCart = async (req, res) => {
   try {
-    // Get user ID from session/authentication
     const userId = req.user?.userId;
 
     if (!userId) {
+      req.flash("error", "please login to access cart");
       return res.redirect("/");
     }
 
-    // Find cart items for the user with populated product details
-    const cart = await Cart.findOne({ userId }).populate({
+    let cart = await Cart.findOne({ userId }).populate({
       path: "items.productId",
       populate: {
         path: "category",
-        select: "name",
+        select: "name categoryOffer",
       },
     });
 
-    // Prepare cart items for the view and calculate grand total
-    let cartItems = [];
-    let grandTotal = 0;
+    cart.items.forEach((item) => {
+      const regularPrice = item.productId.regularPrice;
+      const categoryOffer = item.productId.category?.categoryOffer || 0;
+      const productOffer = item.productId.productOffer || 0;
+      const bestDiscount = Math.max(categoryOffer, productOffer);
 
-    if (cart && cart.items.length > 0) {
+      const discountedPrice =
+        Math.round((regularPrice - (bestDiscount / 100) * regularPrice) * 100) /
+        100;
+
+      item.price = discountedPrice;
+      item.totalPrice = item.quantity * discountedPrice;
+    });
+    await cart.save();
+
+    let subtotal = 0;
+    let offerdiscount = 0;
+    let cartItems = [];
+    let totalproductPrice = 0;
+
+    if (cart && cart.items.length !== 0) {
       cartItems = cart.items.map((item) => {
-        grandTotal += item.totalPrice;
+        const itemSubtotal = item.totalPrice;
+        subtotal += itemSubtotal;
+
+        const originalPrice = item.productId.regularPrice * item.quantity;
+        const discountAmount = originalPrice - itemSubtotal;
+        offerdiscount += discountAmount;
+
+        totalproductPrice += originalPrice;
 
         return {
-          product: item.productId, // This is already populated with product details
+          product: item.productId,
           quantity: item.quantity,
           totalPrice: item.totalPrice,
           price: item.price,
+          appliedDiscount: Math.max(
+            item.productId.category?.categoryOffer || 0,
+            item.productId.productOffer || 0
+          ),
         };
       });
     }
 
-    // Render the cart page with items and total
     res.render("cart.ejs", {
       cartItems,
-      grandTotal,
+      // discounted total (after applying best offer)
+      offerdiscount, // how much saved
+      grandTotal: subtotal, // corrected final amount after discount
+      totalproductPrice, // original MRP before any discount
       title: "Shopping Cart",
     });
   } catch (error) {
@@ -108,7 +136,7 @@ const addToCart = async (req, res) => {
         (item) => item.productId.toString() === productId
       );
       if (existingItemIndex >= 0) {
-        const existingItem = cart.itmes[existingItemIndex];
+        const existingItem = cart.items[existingItemIndex];
         const newQuantity =
           cart.items[existingItemIndex].quantity + parseInt(quantity);
 
@@ -227,6 +255,8 @@ const changeQuantity = async (req, res) => {
           cart.items[itemIndex].price * cart.items[itemIndex].quantity;
       }
     }
+
+    // cart.items.map((item) => (item.totalPrice = item.quantity * item.price));
 
     await cart.save();
 

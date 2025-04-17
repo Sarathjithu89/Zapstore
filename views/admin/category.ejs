@@ -1,97 +1,92 @@
 <%- include('../partials2/header.ejs') %>
 <style>
- 
   /* Base styles for larger screens */
-.table th,
-.table td {
-  padding: 12px;
-  font-size: 12.5px;
-}
-.table button{
-  padding: .5rem;
-}
-
-
-/* Medium devices (tablets, 768px and up) */
-@media (max-width: 768px) {
   .table th,
   .table td {
-    padding: 10px;
-    font-size: 12px;
+    padding: 12px;
+    font-size: 12.5px;
   }
-}
-
-/* Small devices (landscape phones, 576px and up) */
-@media (max-width: 576px) {
-  .table th,
-  .table td {
-    padding: 8px;
-    font-size: 11.5px;
+  .table button {
+    padding: 0.5rem;
   }
 
-  /* Stack table headers and data vertically */
-  .table thead {
-    display: none;
+  /* Medium devices (tablets, 768px and up) */
+  @media (max-width: 768px) {
+    .table th,
+    .table td {
+      padding: 10px;
+      font-size: 12px;
+    }
   }
 
-  .table,
-  .table tbody,
-  .table tr,
-  .table td {
-    display: block;
-    width: 100%;
+  /* Small devices (landscape phones, 576px and up) */
+  @media (max-width: 576px) {
+    .table th,
+    .table td {
+      padding: 8px;
+      font-size: 11.5px;
+    }
+
+    /* Stack table headers and data vertically */
+    .table thead {
+      display: none;
+    }
+
+    .table,
+    .table tbody,
+    .table tr,
+    .table td {
+      display: block;
+      width: 100%;
+    }
+
+    .table tr {
+      margin-bottom: 15px;
+    }
+
+    .table td {
+      text-align: right;
+      padding-left: 50%;
+      position: relative;
+    }
+
+    .table td::before {
+      content: attr(data-label);
+      position: absolute;
+      left: 0;
+      width: 50%;
+      padding-left: 15px;
+      font-weight: bold;
+      text-align: left;
+    }
   }
 
-  .table tr {
-    margin-bottom: 15px;
+  /* Error message styling */
+  .alert-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1050;
+    max-width: 350px;
   }
 
-  .table td {
-    text-align: right;
-    padding-left: 50%;
-    position: relative;
+  .alert-toast {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
+    margin-bottom: 10px;
+    animation: fadeInRight 0.5s;
   }
 
-  .table td::before {
-    content: attr(data-label);
-    position: absolute;
-    left: 0;
-    width: 50%;
-    padding-left: 15px;
-    font-weight: bold;
-    text-align: left;
+  @keyframes fadeInRight {
+    from {
+      opacity: 0;
+      transform: translateX(50px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
   }
-}
-
-/* Error message styling */
-.alert-container {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        z-index: 1050;
-        max-width: 350px;
-      }
-
-      .alert-toast {
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        border-radius: 8px;
-        margin-bottom: 10px;
-        animation: fadeInRight 0.5s;
-      }
-
-      @keyframes fadeInRight {
-        from {
-          opacity: 0;
-          transform: translateX(50px);
-        }
-        to {
-          opacity: 1;
-          transform: translateX(0);
-        }
-      }
-
-
-
 </style>
 
 <main id="main">
@@ -157,52 +152,90 @@
                     <th>Status</th>
                     <th>List/unlist</th>
                     <th>Actions</th>
+                    <th>Delete</th>
                   </tr>
                 </thead>
                 <tbody>
                   <% cat.forEach((category) => { %>
-                    <tr>
-                      <td data-label="Name" class="text-start"><%= category.name %></td>
-                      <td data-label="Description" class="text-start"><%= category.description %></td>
-                      <td data-label="Offer" class="text-start">
-                        <% if(category.categoryOffer) { %> <%= category.categoryOffer %> <% } else { %> 0% <% } %>
-                      </td>
-                      <td data-label="Add/remove Offer" class="text-start">
-                        <% if(category.categoryOffer === 0) { %>
-                          <button class="btn btn-info">
-                            <a class="text-white" onclick="addOffer('<%= category._id %>')">Add Offer</a>
-                          </button>
-                        <% } else { %>
-                          <button class="btn btn-danger">
-                            <a class="text-white" onclick="removeOffer('<%= category._id %>')">Remove</a>
-                          </button>
-                        <% } %>
-                      </td>
-                      <td data-label="Status" class="text-start">
-                        <% if(category.isListed) { %>
-                          <span class="badge rounded-pill alert-success">Listed</span>
-                        <% } else { %>
-                          <span class="badge rounded-pill alert-danger">Unlisted</span>
-                        <% } %>
-                      </td>
-                      <td data-label="List/unlist" class="text-start">
-                        <% if(category.isListed) { %>
-                          <button class="btn btn-danger">
-                            <a href="/admin/listCategory?id=<%= category._id %>" class="text-white">Unlist</a>
-                          </button>
-                        <% } else { %>
-                          <button class="btn btn-success">
-                            <a href="/admin/unListCategory?id=<%= category._id %>" class="text-white">List</a>
-                          </button>
-                        <% } %>
-                      </td>
-                      <td data-label="Actions" class="text-start">
-                        <button class="btn btn-info" onclick="prepareEditModal('<%= category._id %>', '<%= category.name %>', '<%= category.description %>')"
-                        data-bs-toggle="modal" data-bs-target="#editCatogory">
-                          Edit
-                        </button>
-                      </td>
-                    </tr>
+                  <tr>
+                    <td data-label="Name" class="text-start">
+                      <%= category.name %>
+                    </td>
+                    <td data-label="Description" class="text-start">
+                      <%= category.description %>
+                    </td>
+                    <td data-label="Offer" class="text-start">
+                      <% if(category.categoryOffer) { %> <%=
+                      category.categoryOffer %> <% } else { %> 0% <% } %>
+                    </td>
+                    <td data-label="Add/remove Offer" class="text-start">
+                      <% if(category.categoryOffer === 0) { %>
+                      <button class="btn btn-info">
+                        <a
+                          class="text-white"
+                          onclick="addOffer('<%= category._id %>')"
+                          >Add Offer</a
+                        >
+                      </button>
+                      <% } else { %>
+                      <button class="btn btn-danger">
+                        <a
+                          class="text-white"
+                          onclick="removeOffer('<%= category._id %>')"
+                          >Remove</a
+                        >
+                      </button>
+                      <% } %>
+                    </td>
+                    <td data-label="Status" class="text-start">
+                      <% if(category.isListed) { %>
+                      <span class="badge rounded-pill alert-success"
+                        >Listed</span
+                      >
+                      <% } else { %>
+                      <span class="badge rounded-pill alert-danger"
+                        >Unlisted</span
+                      >
+                      <% } %>
+                    </td>
+                    <td data-label="List/unlist" class="text-start">
+                      <% if(category.isListed) { %>
+                      <button class="btn btn-danger">
+                        <a
+                          href="/admin/listCategory?id=<%= category._id %>"
+                          class="text-white"
+                          >Unlist</a
+                        >
+                      </button>
+                      <% } else { %>
+                      <button class="btn btn-success">
+                        <a
+                          href="/admin/unListCategory?id=<%= category._id %>"
+                          class="text-white"
+                          >List</a
+                        >
+                      </button>
+                      <% } %>
+                    </td>
+                    <td data-label="Actions" class="text-start">
+                      <button
+                        class="btn btn-info"
+                        onclick="prepareEditModal('<%= category._id %>', '<%= category.name %>', '<%= category.description %>')"
+                        data-bs-toggle="modal"
+                        data-bs-target="#editCatogory"
+                      >
+                        Edit
+                      </button>
+                    </td>
+                    <td data-label="Actions" class="text-start">
+                      <button
+                        class="btn btn-danger"
+                        onclick="deleteCategory('<%= category._id %>')"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
                   <% }); %>
                 </tbody>
               </table>
@@ -215,7 +248,6 @@
     <%- include('../partials2/pagination.ejs') %>
   </section>
 
-   
   <!-- Edit Category Modal -->
   <div
     class="modal fade"
@@ -223,13 +255,14 @@
     tabindex="-1"
     aria-labelledby="editCategoryModalLabel"
     aria-hidden="true"
-    
   >
     <div class="modal-dialog">
       <div class="modal-content">
         <!-- Modal header -->
         <div class="modal-header">
-          <h1 class="modal-title fs-5" id="editCategoryModalLabel">Edit Category</h1>
+          <h1 class="modal-title fs-5" id="editCategoryModalLabel">
+            Edit Category
+          </h1>
           <button
             type="button"
             class="btn-close"
@@ -237,14 +270,16 @@
             aria-label="Close"
           ></button>
         </div>
-        
+
         <!-- Modal body -->
         <div class="modal-body">
-         
+          <form
+            id="editCategoryForm"
+            method="post"
+            action="/admin/editCategory"
+          >
+            <input type="hidden" id="editCategoryId" name="id" value="" />
 
-          <form id="editCategoryForm" method="post" action="/admin/editCategory">
-            <input type="hidden" id="editCategoryId" name="id" value="">
-            
             <div class="mb-4">
               <label for="categoryName" class="form-label">Name</label>
               <input
@@ -289,18 +324,22 @@
     </div>
   </div>
   <!-- /Edit Category Modal -->
-
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script>
     // Function to prepare the edit modal with category data
     function prepareEditModal(categoryId, categoryName, categoryDescription) {
-      document.getElementById('editCategoryId').value = categoryId;
-      document.getElementById('categoryName').value = categoryName;
-      document.getElementById('categoryDescription').value = categoryDescription;
-      
+      document.getElementById("editCategoryId").value = categoryId;
+      document.getElementById("categoryName").value = categoryName;
+      document.getElementById("categoryDescription").value =
+        categoryDescription;
+
       // Update the form action with the category ID
-      document.getElementById('editCategoryForm').action = `/admin/editCategory?id=${categoryId}`;
+      document.getElementById(
+        "editCategoryForm"
+      ).action = `/admin/editCategory?id=${categoryId}`;
     }
-    
+
     // Add Category Form Validation
     document.addEventListener("DOMContentLoaded", function () {
       document
@@ -354,8 +393,8 @@
             event.preventDefault();
             return false;
           }
-          
-          document.getElementById("updateButton").innerHTML = 
+
+          document.getElementById("updateButton").innerHTML =
             'Updating... <span class="spinner-border spinner-border-sm"></span>';
           document.getElementById("updateButton").disabled = true;
           return true;
@@ -397,10 +436,15 @@
         let isValid = true;
 
         const name = document.getElementById("categoryName").value.trim();
-        const description = document.getElementById("categoryDescription").value.trim();
+        const description = document
+          .getElementById("categoryDescription")
+          .value.trim();
 
         if (name === "") {
-          displayEditErrorMessage("edit-name-error", "Please enter a category name");
+          displayEditErrorMessage(
+            "edit-name-error",
+            "Please enter a category name"
+          );
           isValid = false;
         } else if (!/^[a-zA-Z\s]+$/.test(name)) {
           displayEditErrorMessage(
@@ -438,14 +482,14 @@
           ele.innerText = "";
         });
       }
-      
+
       function clearEditErrorMessages() {
         document.querySelectorAll(".error-message").forEach((ele) => {
           ele.innerText = "";
         });
       }
     });
-    
+
     //add offer function
     async function addOffer(categoryId) {
       const { value: amount } = await Swal.fire({
@@ -534,28 +578,104 @@
     }
     //error messages
     document.addEventListener("DOMContentLoaded", function () {
-        const alerts = document.querySelectorAll(".alert-toast");
-        // Auto-dismiss alerts after 5 seconds
-        if (alerts.length > 0) {
-          setTimeout(function () {
-            alerts.forEach(dismissAlert);
-          }, 5000);
-        }
-        // Function to dismiss alert
-        function dismissAlert(alert) {
-          alert.style.opacity = "0";
-          alert.style.transform = "translateX(50px)";
-          alert.style.transition = "opacity 0.5s, transform 0.5s";
-          setTimeout(() => alert.remove(), 500);
-        }
-      });
+      const alerts = document.querySelectorAll(".alert-toast");
+      // Auto-dismiss alerts after 5 seconds
+      if (alerts.length > 0) {
+        setTimeout(function () {
+          alerts.forEach(dismissAlert);
+        }, 5000);
+      }
+      // Function to dismiss alert
+      function dismissAlert(alert) {
+        alert.style.opacity = "0";
+        alert.style.transform = "translateX(50px)";
+        alert.style.transition = "opacity 0.5s, transform 0.5s";
+        setTimeout(() => alert.remove(), 500);
+      }
+    });
+    async function deleteCategory(categoryId) {
+      try {
+        Swal.fire({
+          title: "Are you sure?",
+          text: "You will not be able to undo this action!",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonColor: "#d33",
+          cancelButtonColor: "#3085d6",
+          confirmButtonText: "Yes, delete it!",
+        }).then((result) => {
+          if (result.isConfirmed) {
+            fetch("/admin/delete-category", {
+              method: "POST",
+              headers: {
+                "content-type": "application/json",
+              },
+              body: JSON.stringify({
+                categoryId: categoryId,
+              }),
+            }).then((data) => {
+              if (data.status) {
+                Swal.fire(
+                  "Deleted",
+                  "The category has been deleted",
+                  "success"
+                ).then(() => {
+                  location.reload();
+                });
+              } else {
+                Swal.fire(
+                  "Failed",
+                  data.message || "Deleting category failed",
+                  "error"
+                );
+              }
+            });
+          }
+        });
+      } catch (error) {
+        Swal.fire(
+          "Error",
+          "An Error Occured while Deleting the Category",
+          "error"
+        );
+        console.log("Error Deleting Category", error);
+      }
 
+      // try {
+      //   const response = await fetch("/admin/delete-category", {
+      //     method: "POST",
+      //     headers: {
+      //       "content-type": "application/json",
+      //     },
+      //     body: JSON.stringify({
+      //       categoryId: categoryId,
+      //     }),
+      //   });
+      //   const data = await response.json();
+      //   if (response.ok && data.status === true) {
+      //     Swal.fire("Deleted", "The category has been deleted", "success").then(
+      //       () => {
+      //         location.reload();
+      //       }
+      //     );
+      //   } else {
+      //     Swal.fire(
+      //       "Failed",
+      //       data.message || "Deleting category failed",
+      //       "error"
+      //     );
+      //   }
+      // } catch (error) {
+      //   Swal.fire(
+      //     "Error",
+      //     "An Error Occured while Deleting the Category",
+      //     "error"
+      //   );
+      //   console.log("Error Deleting Category", error);
+      // }
+    }
   </script>
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 
-
-  <%- include('../partials/alerts.ejs') %>
-  <%- include('../partials2/footer.ejs') %>
+  <%- include('../partials/alerts.ejs') %> <%-
+  include('../partials2/footer.ejs') %>
 </main>

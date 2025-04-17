@@ -170,8 +170,12 @@
                     <input type="number" step="1.0" min="0" class="form-control" id="salePrice" name="salePrice" placeholder="0.00" value="<%= product.salePrice %>" required>
                   </div>
                   <div id="salePrice-error" class="error-message"></div>
+                  <div id="discountDisplay"  style="color: green;"></div>
                 </div>
+        
               </div>
+              
+
 
               <div class="row">
                 <div class="col-md-6 mb-3">
@@ -390,7 +394,9 @@ function validateForm() {
     const salePrice = parseFloat(document.getElementById('salePrice').value);
     const salePriceError = document.getElementById('salePrice-error');
     
-    if (salePrice >= regularPrice) {
+    if (salePrice > regularPrice) {
+      console.log(salePrice)
+      console.log(regularPrice);
         salePriceError.textContent = 'Sale price must be less than regular price.';
         isValid = false;
     }
@@ -519,7 +525,7 @@ document.addEventListener('DOMContentLoaded', () => {
         input.addEventListener('input', () => {
             const discountPercentage = calculateDiscount();
             // Optionally display the discount percentage somewhere on the form
-            // For example: document.getElementById('discountDisplay').textContent = `${discountPercentage}% off`;
+             document.getElementById('discountDisplay').textContent = `${discountPercentage}% off`;
         });
     });
 });

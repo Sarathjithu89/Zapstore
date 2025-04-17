@@ -54,6 +54,11 @@ adminRouter.get(
 );
 adminRouter.get("/editCategory", adminAuth, categoryController.getEditCategory);
 adminRouter.post("/editCategory", adminAuth, categoryController.editCategory);
+adminRouter.post(
+  "/delete-category",
+  adminAuth,
+  categoryController.deleteCategory
+);
 
 //Brand Managment
 adminRouter.get("/brands", adminAuth, brandController.getBrandPage);
