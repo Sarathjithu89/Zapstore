@@ -114,6 +114,16 @@ userRouter.get("/checkout", authToken, checkoutController.getCheckoutPage);
 userRouter.get("/checkStock", authToken, checkoutController.checkStock);
 userRouter.post("/placeOrder", authToken, checkoutController.placeOrder);
 userRouter.post("/palceWalletOrder", authToken, checkoutController.WalletOrder);
+userRouter.post(
+  "/razorpay-order",
+  authToken,
+  checkoutController.razorpayPayment
+);
+userRouter.post(
+  "/verify-razorpay-payment",
+  authToken,
+  checkoutController.verifyRazorpayPayment
+);
 
 //orders
 userRouter.get("/orders", authToken, orderController.getUserOrders);

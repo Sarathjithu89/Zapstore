@@ -522,7 +522,7 @@
         </div>
         
         <!-- Available Coupons -->
-        <div id="available-coupons" class="tab-content active">
+        <div id="available" class="tab-content active">
           <% if (coupons && coupons.available && coupons.available.length > 0) { %>
             <% coupons.available.forEach(coupon => { %>
               <div class="coupon-card">
@@ -550,7 +550,7 @@
         </div>
         
         <!-- Used Coupons -->
-        <div id="used-coupons" class="tab-content">
+        <div id="used" class="tab-content">
           <% if (coupons && coupons.used && coupons.used.length > 0) { %>
             <% coupons.used.forEach(coupon => { %>
               <div class="coupon-card coupon-used">
@@ -578,7 +578,7 @@
         </div>
         
         <!-- Expired Coupons -->
-        <div id="expired-coupons" class="tab-content">
+        <div id="expired" class="tab-content">
           <% if (coupons && coupons.expired && coupons.expired.length > 0) { %>
             <% coupons.expired.forEach(coupon => { %>
               <div class="coupon-card coupon-expired">
@@ -613,21 +613,22 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-  // Tab 
+  // Tab switching
   document.querySelectorAll('.tab').forEach(tab => {
     tab.addEventListener('click', function() {
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      this.classList.add('active');ts
+      this.classList.add('active');
+      
       document.querySelectorAll('.tab-content').forEach(content => {
         content.classList.remove('active');
       });
       
       const tabId = this.getAttribute('data-tab');
-      document.getElementById(tabId + '-coupons').classList.add('active');
+      document.getElementById(tabId).classList.add('active');
     });
   });
   
-  // Copy coupon code
+  // Copy coupon 
   function copyCouponCode(element) {
     const code = element.innerText;
     navigator.clipboard.writeText(code).then(() => {

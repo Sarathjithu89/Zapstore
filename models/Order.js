@@ -45,6 +45,9 @@ const orderSchema = new mongoose.Schema(
       type: Object,
       required: true,
     },
+    shippingCost: {
+      type: Number,
+    },
     invoiceDate: {
       type: Date,
     },
@@ -60,6 +63,9 @@ const orderSchema = new mongoose.Schema(
         "Return Requested",
         "Returned",
       ],
+    },
+    onlinePaymentId: {
+      type: String,
     },
     paymentMethod: {
       type: String,

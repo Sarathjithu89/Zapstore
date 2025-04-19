@@ -46,27 +46,27 @@ const customerInfo = async (req, res) => {
     console.log("customerInfo Error", error);
   }
 };
+//block customer
 const custormerBlocked = async (req, res) => {
   try {
     let id = req.query.userid;
     await User.updateOne({ _id: id }, { $set: { is_blocked: true } });
-    req.flash("success", "User Blocked Successfully");
-    return res.redirect("/admin/users");
+    return res.status(200).json({ success: true });
   } catch (error) {
     console.log("Customer Block error", error);
-    return res.redirect("admin/pageerror");
+    return res.status(500).json({ success: false });
   }
 };
+//unblock coustomer
 const custormerUnblocked = async (req, res) => {
   try {
     let id = req.query.userid;
 
     await User.updateOne({ _id: id }, { $set: { is_blocked: false } });
-    req.flash("success", "User Unblocked Successfully");
-    return res.redirect("/admin/users");
+    return res.status(200).json({ success: true });
   } catch (error) {
     console.log("unblock error", error);
-    return res.redirect("admin/pageerror");
+    return res.status(500).json({ success: false });
   }
 };
 

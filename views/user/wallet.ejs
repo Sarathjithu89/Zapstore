@@ -473,7 +473,9 @@
       <div class="wallet-balance">
         <h3>Available Balance</h3>
         <div class="amount">
-          ₹<%= wallet ? wallet.balance.toFixed(2) : '0.00' %>
+          ₹<%= wallet ?
+          wallet.balance.toLocaleString('en-In',{minimunFacionsDigist:2}) :
+          '0.00' %>
         </div>
         <p>
           Last updated: <%= wallet && wallet.updatedAt ? new

@@ -1,6 +1,14 @@
 <%-include('../partials2/header.ejs') %>
 <%-include('../partials/alerts.ejs') %>
 
+<style>
+  .bttn{
+    padding: 8px 1px;
+    text-align: center;
+    border: 0;
+    width: 80px;
+  }
+</style>
 <!-- Page Content -->
 <main id="main">
   <!-- Breadcrumbs-->
@@ -107,12 +115,14 @@
                 <td class="text-muted"><%= (data[i].createdAt).toLocaleDateString("en-GB") %></td>
                 <td>
                     <%if(data[i].is_blocked===false){  %>
-                    <button class="btn btn-danger" style="width: 100px;">
-                      <a href="/admin/blockCustomer?userid=<%= data[i]._id %>" class="text-white" style="text-decoration: none;">Block</a>
+                    <button class="btn btn-danger text-white bttn"
+                      onclick="blockUser('<%= data[i]._id %>')"
+                      >Block
                     </button>
                     <% }else{ %>
-                      <button class="btn btn-success" style="width: 100px;">
-                        <a href="/admin/unBlockCustomer?userid=<%= data[i]._id %>" class="text-white" style="text-decoration: none;">Unblock</a>
+                      <button class="btn btn-success text-white bttn" 
+                        onclick="unblockUser('<%= data[i]._id %>')"
+                        >Unblock
                       </button>
                       <% }; %>
                 </td>
@@ -138,5 +148,69 @@
   </section>
   <!-- / Content-->
 </main>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+
+async function blockUser(userId) {
+  const result = await Swal.fire({
+    title: "Are you sure?",
+    text: "You are about to block the user",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#d33",
+    cancelButtonColor: "#3085d6",
+    confirmButtonText: "Yes, Block!",
+  });
+
+  if (result.isConfirmed) {
+    try {
+      const response = await fetch(`/admin/blockCustomer?userid=${userId}`, {
+        method: "GET",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to block user");
+      }
+
+      await Swal.fire("Blocked", "This user is blocked", "success");
+      location.reload();
+    } catch (error) {
+      Swal.fire("Failed", error.message || "Error blocking user", "error");
+    }
+  }
+}
+
+async function unblockUser(userId) {
+  const result = await Swal.fire({
+    title: "Are you sure?",
+    text: "You are about to unblock the user",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#d33",
+    cancelButtonColor: "#3085d6",
+    confirmButtonText: "Yes, Unblock!",
+  });
+
+  if (result.isConfirmed) {
+    try {
+      const response = await fetch(`/admin/unblockCustomer?userid=${userId}`, {
+        method: "GET",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to unblock user");
+      }
+
+      await Swal.fire("Unblocked", "This user is unblocked", "success");
+      location.reload();
+    } catch (error) {
+      Swal.fire("Failed", error.message || "Error unblocking user", "error");
+    }
+  }
+}
+
+</script>
+
 <!-- /Page Content -->
 <%-include('../partials2/footer.ejs') %>

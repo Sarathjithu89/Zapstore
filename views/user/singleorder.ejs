@@ -396,9 +396,17 @@
                           >Coupon Applied</small
                         ></span
                       >
-                      <span></span>
+                      <span>
+                        <small class="text-success"
+                          ><%= order.couponName %></small
+                        >
+                      </span>
                     </div>
                     <% } %>
+                    <div class="summary-row">
+                      <span>Shipping Cost:</span>
+                      <span>+ <%= order.shippingCost %></span>
+                    </div>
                     <div class="summary-row">
                       <span>Payment Method:</span>
                       <span><%= order.paymentMethod %></span>

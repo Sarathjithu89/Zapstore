@@ -1,28 +1,68 @@
 const Product = require("../../models/Products.js");
 const User = require("../../models/User.js");
-//const fs = require("fs");
 const Order = require("../../models/Order.js");
 const PDFDocument = require("pdfkit");
 const Transactions = require("../../models/Transactions.js");
 const Wallet = require("../../models/Wallet.js");
+const Coupon = require("../../models/Coupon.js");
 
 // get Orders
 const getUserOrders = async (req, res) => {
   try {
     const userId = req.user?.userId;
+    const page = parseInt(req.query.page) || 1;
+    const limit = 2;
+    const searchQuery = req.query.search ? req.query.search.trim() : "";
 
-    const orders = await Order.find({ userId: userId })
+    let query = { userId: userId };
+    let productQuery = {};
+
+    if (searchQuery) {
+      const matchingProducts = await Product.find({
+        productName: { $regex: searchQuery, $options: "i" },
+      }).select("_id");
+
+      const matchingProductIds = matchingProducts.map((product) => product._id);
+
+      query = {
+        userId: userId,
+        $or: [
+          { orderId: { $regex: searchQuery, $options: "i" } },
+          { "orderedItems.product": { $in: matchingProductIds } },
+        ],
+      };
+    }
+
+    const totalOrders = await Order.countDocuments(query);
+
+    const orders = await Order.find(query)
       .populate({
         path: "orderedItems.product",
         select: "productName productImage",
       })
       .populate("address")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .skip((page - 1) * limit)
+      .exec();
+
+    const totalPages = Math.ceil(totalOrders / limit);
+    const hasNextPage = page < totalPages;
+    const hasPrevPage = page > 1;
 
     res.render("orders.ejs", {
       title: "Your Orders",
       orders,
       user: req.user,
+      pagination: {
+        page,
+        limit,
+        totalOrders,
+        totalPages,
+        hasNextPage,
+        hasPrevPage,
+        searchQuery,
+      },
     });
   } catch (error) {
     console.error("Error fetching user orders:", error);
@@ -101,6 +141,7 @@ const cancelOrder = async (req, res) => {
   }
 };
 
+//request return
 const requestReturn = async (req, res) => {
   try {
     const { orderId, reason, comments } = req.body;
@@ -150,6 +191,7 @@ const requestReturn = async (req, res) => {
   }
 };
 
+//invoice
 const generateInvoice = async (req, res) => {
   try {
     const orderId = req.params.orderId;
@@ -336,6 +378,7 @@ const generateInvoice = async (req, res) => {
   }
 };
 
+//order details
 const getOrderDetails = async (req, res) => {
   try {
     const orderId = req.params.id;
@@ -364,7 +407,8 @@ const getOrderDetails = async (req, res) => {
       paymentStatus: order.paymentStatus || "Not Paid",
       totalPrice: order.totalPrice,
       discount: order.discount || 0,
-      couponApplied: order.couponCode ? true : false,
+      couponApplied: order.couponApplied ? true : false,
+      couponName: order.couponApplied ? order.couponName : null,
       finalAmount: order.finalAmount,
       address: order.address,
       orderedItems: order.orderedItems,
@@ -372,7 +416,9 @@ const getOrderDetails = async (req, res) => {
       returnRequestedAt: order.returnRequestedAt,
       returnReason: order.returnReason,
       returnComments: order.returnComments,
+      shippingCost: order.shippingCost,
     };
+
     res.render("singleorder.ejs", {
       title: `Order #${order.orderId} - Your Shop`,
       order: formattedOrder,
@@ -385,6 +431,7 @@ const getOrderDetails = async (req, res) => {
   }
 };
 
+//order success
 const orderSuccess = async (req, res) => {
   try {
     // Get order details from session
@@ -415,13 +462,19 @@ const orderSuccess = async (req, res) => {
       return res.redirect("/orders");
     }
 
-    // Get shipping address
+    let couponDiscount = 0;
+    const coupon = await Coupon.findOne({ name: orderSuccess.couponName });
+
+    if (coupon) {
+      couponDiscount = coupon.offerPrice;
+    }
+
     const shippingAddress = orders[0].address;
 
-    // Calculate total amounts
     let subtotal = 0;
     let discount = 0;
     let shipping = orders.length * 50; // Each order has shipping cost of 50
+    let totalRegularPrice = orderSuccess.totalRegularPrice;
 
     orders.forEach((order) => {
       subtotal += order.totalPrice;
@@ -429,16 +482,15 @@ const orderSuccess = async (req, res) => {
     });
 
     const totalAmount = {
+      totalRegularPrice,
       subtotal,
       discount,
       shipping,
-      total: subtotal + shipping - discount,
+      total: subtotal + shipping - couponDiscount,
     };
 
-    // Clear the session data to prevent revisiting
     delete req.session.orderSuccess;
 
-    // Render the success page with order details
     res.render("ordersuccess.ejs", {
       orders,
       userEmail: user.email,

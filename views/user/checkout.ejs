@@ -561,14 +561,20 @@
         </div>
 
         <div id="appliedCoupon" class="applied-coupon" style="display: none">
-          <div>
-            <i class="fas fa-check-circle text-success mr-2"></i>
-            Applied Coupon:
-            <span id="appliedCouponName" class="font-weight-bold"></span>
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <i class="fas fa-check-circle text-success mr-2"></i>
+              Applied Coupon:
+              <span id="appliedCouponName" class="font-weight-bold"></span>
+            </div>
+            <button
+              class="remove-coupon"
+              style="float: right; top: 0"
+              onclick="removeCoupon()"
+            >
+              <i class="fas fa-times"></i> Remove
+            </button>
           </div>
-          <button class="remove-coupon" onclick="removeCoupon()">
-            <i class="fas fa-times"></i> Remove
-          </button>
         </div>
       </div>
 
@@ -580,8 +586,12 @@
 
         <div class="order-summary">
           <div class="order-summary-row">
-            <span>Subtotal</span>
-            <span>₹ <span id="subtotal"><%= subtotal.toFixed() %></span></span>
+            <span>Total</span>
+            <span>₹ <span><%= totalRegularPrice.toFixed() %></span></span>
+          </div>
+          <div class="order-summary-row">
+            <span>Subtotal(with Discount)</span>
+            <span>₹ <span id="subtotal"><%= subtotal.toFixed(0) %></span></span>
           </div>
           <div class="order-summary-row">
             <span>Coupon Discount</span>
@@ -606,10 +616,7 @@
             <span>Total</span>
             <span class="total-price"
               >₹
-              <span id="grandTotal"
-                ><%= subtotal ==0? subtotal.toFixed(0):(subtotal+50).toFixed(0)
-                %></span
-              ></span
+              <span id="grandTotal"><%= (subtotal+50).toFixed(0) %></span></span
             >
           </div>
         </div>
@@ -850,21 +857,17 @@
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
 <script>
-  // Keep all the original JavaScript functionality intact
   let appliedCoupon = null;
 
   function applyCoupon() {
-    const couponCode = document.getElementById("couponCode").value;
-    const subtotal = parseFloat(
-      document.getElementById("subtotal").textContent
-    );
+    const couponName = document.getElementById("couponCode").value;
 
     fetch("/apply-coupon", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ couponCode, subtotal }),
+      body: JSON.stringify({ couponName }),
     })
       .then((response) => response.json())
       .then((data) => {
@@ -952,19 +955,17 @@
       // Check stock availability before proceeding
       const stockStatus = await checkStockAvailability();
 
-      // Continuation of the placeOrder() function
       if (stockStatus.length === 0) {
         Swal.fire("Error", "Your cart is empty", "error");
         return;
       }
 
-      console.log(stockStatus);
       const blockedProducts = stockStatus.filter((item) => item.isBlocked);
       if (blockedProducts.length > 0) {
         Swal.fire({
           title: "Products Blocked",
-          text: "Some Products in your cart have been blocked by admin.Page will reoad to update your cart",
-          icon: "waringing",
+          text: "Some Products in your cart have been blocked by admin. Page will reload to update your cart",
+          icon: "warning",
           confirmButtonText: "OK",
         }).then(() => {
           window.location.reload();
@@ -1036,7 +1037,7 @@
 
       // For online payment (Razorpay)
       if (paymentMethodValue === "razorpay") {
-        initiateRazorpayPayment(addressId, grandTotal);
+        razorpayPayment(addressId, grandTotal);
       }
     } catch (error) {
       console.error("Error:", error);
@@ -1055,7 +1056,6 @@
       addressId: addressId,
       paymentMethod: paymentMethod,
       paymentId: paymentId,
-      couponCode: appliedCoupon ? appliedCoupon._id : null,
     };
 
     // Send order data to the server
@@ -1095,7 +1095,7 @@
       });
   }
 
-  //Wallet order
+  // Wallet order
   function processWalletOrder(addressId, paymentMethod, paymentId) {
     // Get the grand total amount
     const amount = parseFloat(
@@ -1108,12 +1108,11 @@
       paymentMethod: paymentMethod,
       paymentId: paymentId,
       couponCode: appliedCoupon ? appliedCoupon._id : null,
-      amount: amount, // Add this line to include the amount
+      amount: amount,
     };
 
     // Send order data to the server
     fetch("/palceWalletOrder", {
-      // You should also fix this typo to "/placeWalletOrder"
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -1149,14 +1148,14 @@
       });
   }
 
-  // Initialize Razorpay payment
-  function initiateRazorpayPayment(addressId, amount) {
-    fetch("/create-razorpay-order", {
+  // Initialize Razorpay payment with failure handling
+  function razorpayPayment(addressId, amount) {
+    fetch("/razorpay-order", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ amount: amount * 100 }), // Razorpay accepts amount in paise
+      body: JSON.stringify({ amount: amount }), // in paise
     })
       .then((response) => response.json())
       .then((data) => {
@@ -1165,11 +1164,11 @@
             key: data.key,
             amount: data.order.amount,
             currency: "INR",
-            name: "ShopCart",
+            name: "Zapstore",
             description: "Payment for your order",
             order_id: data.order.id,
             handler: function (response) {
-              processOrder(addressId, "razorpay", response.razorpay_payment_id);
+              verifyRazorpayPayment(response, addressId);
             },
             prefill: {
               name: data.user.name,
@@ -1179,9 +1178,26 @@
             theme: {
               color: "#ffc107",
             },
+            // Add modal closing and payment failed handlers
+            modal: {
+              ondismiss: function () {
+                showPaymentFailedModal(
+                  "Payment window was closed before completing the payment"
+                );
+              },
+            },
           };
 
           const rzp = new Razorpay(options);
+
+          // Add payment failed event handler
+          rzp.on("payment.failed", function (response) {
+            const errorMessage =
+              response.error.description ||
+              "Payment failed. Please try again or choose a different payment method.";
+            showPaymentFailedModal(errorMessage);
+          });
+
           rzp.open();
         } else {
           Swal.fire("Error", data.message, "error");
@@ -1197,58 +1213,186 @@
       });
   }
 
-  // Confirm wallet payment
-  document
-    .getElementById("confirmWalletPayment")
-    .addEventListener("click", function () {
-      const addressId = document.getElementById("existingAddress").value;
-      processWalletOrder(addressId, "Wallet", null);
-      $("#walletPaymentModal").modal("hide");
+  // Show payment failed modal with options
+  function showPaymentFailedModal(errorMessage) {
+    Swal.fire({
+      title: "Payment Failed",
+      text: errorMessage,
+      icon: "error",
+      showCancelButton: true,
+      confirmButtonText: "Try Again",
+      cancelButtonText: "Choose Different Method",
+      confirmButtonColor: "#ffc107",
+      cancelButtonColor: "#007bff",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Try the same payment method again
+        const addressId = document.getElementById("existingAddress").value;
+        const grandTotal = parseFloat(
+          document.getElementById("grandTotal").textContent
+        );
+        razorpayPayment(addressId, grandTotal);
+      } else {
+        // Show payment method selection modal
+        showPaymentMethodSelectionModal();
+      }
+    });
+  }
+
+  // Function to show payment method selection modal
+  function showPaymentMethodSelectionModal() {
+    Swal.fire({
+      title: "Choose Payment Method",
+      html: `
+      <div class="payment-methods-container">
+        <div class="payment-method-option" onclick="selectPaymentMethod('COD')">
+          <i class="fas fa-money-bill-wave mr-2"></i>
+          <div>
+            <div class="method-title">Cash on Delivery</div>
+            <div class="method-description">Pay when your order is delivered</div>
+          </div>
+        </div>
+        <div class="payment-method-option" onclick="selectPaymentMethod('Wallet')">
+          <i class="fas fa-wallet mr-2"></i>
+          <div>
+            <div class="method-title">Wallet Payment</div>
+            <div class="method-description">Balance: ₹${
+              document.getElementById("walletBalance").textContent
+            }</div>
+          </div>
+        </div>
+      </div>
+    `,
+      showConfirmButton: false,
+      customClass: {
+        container: "payment-method-selection-modal",
+      },
+      didOpen: () => {
+        // Add styles for the payment method options
+        const style = document.createElement("style");
+        style.textContent = `
+        .payment-methods-container {
+          display: flex;
+          flex-direction: column;
+          gap: 15px;
+          margin-top: 15px;
+        }
+        .payment-method-option {
+          display: flex;
+          align-items: center;
+          padding: 15px;
+          border: 1px solid #e0e0e0;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+        }
+        .payment-method-option:hover {
+          border-color: #ffc107;
+          background-color: #fffdf5;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        }
+        .method-title {
+          font-weight: 500;
+          font-size: 16px;
+        }
+        .method-description {
+          font-size: 13px;
+          color: #777;
+        }
+        .payment-method-option i {
+          font-size: 24px;
+          margin-right: 15px;
+          color: #555;
+        }
+      `;
+        document.head.appendChild(style);
+      },
+    });
+  }
+
+  // Function to handle payment method selection from modal
+  function selectPaymentMethod(method) {
+    // Close the modal
+    Swal.close();
+
+    // Update the payment method selection in the UI
+    const paymentMethods = document.querySelectorAll(".payment-method");
+    paymentMethods.forEach((m) => {
+      m.classList.remove("selected");
+      if (m.querySelector(`input[value="${method}"]`)) {
+        m.classList.add("selected");
+        m.querySelector('input[type="radio"]').checked = true;
+      }
     });
 
-  // Place order button click handler
-  document
-    .querySelector(".place-order-btn")
-    .addEventListener("click", placeOrder);
+    // Process the order with the new payment method
+    setTimeout(() => {
+      placeOrder();
+    }, 500);
+  }
 
-  // Payment method selection
-  const paymentMethods = document.querySelectorAll(".payment-method");
-  paymentMethods.forEach((method) => {
-    method.addEventListener("click", function () {
-      // Remove selected class from all payment methods
-      paymentMethods.forEach((m) => m.classList.remove("selected"));
-      // Add selected class to clicked method
-      this.classList.add("selected");
-      // Check the radio button
-      this.querySelector('input[type="radio"]').checked = true;
-    });
-  });
+  // Verify razorpay payment with improved error handling
+  function verifyRazorpayPayment(paymentResponse, addressId) {
+    const couponCode = appliedCoupon ? appliedCoupon._id : null;
+
+    fetch("/verify-razorpay-payment", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        razorpay_payment_id: paymentResponse.razorpay_payment_id,
+        razorpay_order_id: paymentResponse.razorpay_order_id,
+        razorpay_signature: paymentResponse.razorpay_signature,
+        addressId: addressId,
+        couponCode: couponCode,
+      }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          Swal.fire({
+            title: "Payment Successful!",
+            text: "Your order has been placed successfully.",
+            icon: "success",
+            confirmButtonText: "View Order",
+          }).then((result) => {
+            if (result.isConfirmed) {
+              window.location.href = "/ordersuccess";
+            } else {
+              window.location.href = "/orders";
+            }
+          });
+        } else {
+          // Handle payment verification failure
+          showPaymentFailedModal(
+            data.message ||
+              "Payment verification failed. Please try again or choose a different payment method."
+          );
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        showPaymentFailedModal(
+          "An error occurred while verifying payment. Please try again or choose a different payment method."
+        );
+      });
+  }
 
   // Show shipping charge details
   function showShippingCharge() {
     Swal.fire({
       title: "Shipping Policy",
-      // html: `
-      //   <div class="text-left">
-      //     <p>Standard shipping charge of ₹50 applies to all orders.</p>
-      //     <p>Free shipping on orders above ₹1000.</p>
-      //     <p>Delivery Time:</p>
-      //     <ul>
-      //       <li>Metro Cities: 2-3 business days</li>
-      //       <li>Other Cities: 3-5 business days</li>
-      //       <li>Remote Areas: 5-7 business days</li>
-      //     </ul>
-      //   </div>
-      // `,
       html: ` <div class="text-center">
-              <p>Standard shipping charge of ₹50 
-        <p>Delivery Time:</p>
-          <ul class="text-left">
-            <li>Metro Cities: 2-3 business days</li>
-            <li>Other Cities: 3-5 business days</li>
-            <li>Remote Areas: 5-7 business days</li>
-           </ul>
-              </div> `,
+            <p>Standard shipping charge of ₹50 
+      <p>Delivery Time:</p>
+        <ul class="text-left">
+          <li>Metro Cities: 2-3 business days</li>
+          <li>Other Cities: 3-5 business days</li>
+          <li>Remote Areas: 5-7 business days</li>
+         </ul>
+            </div> `,
       icon: "info",
     });
   }
@@ -1318,6 +1462,33 @@
         );
       });
   }
+
+  // Confirm wallet payment
+  document
+    .getElementById("confirmWalletPayment")
+    .addEventListener("click", function () {
+      const addressId = document.getElementById("existingAddress").value;
+      processWalletOrder(addressId, "Wallet", null);
+      $("#walletPaymentModal").modal("hide");
+    });
+
+  // Place order button click handler
+  document
+    .querySelector(".place-order-btn")
+    .addEventListener("click", placeOrder);
+
+  // Payment method selection
+  const paymentMethods = document.querySelectorAll(".payment-method");
+  paymentMethods.forEach((method) => {
+    method.addEventListener("click", function () {
+      // Remove selected class from all payment methods
+      paymentMethods.forEach((m) => m.classList.remove("selected"));
+      // Add selected class to clicked method
+      this.classList.add("selected");
+      // Check the radio button
+      this.querySelector('input[type="radio"]').checked = true;
+    });
+  });
 
   // Initialize the page
   document.addEventListener("DOMContentLoaded", function () {

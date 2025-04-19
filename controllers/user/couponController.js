@@ -2,8 +2,8 @@ const User = require("../../models/User.js");
 const Coupon = require("../../models/Coupon.js");
 const Order = require("../../models/Order.js");
 const Cart = require("../../models/Cart.js");
-const { orderSuccess } = require("./orderController.js");
 
+//get coupons
 const getMyCoupons = async (req, res) => {
   try {
     if (!req.user) {
@@ -76,8 +76,9 @@ const applyCoupon = async (req, res) => {
 
     const cart = (await Cart.findOne({ userId: userId })) || {
       items: [],
-      totalPrice: 0,
     };
+    let totalPrice = 0;
+    cart.items.forEach((item) => (totalPrice += item.totalPrice));
 
     if (!cart.items.length) {
       return res.json({
@@ -100,7 +101,7 @@ const applyCoupon = async (req, res) => {
       });
     }
 
-    if (cart.totalPrice < coupon.minimumPrice) {
+    if (totalPrice < coupon.minimumPrice) {
       return res.json({
         success: false,
         message: `Minimum purchase of ₹${coupon.minimumPrice} required to use this coupon`,
@@ -120,17 +121,26 @@ const applyCoupon = async (req, res) => {
     }
 
     let discountAmount = coupon.offerPrice;
+    let finalAmount = cart.totalPrice - discountAmount;
 
-    (req.session.cart.couponApplied = true),
-      (req.session.cart.couponName = couponName),
-      (req.session.cart.discount = discountAmount);
+    if (!req.session.cart) {
+      req.session.cart = {};
+    }
+
+    req.session.cart.couponApplied = true;
+    req.session.cart.couponName = couponName;
+    req.session.cart.discount = discountAmount;
     req.session.cart.finalAmount = cart.totalPrice - discountAmount;
 
     return res.json({
       success: true,
       message: "coupon applied successfully",
       discount: discountAmount,
-      finalAmount: req.session.cart.finalAmount,
+      finalAmount: finalAmount,
+      coupon: {
+        name: couponName,
+        offerPrice: discountAmount,
+      },
     });
   } catch (error) {
     console.error("Error applying coupon", error);

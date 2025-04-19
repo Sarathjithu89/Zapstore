@@ -1,6 +1,7 @@
 const Brand = require("../../models/Brand.js");
 const Product = require("../../models/Products.js");
-
+const fs = require("fs");
+const path = require("path");
 const getBrandPage = async (req, res) => {
   try {
     const admin = req.admin;
@@ -86,15 +87,30 @@ const unBlockBrand = async (req, res) => {
     res.redirect("admin/pageerror");
   }
 };
+//delete brand
 const deleteBrand = async (req, res) => {
   try {
     const { id } = req.query;
     if (!id) {
-      return re.status(400).redirect("/pageerror");
+      return res.status(400).redirect("/pageerror");
     }
+
+    const brand = await Brand.findOne({ _id: id });
+
+    if (brand.brandImage && brand.brandImage.length > 0) {
+      const imagePath = path.join(
+        __dirname,
+        "../../public/uploads/brand-images/",
+        brand.brandImage[0]
+      );
+      await fs.unlink(imagePath, (err) => {
+        if (err) console.log("Image deletion error", err);
+      });
+    }
+
     await Brand.deleteOne({ _id: id });
-    req.flash("success", "Brand Deleted Successfully");
-    res.redirect("/admin/brands");
+
+    return res.status(200).json({ success: true });
   } catch (error) {
     console.log("Error Deleting Brand", error);
     res.redirect("admin/pageerror");

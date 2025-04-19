@@ -77,6 +77,18 @@
     animation: fadeInRight 0.5s;
   }
 
+  .description {
+  }
+  .contentbox {
+    width: 100%;
+  }
+  .mainrow {
+    gap: 10px;
+  }
+  .firstcol {
+    width: 100%;
+  }
+
   @keyframes fadeInRight {
     from {
       opacity: 0;
@@ -106,8 +118,8 @@
   <section class="container-fluid p-4">
     <div class="card">
       <div class="card-body">
-        <div class="row">
-          <div class="col-md-3">
+        <div class="row mainrow">
+          <div class="col-md-3 firstcol">
             <form method="post" action="/admin/addcategory" id="categoryForm">
               <div class="mb-4">
                 <label for="product_name" class="form-label">Name</label>
@@ -140,7 +152,7 @@
             </form>
           </div>
 
-          <div class="col-md-8 ml-10">
+          <div class="col-md-8 ml-10 contentbox">
             <div class="table-responsive">
               <table class="table table-hover table-bordered">
                 <thead>
@@ -161,7 +173,7 @@
                     <td data-label="Name" class="text-start">
                       <%= category.name %>
                     </td>
-                    <td data-label="Description" class="text-start">
+                    <td data-label="Description" class="text-start description">
                       <%= category.description %>
                     </td>
                     <td data-label="Offer" class="text-start">
@@ -640,39 +652,6 @@
         );
         console.log("Error Deleting Category", error);
       }
-
-      // try {
-      //   const response = await fetch("/admin/delete-category", {
-      //     method: "POST",
-      //     headers: {
-      //       "content-type": "application/json",
-      //     },
-      //     body: JSON.stringify({
-      //       categoryId: categoryId,
-      //     }),
-      //   });
-      //   const data = await response.json();
-      //   if (response.ok && data.status === true) {
-      //     Swal.fire("Deleted", "The category has been deleted", "success").then(
-      //       () => {
-      //         location.reload();
-      //       }
-      //     );
-      //   } else {
-      //     Swal.fire(
-      //       "Failed",
-      //       data.message || "Deleting category failed",
-      //       "error"
-      //     );
-      //   }
-      // } catch (error) {
-      //   Swal.fire(
-      //     "Error",
-      //     "An Error Occured while Deleting the Category",
-      //     "error"
-      //   );
-      //   console.log("Error Deleting Category", error);
-      // }
     }
   </script>
 

@@ -3,8 +3,8 @@ const Cart = require("../../models/Cart.js");
 const Product = require("../../models/Products.js");
 const { json } = require("body-parser");
 const Wishlist = require("../../models/Wishlist.js");
-//View the shopping cart
 
+//View the shopping cart
 const viewCart = async (req, res) => {
   try {
     const userId = req.user?.userId;
@@ -21,6 +21,16 @@ const viewCart = async (req, res) => {
         select: "name categoryOffer",
       },
     });
+
+    if (!cart) {
+      return res.render("cart.ejs", {
+        cartItems: [],
+        offerdiscount: 0,
+        grandTotal: 0,
+        totalproductPrice: 0,
+        title: "Shopping Cart",
+      });
+    }
 
     cart.items.forEach((item) => {
       const regularPrice = item.productId.regularPrice;
@@ -42,7 +52,7 @@ const viewCart = async (req, res) => {
     let cartItems = [];
     let totalproductPrice = 0;
 
-    if (cart && cart.items.length !== 0) {
+    if (cart.items.length !== 0) {
       cartItems = cart.items.map((item) => {
         const itemSubtotal = item.totalPrice;
         subtotal += itemSubtotal;
@@ -68,10 +78,9 @@ const viewCart = async (req, res) => {
 
     res.render("cart.ejs", {
       cartItems,
-      // discounted total (after applying best offer)
-      offerdiscount, // how much saved
-      grandTotal: subtotal, // corrected final amount after discount
-      totalproductPrice, // original MRP before any discount
+      offerdiscount,
+      grandTotal: subtotal,
+      totalproductPrice,
       title: "Shopping Cart",
     });
   } catch (error) {
@@ -196,6 +205,7 @@ const addToCart = async (req, res) => {
   }
 };
 
+//change Quantity
 const changeQuantity = async (req, res) => {
   try {
     const { productId, action } = req.body;
@@ -273,6 +283,7 @@ const changeQuantity = async (req, res) => {
   }
 };
 
+//deleteItem
 const deleteItem = async (req, res) => {
   try {
     const productId = req.query.id;
@@ -329,5 +340,3 @@ const clearCart = async (req, res) => {
 };
 
 module.exports = { viewCart, addToCart, changeQuantity, deleteItem, clearCart };
-
-// ----------------------

@@ -397,7 +397,11 @@
         <h3 class="order-details-title">Order Summary</h3>
 
         <div class="order-summary-row">
-          <span>Subtotal (<%= totalItems %> items)</span>
+          <span>Total Price (<%= totalItems %> items)</span>
+          <span>₹ <%= totalAmount.totalRegularPrice.toFixed(2) %></span>
+        </div>
+        <div class="order-summary-row">
+          <span>Disounted Subtotal (<%= totalItems %> items)</span>
           <span>₹ <%= totalAmount.subtotal.toFixed(2) %></span>
         </div>
 
@@ -416,7 +420,7 @@
         <% } %>
 
         <div class="order-summary-row total-row">
-          <span>Total</span>
+          <span>Grand Total</span>
           <span>₹ <%= totalAmount.total.toFixed(2) %></span>
         </div>
       </div>
