@@ -12,13 +12,24 @@ const getMyCoupons = async (req, res) => {
     }
 
     const userId = req.user.userId;
-
     const currentDate = new Date();
 
+    const page = parseInt(req.query.page) || 1;
+    const limit = 4;
+
     const allCoupons = await Coupon.find({
-      $or: [{ UserId: userId }, { UserId: { $size: 0 } }],
+      $or: [
+        { UserId: userId },
+        { UserId: { $nin: [userId] } },
+        {
+          isReferralCoupon: true,
+          isusedFor: userId,
+        },
+      ],
       isListed: true,
     });
+
+    const referralCoupons = allCoupons.filter((c) => c.isReferralCoupon);
 
     const userOrders = await Order.find({
       userId: userId,
@@ -35,12 +46,20 @@ const getMyCoupons = async (req, res) => {
     };
 
     allCoupons.forEach((coupon) => {
+      if (
+        coupon.isReferralCoupon &&
+        coupon.isusedFor.toString() !== userId.toString()
+      ) {
+        return;
+      }
+
       const couponData = {
         id: coupon._id,
         name: coupon.name,
         offerPrice: coupon.offerPrice,
         minimumPrice: coupon.minimumPrice,
         expireOn: coupon.expireOn,
+        isReferralCoupon: coupon.isReferralCoupon || false,
       };
 
       if (new Date(coupon.expireOn) < currentDate) {
@@ -52,14 +71,35 @@ const getMyCoupons = async (req, res) => {
       }
     });
 
+    const activeTab = req.query.tab || "available";
+
+    const totalCoupons = categorizedCoupons[activeTab].length;
+    const totalPages = Math.ceil(totalCoupons / limit);
+
+    const startIndex = (page - 1) * limit;
+    const endIndex = page * limit;
+
+    const paginatedCoupons = { ...categorizedCoupons };
+    paginatedCoupons[activeTab] = categorizedCoupons[activeTab].slice(
+      startIndex,
+      endIndex
+    );
+
     res.render("user/coupons.ejs", {
       title: "My coupons",
-      coupons: categorizedCoupons,
+      coupons: paginatedCoupons,
       user: req.user,
+      pagination: {
+        page,
+        limit,
+        totalPages,
+        totalCoupons,
+        activeTab,
+      },
     });
   } catch (error) {
     console.error("Error fetching coupons:", error);
-    req.flash("error", "Failed to load coupons.Please try again later.");
+    req.flash("error", "Failed to load coupons. Please try again later.");
     res.redirect("/coupons");
   }
 };

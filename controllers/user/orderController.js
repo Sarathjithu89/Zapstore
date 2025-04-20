@@ -5,6 +5,7 @@ const PDFDocument = require("pdfkit");
 const Transactions = require("../../models/Transactions.js");
 const Wallet = require("../../models/Wallet.js");
 const Coupon = require("../../models/Coupon.js");
+const path = require("path");
 
 // get Orders
 const getUserOrders = async (req, res) => {
@@ -212,7 +213,16 @@ const generateInvoice = async (req, res) => {
     const userName = req.user?.name || "Customer";
     const userEmail = req.user?.email || "";
 
-    const doc = new PDFDocument({ margin: 40, bufferPages: true, size: "A4" });
+    const doc = new PDFDocument({ margin: 50, bufferPages: true, size: "A4" });
+
+    const fontPath = path.join(
+      "public",
+      "assets",
+      "fonts",
+      "NotoSans-Regular.ttf"
+    );
+    doc.registerFont("Unicode", fontPath);
+    doc.font("Unicode");
 
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader(
@@ -225,60 +235,80 @@ const generateInvoice = async (req, res) => {
     // Company logo and info
     doc
       .fontSize(10)
-      .text("Zapsore", 400, 50, { align: "left" })
-      .text("123 Business Street", { align: ";eft" })
-      .text("City, State, 874596", { align: "left" })
-      .text("Email: zapstore@company.com", { align: "left" });
-
-    doc.moveDown();
+      .text("Zapstore", 400, 50, { align: "right" }) // Fixed company name typo "Zapsore" to "Zapstore"
+      .text("123 Business Street", { align: "right" })
+      .text("City, State, 874596", { align: "right" })
+      .text("Email:", { align: "right" })
+      .text("zapstore@company.com", { align: "right" });
 
     // Invoice header
-    doc.fillColor("#333333").fontSize(25).text("INVOICE", 50, 150);
+    doc.fillColor("#333333").fontSize(25).text("INVOICE", 50, 120);
     doc
       .fontSize(10)
       .fillColor("#555555")
-      .text(`Invoice #: ${order.orderId || orderId}`, 50, 180)
-      .text(`Date: ${new Date(order.createdAt).toLocaleDateString()}`, 50, 195);
-
-    doc.moveDown();
+      .text(`Invoice #: ${order.orderId || orderId}`, 50, 150)
+      .text(`Date: ${new Date(order.createdAt).toLocaleDateString()}`, 50, 165);
 
     // Customer info
     doc
       .fontSize(12)
       .fillColor("#000")
-      .text("Bill To:", 50, 230, { underline: true });
-    doc.fontSize(10).text(userName).text(userEmail);
+      .text("Bill To:", 50, 195, { underline: true });
+
+    let currentY = 210;
+    doc.fontSize(10).text(userName, 50, currentY);
+    currentY += 15;
+    doc.text(userEmail, 50, currentY);
+    currentY += 15;
+
     if (order.address) {
-      doc.text(`${order.address.addressLine}, ${order.address.city}`);
-      doc.text(`${order.address.state} - ${order.address.pincode}`);
-      doc.text(order.address.country);
+      doc.text(
+        `${order.address.addressLine}${
+          order.address.city ? ", " + order.address.city : ""
+        }`,
+        50,
+        currentY
+      );
+      currentY += 15;
+      doc.text(
+        `${order.address.state}${
+          order.address.pincode ? " - " + order.address.pincode : ""
+        }`,
+        50,
+        currentY
+      );
+      currentY += 15;
+      doc.text(order.address.country, 50, currentY);
+      currentY += 15;
     }
 
-    doc.moveDown(2);
+    // Table layout - ensure enough space after address
+    const tableTop = currentY + 20;
 
-    // Table layout
-    const tableTop = 300;
+    // Properly spaced columns - ensuring enough width for each
     const itemCodeX = 50;
-    const descriptionX = 150;
-    const quantityX = 350;
-    const priceX = 400;
-    const amountX = 470;
+    const descriptionX = 120;
+    const quantityX = 300;
+    const priceX = 350;
+    const amountX = 430;
 
-    // Header background
+    // Table header background
     doc
       .rect(50, tableTop - 5, 500, 20)
-      .fill("#f0f0f0")
+      .fillColor("#f0f0f0")
+      .fill()
+      .strokeColor("#cccccc")
       .stroke();
 
     // Table headers
     doc
       .fillColor("#000000")
       .fontSize(10)
-      .text("Item", itemCodeX, tableTop)
-      .text("Description", descriptionX, tableTop)
-      .text("Qty", quantityX, tableTop)
-      .text("Price", priceX, tableTop)
-      .text("Amount", amountX, tableTop);
+      .text("Item", itemCodeX, tableTop, { width: 60 })
+      .text("Description", descriptionX, tableTop, { width: 170 })
+      .text("Qty", quantityX, tableTop, { width: 40 })
+      .text("Price", priceX, tableTop, { width: 70 })
+      .text("Amount", amountX, tableTop, { width: 70 });
 
     // Row data
     let y = tableTop + 20;
@@ -289,72 +319,109 @@ const generateInvoice = async (req, res) => {
       if (isEven) {
         doc
           .rect(50, y - 2, 500, 18)
-          .fill("#f9f9f9")
+          .fillColor("#f9f9f9")
+          .fill()
+          .strokeColor("#cccccc")
           .stroke();
       }
 
+      // Define clear column widths
       doc
         .fillColor("#000")
         .fontSize(10)
-        .text(productName.substring(0, 20), itemCodeX, y)
-        .text(productName.substring(0, 30), descriptionX, y)
-        .text(item.quantity.toString(), quantityX, y)
-        .text(`₹${item.price.toFixed(2)}`, priceX, y)
-        .text(`₹${(item.price * item.quantity).toFixed(2)}`, amountX, y);
+        .text(productName.substring(0, 10), itemCodeX, y, { width: 60 })
+        .text(productName, descriptionX, y, { width: 170 })
+        .text(item.quantity.toString(), quantityX, y, { width: 40 })
+        .text(`₹${item.price.toFixed(2)}`, priceX, y, { width: 70 })
+        .text(`₹${(item.price * item.quantity).toFixed(2)}`, amountX, y, {
+          width: 70,
+          align: "left",
+        });
 
       y += 20;
     });
 
-    // Totals box
-    y += 10;
+    // Add padding after the table
+    y += 20;
+
+    // Totals section - moved to the right side
+    // Draw totals with fixed positioning to ensure they appear as expected
     doc
-      .lineWidth(1)
-      .rect(350, y, 200, order.discount > 0 ? 60 : 45)
-      .strokeColor("#cccccc")
+      .rect(350, y, 200, order.discount > 0 ? 80 : 60)
+      .fillColor("#f9f9f9")
+      .fill()
+      .strokeColor("#dddddd")
       .stroke();
 
+    // Make sure totals align properly
     doc
-      .fontSize(10)
       .fillColor("#000000")
-      .text("Subtotal:", 360, y + 5)
-      .text(`₹ ${order.totalPrice.toFixed(2)}`, 530, y + 5, { align: "right" });
+      .fontSize(10)
+      .text("Subtotal:", 370, y + 15, { width: 75 })
+      .text(`₹ ${order.totalPrice.toFixed()}`, 490, y + 15, {
+        width: 50,
+        align: "right",
+      });
 
     if (order.discount > 0) {
       doc
-        .text("Discount:", 360, y + 20)
-        .text(`-₹ ${order.discount.toFixed(2)}`, 530, y + 20, {
+        .text("Discount:", 370, y + 35, { width: 75 })
+        .text(`-₹ ${order.discount.toFixed()}`, 490, y + 35, {
+          width: 50,
+          align: "right",
+        });
+
+      doc
+        .fontSize(11)
+        .font("Unicode")
+        .text("Total:", 370, y + 60, { width: 75 })
+        .text(`₹ ${order.finalAmount.toFixed()}`, 490, y + 60, {
+          width: 50,
+          align: "right",
+        });
+    } else {
+      doc
+        .fontSize(11)
+        .font("Unicode")
+        .text("Total:", 370, y + 35, { width: 75 })
+        .text(`₹ ${order.finalAmount.toFixed()}`, 490, y + 35, {
+          width: 50,
           align: "right",
         });
     }
 
-    doc
-      .fontSize(12)
-      .text("Total:", 360, y + (order.discount > 0 ? 40 : 25))
-      .text(
-        `₹ ${order.finalAmount.toFixed(2)}`,
-        530,
-        y + (order.discount > 0 ? 40 : 25),
-        {
-          align: "right",
-        }
-      );
+    // Move down to ensure space for payment info
+    y = y + (order.discount > 0 ? 100 : 80);
 
-    // Payment info
-    y += order.discount > 0 ? 80 : 60;
-    doc.fontSize(10).text("Payment Information", 50, y, { underline: true });
+    // Payment info - formatted as a clean section
+    doc
+      .fontSize(10)
+      .font("Unicode")
+      .text("Payment Information", 50, y, { underline: true });
+
+    y += 20;
+    doc.text(`Payment Status: ${order.status}`, 50, y);
     y += 15;
-    doc.text(`Payment Status: ${order.status}`);
-    doc.text(`Payment Method: ${order.paymentMethod}`);
+    doc.text(`Payment Method: ${order.paymentMethod}`, 50, y);
 
-    // Thank you note
-    doc.moveDown(2);
-    doc.fontSize(12).text("Thank you for your business!", { align: "center" });
+    // Thank you note - centered properly
+    y += 30;
+    doc.fontSize(12).text("Thank you for your business!", 50, y, {
+      align: "center",
+      width: 500,
+    });
 
-    // Footer
-    const footerY = doc.page.height - 30;
+    //Check if we need to add a page for footer
+    if (y > doc.page.height - 100) {
+      doc.addPage();
+      y = 50;
+    }
+
+    // Footer with line
+    const footerY = doc.page.height - 75;
     doc
-      .moveTo(50, footerY - 10)
-      .lineTo(550, footerY - 10)
+      .moveTo(50, footerY)
+      .lineTo(550, footerY)
       .strokeColor("#dddddd")
       .stroke();
 
@@ -363,9 +430,9 @@ const generateInvoice = async (req, res) => {
       .fillColor("#888888")
       .text(
         "This is a computer generated invoice and does not require a signature.",
-        40,
-        footerY,
-        { align: "center" }
+        50,
+        footerY + 10,
+        { align: "center", width: 500 }
       );
 
     doc.end();

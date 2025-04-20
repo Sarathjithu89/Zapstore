@@ -245,7 +245,7 @@
           </div>
 
           <!-- Phone Number -->
-          <div class="col-md-12">
+          <div class="col-md-6">
             <div class="form-group">
               <label class="form-label" for="phone">Phone Number *</label>
               <input
@@ -256,6 +256,32 @@
                 placeholder="Enter your phone number"
               />
               <div id="error3" class="error-message"></div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label class="form-label" for="referral"
+                >referral code(optional)</label
+              >
+              <% if(referral){ %>
+              <input
+                class="form-control"
+                name="referral"
+                type="text"
+                id="referral"
+                value="<%= referral %>"
+                placeholder="Enter a referral code"
+              />
+              <%}else{ %>
+              <input
+                class="form-control"
+                name="referral"
+                type="text"
+                id="referral"
+                placeholder="Enter a referral code"
+              />
+              <% } %>
+              <div id="error6" class="error-message"></div>
             </div>
           </div>
 

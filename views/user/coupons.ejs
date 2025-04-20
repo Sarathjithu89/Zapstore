@@ -222,7 +222,7 @@
   .coupon-left {
     background-color: #577194;
     color: white;
-    padding: 15px;
+    padding: 8px;
     width: 30%;
     display: flex;
     flex-direction: column;
@@ -232,19 +232,23 @@
   }
 
   .coupon-left::after {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     right: -10px;
     width: 20px;
     height: 100%;
-    background-image: radial-gradient(circle at 0 50%, transparent 10px, white 10px);
+    background-image: radial-gradient(
+      circle at 0 50%,
+      transparent 10px,
+      white 10px
+    );
     background-size: 20px 20px;
     background-repeat: repeat-y;
   }
 
   .coupon-right {
-    padding: 15px;
+    padding: 8px;
     width: 70%;
   }
 
@@ -262,11 +266,13 @@
     display: inline-block;
     margin-top: 5px;
   }
-  
+
   .coupon-details {
     margin-top: 10px;
     font-size: 14px;
     color: #555;
+    display: flex;
+    justify-content: space-between;
   }
 
   .coupon-expired {
@@ -274,7 +280,7 @@
   }
 
   .coupon-expired::before {
-    content: 'EXPIRED';
+    content: "EXPIRED";
     position: absolute;
     top: 50%;
     left: 50%;
@@ -293,7 +299,7 @@
   }
 
   .coupon-used::before {
-    content: 'USED';
+    content: "USED";
     position: absolute;
     top: 50%;
     left: 50%;
@@ -340,6 +346,52 @@
     border-radius: 8px;
     color: #666;
   }
+  .pagination-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+  }
+
+  .pagination {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .page-item {
+    margin: 0 2px;
+  }
+
+  .page-link {
+    display: block;
+    padding: 8px 12px;
+    color: #577194;
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+
+  .page-item.active .page-link {
+    background-color: #577194;
+    color: white;
+    border-color: #577194;
+  }
+
+  .page-item.disabled .page-link {
+    color: #6c757d;
+    pointer-events: none;
+    background-color: #fff;
+    border-color: #dee2e6;
+  }
+
+  .page-link:hover {
+    background-color: #e9ecef;
+    color: #577194;
+    text-decoration: none;
+  }
 </style>
 <div class="header-bottom header-sticky d-none d-lg-block d-xl-block mb-0">
   <div class="container">
@@ -355,6 +407,7 @@
               <li class="megamenu-holder active">
                 <a href="/shop">Shop</a>
               </li>
+              <li><a href="/cart">Cart</a></li>
               <li><a href="/about">About Us</a></li>
               <li><a href="/contact">Contact</a></li>
             </ul>
@@ -376,9 +429,7 @@
           <ol>
             <li><a href="/">Home</a></li>
             <li>profile</li>
-            <li>
-              My Coupons
-            </li>
+            <li>My Coupons</li>
           </ol>
         </div>
       </div>
@@ -387,223 +438,382 @@
 </div>
 <!-- Breadcrumb Area End -->
 
-  <div class="container mt-3 mb-5">
-    <div class="row justify-content-center">
-      <!-- Sidebar -->
-      <div class="col-md-3 col-sm-9 sidebar mx-1">
-        <h2>My Account</h2>
-        <a href="/userProfile"
-          ><svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            fill="currentColor"
-            class="bi bi-person"
-            viewBox="0 0 16 16"
-          >
-            <path
-              d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z"
-            />
-          </svg>
-          Details</a
+<div class="container mt-3 mb-5">
+  <div class="row justify-content-center">
+    <!-- Sidebar -->
+    <div class="col-md-3 col-sm-9 sidebar mx-1">
+      <h2>My Account</h2>
+      <a href="/userProfile"
+        ><svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          fill="currentColor"
+          class="bi bi-person"
+          viewBox="0 0 16 16"
         >
-        <a href="/address"
-          ><svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            fill="currentColor"
-            class="bi bi-geo-alt"
-            viewBox="0 0 16 16"
-          >
-            <path
-              d="M12.166 8.94c-.524 1.062-1.234 2.12-1.96 3.07A32 32 0 0 1 8 14.58a32 32 0 0 1-2.206-2.57c-.726-.95-1.436-2.008-1.96-3.07C3.304 7.867 3 6.862 3 6a5 5 0 0 1 10 0c0 .862-.305 1.867-.834 2.94M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10"
-            />
-            <path
-              d="M8 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4m0 1a3 3 0 1 0 0-6 3 3 0 0 0 0 6"
-            />
-          </svg>
-          Address</a
+          <path
+            d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z"
+          />
+        </svg>
+        Details</a
+      >
+      <a href="/address"
+        ><svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          fill="currentColor"
+          class="bi bi-geo-alt"
+          viewBox="0 0 16 16"
         >
-        <a href="/orders"
-          ><svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            fill="currentColor"
-            class="bi bi-cart2"
-            viewBox="0 0 16 16"
-          >
-            <path
-              d="M0 2.5A.5.5 0 0 1 .5 2H2a.5.5 0 0 1 .485.379L2.89 4H14.5a.5.5 0 0 1 .485.621l-1.5 6A.5.5 0 0 1 13 11H4a.5.5 0 0 1-.485-.379L1.61 3H.5a.5.5 0 0 1-.5-.5M3.14 5l1.25 5h8.22l1.25-5zM5 13a1 1 0 1 0 0 2 1 1 0 0 0 0-2m-2 1a2 2 0 1 1 4 0 2 2 0 0 1-4 0m9-1a1 1 0 1 0 0 2 1 1 0 0 0 0-2m-2 1a2 2 0 1 1 4 0 2 2 0 0 1-4 0"
-            />
-          </svg>
-          Orders</a
+          <path
+            d="M12.166 8.94c-.524 1.062-1.234 2.12-1.96 3.07A32 32 0 0 1 8 14.58a32 32 0 0 1-2.206-2.57c-.726-.95-1.436-2.008-1.96-3.07C3.304 7.867 3 6.862 3 6a5 5 0 0 1 10 0c0 .862-.305 1.867-.834 2.94M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10"
+          />
+          <path
+            d="M8 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4m0 1a3 3 0 1 0 0-6 3 3 0 0 0 0 6"
+          />
+        </svg>
+        Address</a
+      >
+      <a href="/orders"
+        ><svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          fill="currentColor"
+          class="bi bi-cart2"
+          viewBox="0 0 16 16"
         >
-        <a href="/wishlist"
-          ><svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            fill="currentColor"
-            class="bi bi-heart"
-            viewBox="0 0 16 16"
-          >
-            <path
-              d="m8 2.748-.717-.737C5.6.281 2.514.878 1.4 3.053c-.523 1.023-.641 2.5.314 4.385.92 1.815 2.834 3.989 6.286 6.357 3.452-2.368 5.365-4.542 6.286-6.357.955-1.886.838-3.362.314-4.385C13.486.878 10.4.28 8.717 2.01zM8 15C-7.333 4.868 3.279-3.04 7.824 1.143q.09.083.176.171a3 3 0 0 1 .176-.17C12.72-3.042 23.333 4.867 8 15"
-            />
-          </svg>
-          Wishlist</a
+          <path
+            d="M0 2.5A.5.5 0 0 1 .5 2H2a.5.5 0 0 1 .485.379L2.89 4H14.5a.5.5 0 0 1 .485.621l-1.5 6A.5.5 0 0 1 13 11H4a.5.5 0 0 1-.485-.379L1.61 3H.5a.5.5 0 0 1-.5-.5M3.14 5l1.25 5h8.22l1.25-5zM5 13a1 1 0 1 0 0 2 1 1 0 0 0 0-2m-2 1a2 2 0 1 1 4 0 2 2 0 0 1-4 0m9-1a1 1 0 1 0 0 2 1 1 0 0 0 0-2m-2 1a2 2 0 1 1 4 0 2 2 0 0 1-4 0"
+          />
+        </svg>
+        Orders</a
+      >
+      <a href="/wishlist"
+        ><svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          fill="currentColor"
+          class="bi bi-heart"
+          viewBox="0 0 16 16"
         >
-        <a href="/wallet"
-          ><svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            fill="currentColor"
-            class="bi bi-wallet-fill"
-            viewBox="0 0 16 16"
-          >
-            <path
-              d="M1.5 2A1.5 1.5 0 0 0 0 3.5v2h6a.5.5 0 0 1 .5.5c0 .253.08.644.306.958.207.288.557.542 1.194.542s.987-.254 1.194-.542C9.42 6.644 9.5 6.253 9.5 6a.5.5 0 0 1 .5-.5h6v-2A1.5 1.5 0 0 0 14.5 2z"
-            />
-            <path
-              d="M16 6.5h-5.551a2.7 2.7 0 0 1-.443 1.042C9.613 8.088 8.963 8.5 8 8.5s-1.613-.412-2.006-.958A2.7 2.7 0 0 1 5.551 6.5H0v6A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5z"
-            />
-          </svg>
-          Wallet</a
+          <path
+            d="m8 2.748-.717-.737C5.6.281 2.514.878 1.4 3.053c-.523 1.023-.641 2.5.314 4.385.92 1.815 2.834 3.989 6.286 6.357 3.452-2.368 5.365-4.542 6.286-6.357.955-1.886.838-3.362.314-4.385C13.486.878 10.4.28 8.717 2.01zM8 15C-7.333 4.868 3.279-3.04 7.824 1.143q.09.083.176.171a3 3 0 0 1 .176-.17C12.72-3.042 23.333 4.867 8 15"
+          />
+        </svg>
+        Wishlist</a
+      >
+      <a href="/wallet"
+        ><svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          fill="currentColor"
+          class="bi bi-wallet-fill"
+          viewBox="0 0 16 16"
         >
-        <a href="/mycoupons" class="active"
-          ><svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            fill="currentColor"
-            class="bi bi-cash"
-            viewBox="0 0 16 16"
-          >
-            <path d="M8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4" />
-            <path
-              d="M0 4a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H1a1 1 0 0 1-1-1zm3 0a2 2 0 0 1-2 2v4a2 2 0 0 1 2 2h10a2 2 0 0 1 2-2V6a2 2 0 0 1-2-2z"
-            />
-          </svg>
-          My Coupons</a
+          <path
+            d="M1.5 2A1.5 1.5 0 0 0 0 3.5v2h6a.5.5 0 0 1 .5.5c0 .253.08.644.306.958.207.288.557.542 1.194.542s.987-.254 1.194-.542C9.42 6.644 9.5 6.253 9.5 6a.5.5 0 0 1 .5-.5h6v-2A1.5 1.5 0 0 0 14.5 2z"
+          />
+          <path
+            d="M16 6.5h-5.551a2.7 2.7 0 0 1-.443 1.042C9.613 8.088 8.963 8.5 8 8.5s-1.613-.412-2.006-.958A2.7 2.7 0 0 1 5.551 6.5H0v6A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5z"
+          />
+        </svg>
+        Wallet</a
+      >
+      <a href="/mycoupons" class="active"
+        ><svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          fill="currentColor"
+          class="bi bi-cash"
+          viewBox="0 0 16 16"
         >
-        <a href="#" onclick="confirmLogout(event)" class="text-danger mt-4"
-          ><svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            fill="currentColor"
-            class="bi bi-box-arrow-right"
-            viewBox="0 0 16 16"
-          >
-            <path
-              fill-rule="evenodd"
-              d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0z"
-            />
-            <path
-              fill-rule="evenodd"
-              d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708z"
-            />
-          </svg>
-          Logout</a
+          <path d="M8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4" />
+          <path
+            d="M0 4a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H1a1 1 0 0 1-1-1zm3 0a2 2 0 0 1-2 2v4a2 2 0 0 1 2 2h10a2 2 0 0 1 2-2V6a2 2 0 0 1-2-2z"
+          />
+        </svg>
+        My Coupons</a
+      >
+      <a href="#" onclick="confirmLogout(event)" class="text-danger mt-4"
+        ><svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          fill="currentColor"
+          class="bi bi-box-arrow-right"
+          viewBox="0 0 16 16"
         >
+          <path
+            fill-rule="evenodd"
+            d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0z"
+          />
+          <path
+            fill-rule="evenodd"
+            d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708z"
+          />
+        </svg>
+        Logout</a
+      >
+    </div>
+
+    <!-- Main Content -->
+    <div class="col-md-8 col-sm-9 main-content mx-1">
+      <h2><i class="bi bi-ticket-perforated"></i> My Coupons</h2>
+
+      <div class="tabs-container">
+        <div class="tab active" data-tab="available">Available Coupons</div>
+        <div class="tab" data-tab="used">Used Coupons</div>
+        <div class="tab" data-tab="expired">Expired Coupons</div>
       </div>
 
-      <!-- Main Content -->
-      <div class="col-md-8 col-sm-9 main-content mx-1">
-        <h2><i class="bi bi-ticket-perforated"></i> My Coupons</h2>
-        
-        <div class="tabs-container">
-          <div class="tab active" data-tab="available">Available Coupons</div>
-          <div class="tab" data-tab="used">Used Coupons</div>
-          <div class="tab" data-tab="expired">Expired Coupons</div>
-        </div>
-        
-        <!-- Available Coupons -->
-        <div id="available" class="tab-content active">
-          <% if (coupons && coupons.available && coupons.available.length > 0) { %>
-            <% coupons.available.forEach(coupon => { %>
-              <div class="coupon-card">
-                <div class="coupon-left">
-                  <div class="coupon-amount">₹<%= coupon.offerPrice %></div>
-                  <div>OFF</div>
-                </div>
-                <div class="coupon-right">
-                  <h4><%= coupon.name %></h4>
-                  <div class="coupon-code" onclick="copyCouponCode(this)"><%= coupon.name %></div>
-                  <div class="coupon-details">
-                    <p>Min. Order: ₹<%= coupon.minimumPrice %></p>
-                    <p>Valid until: <%= new Date(coupon.expireOn).toLocaleDateString() %></p>
-                  </div>
-                </div>
-              </div>
-            <% }); %>
-          <% } else { %>
-            <div class="no-coupons">
-              <i class="bi bi-ticket-perforated" style="font-size: 48px;"></i>
-              <h4>No available coupons</h4>
-              <p>Check back later for new offers!</p>
+      <!-- Available Coupons -->
+      <div
+        id="available"
+        class="tab-content <%= pagination.activeTab === 'available' ? 'active' : '' %>"
+      >
+        <% if (coupons && coupons.available && coupons.available.length > 0) {
+        %> <% coupons.available.forEach(coupon => { %>
+        <div class="coupon-card">
+          <div class="coupon-left">
+            <div class="coupon-amount">₹<%= coupon.offerPrice %></div>
+            <div>OFF</div>
+          </div>
+          <div class="coupon-right">
+            <h6><%= coupon.name %></h6>
+            <div class="coupon-code" onclick="copyCouponCode(this)">
+              <%= coupon.name %>
             </div>
-          <% } %>
-        </div>
-        
-        <!-- Used Coupons -->
-        <div id="used" class="tab-content">
-          <% if (coupons && coupons.used && coupons.used.length > 0) { %>
-            <% coupons.used.forEach(coupon => { %>
-              <div class="coupon-card coupon-used">
-                <div class="coupon-left">
-                  <div class="coupon-amount">₹<%= coupon.offerPrice %></div>
-                  <div>OFF</div>
-                </div>
-                <div class="coupon-right">
-                  <h4><%= coupon.name %></h4>
-                  <div class="coupon-code"><%= coupon.name %></div>
-                  <div class="coupon-details">
-                    <p>Min. Order: ₹<%= coupon.minimumPrice %></p>
-                    <p>Valid until: <%= new Date(coupon.expireOn).toLocaleDateString() %></p>
-                  </div>
-                </div>
-              </div>
-            <% }); %>
-          <% } else { %>
-            <div class="no-coupons">
-              <i class="bi bi-ticket-perforated" style="font-size: 48px;"></i>
-              <h4>No used coupons</h4>
-              <p>You haven't used any coupons yet.</p>
+            <div class="coupon-details">
+              <p>Min. Order: ₹<%= coupon.minimumPrice %></p>
+              <p>
+                Valid until: <%= new Date(coupon.expireOn).toLocaleDateString()
+                %>
+              </p>
             </div>
-          <% } %>
+          </div>
         </div>
-        
-        <!-- Expired Coupons -->
-        <div id="expired" class="tab-content">
-          <% if (coupons && coupons.expired && coupons.expired.length > 0) { %>
-            <% coupons.expired.forEach(coupon => { %>
-              <div class="coupon-card coupon-expired">
-                <div class="coupon-left">
-                  <div class="coupon-amount">₹<%= coupon.offerPrice %></div>
-                  <div>OFF</div>
-                </div>
-                <div class="coupon-right">
-                  <h4><%= coupon.name %></h4>
-                  <div class="coupon-code"><%= coupon.name %></div>
-                  <div class="coupon-details">
-                    <p>Min. Order: ₹<%= coupon.minimumPrice %></p>
-                    <p>Expired on: <%= new Date(coupon.expireOn).toLocaleDateString() %></p>
-                  </div>
-                </div>
-              </div>
-            <% }); %>
-          <% } else { %>
-            <div class="no-coupons">
-              <i class="bi bi-ticket-perforated" style="font-size: 48px;"></i>
-              <h4>No expired coupons</h4>
-              <p>You don't have any expired coupons.</p>
+        <% }); %>
+
+        <!-- Pagination -->
+        <% if (pagination && pagination.activeTab === 'available' &&
+        pagination.totalPages > 1) { %>
+        <div class="pagination-container mt-4">
+          <nav aria-label="Coupon pagination">
+            <ul class="pagination justify-content-center">
+              <!-- Previous Button -->
+              <li
+                class="page-item <%= pagination.page === 1 ? 'disabled' : '' %>"
+              >
+                <a
+                  class="page-link"
+                  href="/mycoupons?tab=available&page=<%= pagination.page-1 %>"
+                  aria-label="Previous"
+                >
+                  <span aria-hidden="true">&laquo;</span>
+                </a>
+              </li>
+
+              <!-- Page Numbers -->
+              <% for(let i = 1; i <= pagination.totalPages; i++) { %>
+              <li
+                class="page-item <%= pagination.page === i ? 'active' : '' %>"
+              >
+                <a
+                  class="page-link"
+                  href="/mycoupons?tab=available&page=<%= i %>"
+                  ><%= i %></a
+                >
+              </li>
+              <% } %>
+
+              <!-- Next Button -->
+              <li
+                class="page-item <%= pagination.page === pagination.totalPages ? 'disabled' : '' %>"
+              >
+                <a
+                  class="page-link"
+                  href="/mycoupons?tab=available&page=<%= pagination.page+1 %>"
+                  aria-label="Next"
+                >
+                  <span aria-hidden="true">&raquo;</span>
+                </a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+        <% } %> <% } else { %>
+        <div class="no-coupons">
+          <i class="bi bi-ticket-perforated" style="font-size: 48px"></i>
+          <h4>No available coupons</h4>
+          <p>Check back later for new offers!</p>
+        </div>
+        <% } %>
+      </div>
+
+      <!-- Used Coupons -->
+      <div
+        id="used"
+        class="tab-content <%= pagination.activeTab === 'used' ? 'active' : '' %>"
+      >
+        <% if (coupons && coupons.used && coupons.used.length > 0) { %> <%
+        coupons.used.forEach(coupon => { %>
+        <div class="coupon-card coupon-used">
+          <div class="coupon-left">
+            <div class="coupon-amount">₹<%= coupon.offerPrice %></div>
+            <div>OFF</div>
+          </div>
+          <div class="coupon-right">
+            <h4><%= coupon.name %></h4>
+            <div class="coupon-code"><%= coupon.name %></div>
+            <div class="coupon-details">
+              <p>Min. Order: ₹<%= coupon.minimumPrice %></p>
+              <p>
+                Valid until: <%= new Date(coupon.expireOn).toLocaleDateString()
+                %>
+              </p>
             </div>
-          <% } %>
+          </div>
         </div>
+        <% }); %>
+
+        <!-- Pagination -->
+        <% if (pagination && pagination.activeTab === 'used' &&
+        pagination.totalPages > 1) { %>
+        <div class="pagination-container mt-4">
+          <nav aria-label="Coupon pagination">
+            <ul class="pagination justify-content-center">
+              <!-- Previous Button -->
+              <li
+                class="page-item <%= pagination.page === 1 ? 'disabled' : '' %>"
+              >
+                <a
+                  class="page-link"
+                  href="/mycoupons?tab=used&page=<%= pagination.page-1 %>"
+                  aria-label="Previous"
+                >
+                  <span aria-hidden="true">&laquo;</span>
+                </a>
+              </li>
+
+              <!-- Page Numbers -->
+              <% for(let i = 1; i <= pagination.totalPages; i++) { %>
+              <li
+                class="page-item <%= pagination.page === i ? 'active' : '' %>"
+              >
+                <a class="page-link" href="/mycoupons?tab=used&page=<%= i %>"
+                  ><%= i %></a
+                >
+              </li>
+              <% } %>
+
+              <!-- Next Button -->
+              <li
+                class="page-item <%= pagination.page === pagination.totalPages ? 'disabled' : '' %>"
+              >
+                <a
+                  class="page-link"
+                  href="/mycoupons?tab=used&page=<%= pagination.page+1 %>"
+                  aria-label="Next"
+                >
+                  <span aria-hidden="true">&raquo;</span>
+                </a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+        <% } %> <% } else { %>
+        <div class="no-coupons">
+          <i class="bi bi-ticket-perforated" style="font-size: 48px"></i>
+          <h4>No used coupons</h4>
+          <p>You haven't used any coupons yet.</p>
+        </div>
+        <% } %>
+      </div>
+
+      <!-- Expired Coupons -->
+      <div
+        id="expired"
+        class="tab-content <%= pagination.activeTab === 'expired' ? 'active' : '' %>"
+      >
+        <% if (coupons && coupons.expired && coupons.expired.length > 0) { %> <%
+        coupons.expired.forEach(coupon => { %>
+        <div class="coupon-card coupon-expired">
+          <div class="coupon-left">
+            <div class="coupon-amount">₹<%= coupon.offerPrice %></div>
+            <div>OFF</div>
+          </div>
+          <div class="coupon-right">
+            <h4><%= coupon.name %></h4>
+            <div class="coupon-code"><%= coupon.name %></div>
+            <div class="coupon-details">
+              <p>Min. Order: ₹<%= coupon.minimumPrice %></p>
+              <p>
+                Expired on: <%= new Date(coupon.expireOn).toLocaleDateString()
+                %>
+              </p>
+            </div>
+          </div>
+        </div>
+        <% }); %>
+
+        <!-- Pagination -->
+        <% if (pagination && pagination.activeTab === 'expired' &&
+        pagination.totalPages > 1) { %>
+        <div class="pagination-container mt-4">
+          <nav aria-label="Coupon pagination">
+            <ul class="pagination justify-content-center">
+              <!-- Previous Button -->
+              <li
+                class="page-item <%= pagination.page === 1 ? 'disabled' : '' %>"
+              >
+                <a
+                  class="page-link"
+                  href="/mycoupons?tab=expired&page=<%= pagination.page-1 %>"
+                  aria-label="Previous"
+                >
+                  <span aria-hidden="true">&laquo;</span>
+                </a>
+              </li>
+
+              <!-- Page Numbers -->
+              <% for(let i = 1; i <= pagination.totalPages; i++) { %>
+              <li
+                class="page-item <%= pagination.page === i ? 'active' : '' %>"
+              >
+                <a class="page-link" href="/mycoupons?tab=expired&page=<%= i %>"
+                  ><%= i %></a
+                >
+              </li>
+              <% } %>
+
+              <!-- Next Button -->
+              <li
+                class="page-item <%= pagination.page === pagination.totalPages ? 'disabled' : '' %>"
+              >
+                <a
+                  class="page-link"
+                  href="/mycoupons?tab=expired&page=<%= pagination.page+1 %>"
+                  aria-label="Next"
+                >
+                  <span aria-hidden="true">&raquo;</span>
+                </a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+        <% } %> <% } else { %>
+        <div class="no-coupons">
+          <i class="bi bi-ticket-perforated" style="font-size: 48px"></i>
+          <h4>No expired coupons</h4>
+          <p>You don't have any expired coupons.</p>
+        </div>
+        <% } %>
       </div>
     </div>
   </div>
@@ -614,34 +824,44 @@
 
 <script>
   // Tab switching
-  document.querySelectorAll('.tab').forEach(tab => {
-    tab.addEventListener('click', function() {
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      this.classList.add('active');
-      
-      document.querySelectorAll('.tab-content').forEach(content => {
-        content.classList.remove('active');
+  document.querySelectorAll(".tab").forEach((tab) => {
+    tab.addEventListener("click", function () {
+      document
+        .querySelectorAll(".tab")
+        .forEach((t) => t.classList.remove("active"));
+      this.classList.add("active");
+
+      document.querySelectorAll(".tab-content").forEach((content) => {
+        content.classList.remove("active");
       });
-      
-      const tabId = this.getAttribute('data-tab');
-      document.getElementById(tabId).classList.add('active');
+
+      const tabId = this.getAttribute("data-tab");
+      document.getElementById(tabId).classList.add("active");
+
+      const url = new URL(window.location);
+      url.searchParams.set("tab", tabId);
+      url.searchParams.set("page", "1");
+      window.history.pushState({}, "", url);
     });
   });
-  
-  // Copy coupon 
+
+  // Copy coupon
   function copyCouponCode(element) {
     const code = element.innerText;
-    navigator.clipboard.writeText(code).then(() => {
-      Swal.fire({
-        icon: 'success',
-        title: 'Coupon Code Copied!',
-        text: `Code "${code}" copied to clipboard`,
-        timer: 1500,
-        showConfirmButton: false
+    navigator.clipboard
+      .writeText(code)
+      .then(() => {
+        Swal.fire({
+          icon: "success",
+          title: "Coupon Code Copied!",
+          text: `Code "${code}" copied to clipboard`,
+          timer: 1500,
+          showConfirmButton: false,
+        });
+      })
+      .catch((err) => {
+        console.error("Could not copy text: ", err);
       });
-    }).catch(err => {
-      console.error('Could not copy text: ', err);
-    });
   }
 
   function confirmLogout(event) {
@@ -663,4 +883,5 @@
   }
 </script>
 
-<%- include("../partials/alerts.ejs") %> <%- include("../partials/footer.ejs") %>
+<%- include("../partials/alerts.ejs") %> <%- include("../partials/footer.ejs")
+%>

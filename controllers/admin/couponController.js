@@ -41,6 +41,7 @@ const getCoupons = async (req, res) => {
 const addCoupon = async (req, res) => {
   try {
     const { name, offerPrice, minimumPrice, expireOn } = req.body;
+
     const existingCoupon = await Coupon.findOne({ name });
     if (existingCoupon) {
       req.flash("error", "A coupon with this name already exists");

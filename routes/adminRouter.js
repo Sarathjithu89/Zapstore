@@ -9,6 +9,7 @@ const productController = require("../controllers/admin/productController.js");
 const orderController = require("../controllers/admin/orderController.js");
 const inventoryController = require("../controllers/admin/inventoryController.js");
 const couponController = require("../controllers/admin/couponController.js");
+const dashboardController = require("../controllers/admin/dashboardController.js");
 
 const { BrandUploads, ProductUploads } = require("../uility/multer.js");
 
@@ -16,7 +17,7 @@ const { BrandUploads, ProductUploads } = require("../uility/multer.js");
 adminRouter.get("/", adminAuth, adminController.loadLogin);
 adminRouter.post("/login", adminController.adminLogin);
 adminRouter.get("/logout", adminController.adminLogout);
-adminRouter.get("/dashboard", adminAuth, adminController.loadDashboard);
+// adminRouter.get("/dashboard", adminAuth, adminController.loadDashboard);
 adminRouter.get("/pageerror", adminController.pageError);
 //list users
 adminRouter.get("/users", adminAuth, customerContorller.customerInfo);
@@ -167,6 +168,19 @@ adminRouter.get(
   "/coupon-users/:id",
   adminAuth,
   couponController.getCouponUsers
+);
+
+adminRouter.get("/dashboard", adminAuth, dashboardController.getSalesReport);
+adminRouter.get("/sales-report", adminAuth, dashboardController.getSalesReport);
+adminRouter.get(
+  "/export-sales-report",
+  adminAuth,
+  dashboardController.exportSalesReport
+);
+adminRouter.get(
+  "/export-sales-report",
+  adminAuth,
+  dashboardController.exportSalesReport
 );
 
 module.exports = adminRouter;

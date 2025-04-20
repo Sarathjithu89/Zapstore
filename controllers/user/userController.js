@@ -5,6 +5,7 @@ const User = require("../../models/User.js");
 const Category = require("../../models/Category.js");
 const Cart = require("../../models/Cart.js");
 const { createJwtToken } = require("../../config/jwt.js");
+const Coupon = require("../../models/Coupon.js");
 const {
   sendVerificationEmail,
   generateOtp,
@@ -74,8 +75,17 @@ const loadLogin = async (req, res) => {
 //load registeration page
 const loadRegister = async (req, res) => {
   try {
-    if (!req.cookies.token) {
-      return res.render("register.ejs");
+    if (req.cookies.token) {
+      req.flash("error", "you are already signied in");
+      return res.redirect("/");
+    }
+
+    let referral;
+    if (req.query.ref) {
+      referral = req.query.ref;
+    }
+    if (!req.cookies.token || !req.user) {
+      return res.render("register.ejs", { referral });
     }
     return res.redirect("/");
   } catch (error) {
@@ -199,7 +209,14 @@ const otpVerification = async (req, res) => {
         message: "Session expired or invalid request",
       });
     }
-    const { name, email, otp: userotp, password, phone } = req.session.user;
+    const {
+      name,
+      email,
+      otp: userotp,
+      password,
+      phone,
+      referral,
+    } = req.session.user;
     if (parseInt(otp) === parseInt(userotp)) {
       const passwordHash = await securePassword(password);
       const saveUser = new User({
@@ -207,8 +224,19 @@ const otpVerification = async (req, res) => {
         email,
         phone,
         password: passwordHash,
+        referralCode: generateReferralCode(name),
       });
+
       await saveUser.save();
+      if (referral) {
+        await User.findOneAndUpdate(
+          { referralCode: referral },
+          { $push: { redeemedUsers: saveUser._id }, $inc: { redeemed: 1 } }
+        );
+        //create a coupon for user
+        createReferralCoupon(saveUser._id);
+      }
+
       req.session.userId = saveUser._id;
       delete req.session.user;
       return res.json({
@@ -400,14 +428,14 @@ const verifyForgotOtp = async (req, res) => {
 //user registration function
 const register = async (req, res) => {
   try {
-    const { name, email, password, cpassword, phone } = req.body;
+    const { name, email, password, cpassword, phone, referral } = req.body;
 
     if (password !== cpassword) {
       req.flash("error", "Password not matched");
       return res.redirect("/register");
     }
-    const findUser = await User.findOne({ email: email });
-    if (findUser) {
+    const existingUser = await User.findOne({ email: email });
+    if (existingUser) {
       req.flash("error", "User already exists");
       return res.redirect("/register");
     }
@@ -423,7 +451,7 @@ const register = async (req, res) => {
       req.flash("error", "Email not sent");
       return res.redirect("/register");
     }
-    req.session.user = { name, email, otp, password, phone };
+    req.session.user = { name, email, otp, password, phone, referral };
     console.log("OTP is :", req.session.user.otp); //console.log otp in the session
     return res.redirect("/verify-otp");
   } catch (error) {
@@ -604,6 +632,38 @@ const securePassword = async (password) => {
     console.log("secure password error", error);
     return false;
   }
+};
+
+//create referal reward coupon
+const createReferralCoupon = async (userId) => {
+  try {
+    const coupon = new Coupon({
+      name: generateCouponCode(),
+      expireOn: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      offerPrice: 100,
+      minimumPrice: 0,
+      isReferralCoupon: true,
+      isusedFor: userId,
+      usageLimit: 1,
+    });
+    await coupon.save();
+    return coupon;
+  } catch (error) {
+    console.error("Error creating referral coupon:", error);
+    return null;
+  }
+};
+
+//for coupon code
+const generateCouponCode = () => {
+  return "REF" + Math.random().toString(36).substring(2, 10).toUpperCase();
+};
+
+//genereate refferal code
+const generateReferralCode = (userName) => {
+  return (
+    userName.substring(0, 3) + Math.random().toString(36).substring(2, 8)
+  ).toUpperCase();
 };
 
 module.exports = {

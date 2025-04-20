@@ -23,6 +23,10 @@ const couponSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+
+    isReferralCoupon: { type: Boolean, default: false },
+    isusedFor: { type: String },
+    usageLimit: { type: Number },
     UserId: [
       {
         type: mongoose.Schema.Types.ObjectId,

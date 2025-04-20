@@ -15,8 +15,8 @@ const userSchema = new mongoose.Schema(
     wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: "Wishlist" }],
     OrderHistory: [{ type: mongoose.Schema.Types.ObjectId, ref: "Order" }],
     profileImage: { type: String, default: "default/default-user-avatar.png" },
-    referalCode: { type: String },
-    redeemed: { type: Boolean },
+    referralCode: { type: String },
+    redeemed: { type: Number, default: 0 },
     redeemedUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     searchHistory: [
       {
