@@ -4,6 +4,8 @@ const Product = require("../../models/Products.js");
 const User = require("../../models/User.js");
 const Category = require("../../models/Category.js");
 const Cart = require("../../models/Cart.js");
+const Wallet = require("../../models/Wallet.js");
+const Transaction = require("../../models/Transactions.js");
 const { createJwtToken } = require("../../config/jwt.js");
 const Coupon = require("../../models/Coupon.js");
 const {
@@ -235,6 +237,22 @@ const otpVerification = async (req, res) => {
         );
         //create a coupon for user
         createReferralCoupon(saveUser._id);
+
+        const refferedUsr = await User.findOne({ referralCode: referral });
+
+        const wallet = await Wallet.findOne({ user: refferedUsr._id });
+
+        wallet.balance += 100;
+        await wallet.save();
+
+        const transaction = new Transaction({
+          wallet: wallet._id,
+          amount: 100,
+          type: "credit",
+          description: `Referal reward for ${saveUser.name}`,
+        });
+
+        await transaction.save();
       }
 
       req.session.userId = saveUser._id;

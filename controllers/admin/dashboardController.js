@@ -4,43 +4,6 @@ const PDFDocument = require("pdfkit");
 const fs = require("fs");
 const path = require("path");
 
-//function for date range
-const getDateRange = (reportType, singleDate, startDate, endDate) => {
-  const now = new Date();
-  let start = new Date();
-  let end = new Date();
-
-  if (reportType === "custom" && startDate && endDate) {
-    start = new Date(startDate);
-    end = new Date(endDate);
-    end.setHours(23, 59, 59, 999);
-  } else if (singleDate) {
-    start = new Date(singleDate);
-    start.setHours(0, 0, 0, 0); //Day Start
-
-    if (reportType === "daily") {
-      end = new Date(singleDate);
-      end.setHours(23, 59, 59, 999); //Day end
-    } else if (reportType === "weekly") {
-      end = new Date(start);
-      end.setDate(start.getDate() + 6);
-      end.setHours(23, 59, 59, 999);
-    } else if (reportType === "monthly") {
-      end = new Date(start);
-      end.setMonth(end.getMonth() + 1);
-      end.setDate(0); //month last
-      end.setHours(23, 59, 59, 999);
-    } else if (reportType === "yearly") {
-      start = new Date(start.getFullYear(), 0, 1); //january 1st
-      end = new Date(start.getFullYear(), 11, 31, 23, 59, 59, 999); //december 31st
-    }
-  } else {
-    start.setHours(0, 0, 0, 0);
-    end.setHours(23, 59, 59, 999);
-  }
-  return { start, end };
-};
-
 // Main sales report page
 const getSalesReport = async (req, res) => {
   try {
@@ -261,6 +224,43 @@ const exportSalesReport = async (req, res) => {
     console.error("Error exporting sales report:", error);
     res.status(500).send("Error exporting sales report");
   }
+};
+
+//function for date range
+const getDateRange = (reportType, singleDate, startDate, endDate) => {
+  const now = new Date();
+  let start = new Date();
+  let end = new Date();
+
+  if (reportType === "custom" && startDate && endDate) {
+    start = new Date(startDate);
+    end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
+  } else if (singleDate) {
+    start = new Date(singleDate);
+    start.setHours(0, 0, 0, 0); //Day Start
+
+    if (reportType === "daily") {
+      end = new Date(singleDate);
+      end.setHours(23, 59, 59, 999); //Day end
+    } else if (reportType === "weekly") {
+      end = new Date(start);
+      end.setDate(start.getDate() + 6);
+      end.setHours(23, 59, 59, 999);
+    } else if (reportType === "monthly") {
+      end = new Date(start);
+      end.setMonth(end.getMonth() + 1);
+      end.setDate(0); //month last
+      end.setHours(23, 59, 59, 999);
+    } else if (reportType === "yearly") {
+      start = new Date(start.getFullYear(), 0, 1); //january 1st
+      end = new Date(start.getFullYear(), 11, 31, 23, 59, 59, 999); //december 31st
+    }
+  } else {
+    start.setHours(0, 0, 0, 0);
+    end.setHours(23, 59, 59, 999);
+  }
+  return { start, end };
 };
 
 //function export to Excel
@@ -660,7 +660,7 @@ async function exportOrderToExcel(res, order) {
       item.price * item.quantity - (item.discount || 0),
     ]);
 
-    // Format currency cells
+    // currency cells
     row.getCell(3).numFmt = "₹#,##0.00"; // Price
     row.getCell(5).numFmt = "₹#,##0.00"; // Discount
     row.getCell(6).numFmt = "₹#,##0.00"; // Total
@@ -686,7 +686,7 @@ async function exportOrderToExcel(res, order) {
   worksheet.getCell(`D${lastRow + 3}`).font = { bold: true };
   worksheet.getCell(`F${lastRow + 3}`).font = { bold: true };
 
-  // Adjust column widths
+  // column widths
   worksheet.columns.forEach((column) => {
     let maxLength = 0;
     column.eachCell({ includeEmpty: true }, (cell) => {
@@ -698,7 +698,6 @@ async function exportOrderToExcel(res, order) {
     column.width = Math.min(maxLength + 2, 30);
   });
 
-  // Set response headers for file download
   res.setHeader(
     "Content-Type",
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -708,36 +707,29 @@ async function exportOrderToExcel(res, order) {
     `attachment; filename=order_${order._id}.xlsx`
   );
 
-  // Write to response
   await workbook.xlsx.write(res);
 }
 
-// Helper function to export a single order to PDF
+//export to pdf
 async function exportOrderToPdf(res, order) {
-  // Create a new PDF document
   const doc = new PDFDocument({ margin: 50 });
 
-  // Set response headers for file download
   res.setHeader("Content-Type", "application/pdf");
   res.setHeader(
     "Content-Disposition",
     `attachment; filename=order_${order._id}.pdf`
   );
 
-  // Pipe the PDF document to the response
   doc.pipe(res);
 
-  // Add title
   doc
     .fontSize(18)
     .font("Helvetica-Bold")
     .text(`Order Details - ${order._id}`, { align: "center" });
   doc.moveDown();
 
-  // Add order information
   doc.fontSize(12).font("Helvetica");
 
-  // Helper function to add key-value pairs
   const addKeyValue = (key, value) => {
     doc.font("Helvetica-Bold").text(key, { continued: true });
     doc.font("Helvetica").text(`: ${value}`);
@@ -774,7 +766,7 @@ async function exportOrderToPdf(res, order) {
   const tableTop = doc.y;
   const tableColumns = ["Product", "Price", "Qty", "Total"];
   const columnWidths = [220, 100, 50, 100];
-  let currentLeft = 50; // starting from left margin
+  let currentLeft = 50;
 
   // Draw table header
   doc.fontSize(10).font("Helvetica-Bold");
@@ -803,11 +795,9 @@ async function exportOrderToPdf(res, order) {
     )
     .stroke();
 
-  // Draw table rows
+  // table rows
   let rowTop = tableTop + headerHeight + 5;
   doc.fontSize(9).font("Helvetica");
-
-  // Add item data
   order.items.forEach((item) => {
     const productName = item.productId
       ? item.productId.name
@@ -829,18 +819,15 @@ async function exportOrderToPdf(res, order) {
       currentLeft += columnWidths[i];
     });
 
-    // Add row separator
     rowTop += 20;
     doc
       .moveTo(50, rowTop)
       .lineTo(50 + columnWidths.reduce((sum, width) => sum + width, 0), rowTop)
       .stroke();
 
-    // Move down for the next row
     rowTop += 5;
   });
 
-  // Add totals
   rowTop += 10;
   const totalsX = 50 + columnWidths[0] + columnWidths[1] + columnWidths[2];
   const labelsX = totalsX - 100;
@@ -872,7 +859,7 @@ async function exportOrderToPdf(res, order) {
     .font("Helvetica-Bold")
     .text(`₹${order.finalAmount.toFixed(2)}`, totalsX, rowTop);
 
-  // Add footer with timestamp
+  // Add footer
   doc
     .fontSize(8)
     .font("Helvetica")
@@ -883,7 +870,6 @@ async function exportOrderToPdf(res, order) {
       { align: "center" }
     );
 
-  // Finalize the PDF and end the stream
   doc.end();
 }
 
