@@ -309,7 +309,7 @@
                 <a href="/">Home</a>
               </li>
               <li class="megamenu-holder active">
-                <a href="/shop">Shop</a>
+                <a href="/products">Shop</a>
               </li>
               <li><a href="/cart">Cart</a></li>
               <li><a href="/about">About Us</a></li>
@@ -362,7 +362,7 @@
         </svg>
         Details</a
       >
-      <a href="/address"
+      <a href="/users/addresses"
         ><svg
           xmlns="http://www.w3.org/2000/svg"
           width="16"
@@ -895,7 +895,12 @@
       confirmButtonText: "Yes, logout!",
     }).then((result) => {
       if (result.isConfirmed) {
-        window.location.href = "/logout";
+        fetch("/logout", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }).then((window.location.href = "/"));
       }
     });
   }

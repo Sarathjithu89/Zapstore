@@ -644,7 +644,7 @@
                 <a href="/">Home</a>
               </li>
               <li class="megamenu-holder active">
-                <a href="/shop">Shop</a>
+                <a href="/products">Shop</a>
               </li>
               <li><a href="/cart">Cart</a></li>
               <li><a href="/about">About Us</a></li>
@@ -698,7 +698,7 @@
                   categories.forEach(category => { %>
                   <li>
                     <a
-                      href="/category?id=<%= category._id %>"
+                      href="/categories/<%= category._id %>/products"
                       class="<%= locals.category && category._id.toString() === locals.category._id.toString() ? 'active' : '' %>"
                     >
                       <%= category.name %>
@@ -748,7 +748,7 @@
                   class="product-thumb"
                   style="width: 80px; margin-right: 10px"
                 >
-                  <a href="/product?id=<%= product._id %>">
+                  <a href="/products/<%= product._id %>">
                     <img
                       src="<%= product.productImage && product.productImage.length ? '/uploads/product-images/' + product.productImage[0] : '/images/product?id=small-size/default.jpg' %>"
                       alt="<%= product.productName %>"
@@ -758,7 +758,7 @@
                 </div>
                 <div class="product-info">
                   <h6 class="product-name">
-                    <a href="/product?id=<%= product._id %>"
+                    <a href="/products/<%= product._id %>"
                       ><%= product.productName %></a
                     >
                   </h6>
@@ -813,7 +813,7 @@
               products.forEach(product => { %>
               <div class="product-card">
                 <div class="product-card-image">
-                  <a href="/product?id=<%= product._id %>">
+                  <a href="/products/<%= product._id %>">
                     <img
                       src="<%= product.productImage && product.productImage.length ? '/uploads/product-images/' + product.productImage[0] : '/images/product?id=large-size/default.jpg' %>"
                       alt="<%= product.productName %>"
@@ -831,7 +831,7 @@
                   <h4>
                     <a
                       class="product-card-title"
-                      href="/product?id=<%= product._id %>"
+                      href="/products/<%= product._id %>"
                     >
                       <%= product.productName %>
                     </a>
@@ -876,7 +876,7 @@
                       <i class="fa fa-heart-o"></i>
                     </button>
                     <a
-                      href="/product?id=<%= product._id %>"
+                      href="/products/<%= product._id %>"
                       class="btn-quickview"
                       title="Quick View"
                     >
@@ -1080,7 +1080,7 @@
     //add to wish list
     function addtowishlist(productId) {
       console.log("wishlist");
-      fetch("/addtowishlisht", {
+      fetch("/wishlist", {
         method: "POST",
         headers: { "Content-type": "application/json" },
 

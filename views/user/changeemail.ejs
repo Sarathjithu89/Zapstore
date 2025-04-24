@@ -163,7 +163,7 @@
                 <a href="/">Home</a>
               </li>
               <li class="megamenu-holder active">
-                <a href="/shop">Shop</a>
+                <a href="/products">Shop</a>
               </li>
               <li><a href="/about">About Us</a></li>
               <li><a href="/contact">Contact</a></li>
@@ -185,7 +185,7 @@
         <div class="breadcrumb-content">
           <ol>
             <li><a href="/">Home</a></li>
-            <li><a href="/userProfile">Profile</a></li>
+            <li><a href="/users/profile">Profile</a></li>
             <li>Change Email</li>
           </ol>
         </div>
@@ -200,7 +200,7 @@
     <!-- Sidebar -->
     <div class="col-md-3 col-sm-9 sidebar mx-1">
       <h2>My Account</h2>
-      <a href="/userProfile" class="active">
+      <a href="/users/profile" class="active">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="16"
@@ -215,7 +215,7 @@
         </svg>
         Details
       </a>
-      <a href="/address">
+      <a href="/users/addresses">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="16"
@@ -415,7 +415,7 @@
         </div>
 
         <div class="d-flex justify-content-between mt-4">
-          <a href="/userProfile" class="btn btn-secondary"> Cancel </a>
+          <a href="/users/profile" class="btn btn-secondary"> Cancel </a>
           <button
             type="submit"
             class="btn btn-success"
@@ -560,7 +560,7 @@
 
       try {
         const response = await fetch("/updateEmail", {
-          method: "POST",
+          method: "PATCH",
           headers: {
             "Content-Type": "application/json",
           },
@@ -583,7 +583,7 @@
           });
 
           // Redirect to login page after email update
-          window.location.href = "/userProfile";
+          window.location.href = "/users/profile";
         } else {
           if (result.error === "invalid_code") {
             document.getElementById("verificationCodeError").textContent =

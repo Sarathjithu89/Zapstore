@@ -922,7 +922,7 @@
                 <a href="/">Home</a>
               </li>
               <li class="megamenu-holder">
-                <a href="/shop">Shop</a>
+                <a href="/products">Shop</a>
               </li>
               <li><a href="/about">About Us</a></li>
               <li><a href="/contact">Contact</a></li>
@@ -941,10 +941,10 @@
     <!-- Breadcrumb -->
     <ol class="breadcrumb">
       <li class="breadcrumb-item"><a href="/">Home</a></li>
-      <li class="breadcrumb-item"><a href="/shop">Shop</a></li>
+      <li class="breadcrumb-item"><a href="/products">Shop</a></li>
       <% if (product.category) { %>
       <li class="breadcrumb-item">
-        <a href="/category/<%= product.category._id %>"
+        <a href="/categories/<%= product.category._id %>/products"
           ><%= product.category.name %></a
         >
       </li>
@@ -1098,13 +1098,22 @@
                   </div>
                 </div>
               </div>
-              <button
-                type="button"
-                class="add-to-cart-btn"
-                onclick="addtocart('<%= product._id %>', event)"
-              >
-                <i class="fa fa-shopping-cart"></i> Add to cart
-              </button>
+              <div class="d-flex">
+                <button
+                  type="button"
+                  class="add-to-cart-btn"
+                  onclick="addtocart('<%= product._id %>', event)"
+                >
+                  <i class="fa fa-shopping-cart"></i> Add to cart
+                </button>
+                <button
+                  type="button"
+                  class="add-to-cart-btn mx-2"
+                  onclick="addtowishlist('<%= product._id  %>')"
+                >
+                  <i class="fa fa-heart-o"></i>
+                </button>
+              </div>
             </form>
           </div>
 
@@ -1265,7 +1274,7 @@
         relatedProducts.forEach(product => { %>
         <div class="product-card">
           <div class="product-card-image">
-            <a href="/product?id=<%= product._id %>">
+            <a href="/products/<%= product._id %>">
               <img
                 src="<%= product.productImage && product.productImage.length ? '/uploads/product-images/' + product.productImage[0] : '/images/product?id=large-size/default.jpg' %>"
                 alt="<%= product.productName %>"
@@ -1281,7 +1290,7 @@
             <h4>
               <a
                 class="product-card-title"
-                href="/product?id=<%= product._id %>"
+                href="/products/<%= product._id %>"
               >
                 <%= product.productName %>
               </a>
@@ -1316,7 +1325,7 @@
                 <i class="fa fa-heart-o"></i>
               </button>
               <a
-                href="/product?id=<%= product._id %>"
+                href="/products/<%= product._id %>"
                 class="btn-quickview"
                 title="Quick View"
               >
@@ -1359,7 +1368,7 @@
         ></button>
       </div>
       <div class="modal-body">
-        <form action="/product/<%= product._id %>/review" method="POST">
+        <form action="/products/<%= product._id %>/review" method="POST">
           <div class="mb-3">
             <label for="name" class="form-label">Your Name</label>
             <input
@@ -1587,6 +1596,41 @@
       });
     });
   });
+  function addtowishlist(productId) {
+    
+    fetch("/wishlist", {
+      method: "POST",
+      headers: { "Content-type": "application/json" },
+
+      body: JSON.stringify({ productId }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          Toast.fire({
+            icon: "success",
+            title: data.message || "Product added to wishlist",
+          });
+          // .then(() => {
+          //   window.location.reload();
+          // });
+        } else {
+          Alert.fire({
+            icon: "error",
+            title: "Oops...",
+            text: data.message || "Error adding product to cart",
+          });
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+        Alert.fire({
+          icon: "error",
+          title: "Oops...",
+          text: "An unexpected error occurred. Please try again.",
+        });
+      });
+  }
 </script>
 
 <%- include('../partials/footer.ejs') %>

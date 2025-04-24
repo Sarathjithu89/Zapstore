@@ -361,7 +361,7 @@
                 <a href="/">Home</a>
               </li>
               <li class="megamenu-holder active">
-                <a href="/shop">Shop</a>
+                <a href="/products">Shop</a>
               </li>
               <li><a href="/about">About Us</a></li>
               <li><a href="/contact">Contact</a></li>
@@ -445,7 +445,7 @@
         <% cartItems.forEach(function(item) { %> <% subtotal += item.totalPrice;
         %>
         <div class="product-item">
-          <a style="all: unset" href="/product?id=<%=item.productId._id%>">
+          <a style="all: unset" href="/products/<%=item.productId._id%>">
             <img
               class="product-image"
               src="uploads/product-images/<%= item.productId.productImage[0] %>"
@@ -455,7 +455,7 @@
           <div class="product-details">
             <a
               style="all: unset; cursor: pointer"
-              href="/product?id=<%=item.productId._id%>"
+              href="/products/<%=item.productId._id%>"
             >
               <h5 class="product-name">
                 <%= item.productId.productName.split('|')[0].trim() %>
@@ -472,7 +472,7 @@
         <div class="empty-cart">
           <i class="fas fa-shopping-cart"></i>
           <p class="lead">Your cart is empty</p>
-          <a href="/shop" class="btn primary-btn action-btn mt-3"
+          <a href="/products" class="btn primary-btn action-btn mt-3"
             >Continue Shopping</a
           >
         </div>
@@ -897,7 +897,12 @@
       });
   }
 
-  function removeCoupon() {
+  async function removeCoupon() {
+    await fetch("checkout/coupon", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+    });
+
     appliedCoupon = null;
     updateOrderSummary();
     document.getElementById("appliedCoupon").style.display = "none";
@@ -1112,7 +1117,7 @@
     };
 
     // Send order data to the server
-    fetch("/palceWalletOrder", {
+    fetch("/checkout/wallet-order", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -1385,7 +1390,7 @@
     Swal.fire({
       title: "Shipping Policy",
       html: ` <div class="text-center">
-            <p>Standard shipping charge of ₹50 
+            <p>Standard shipping charge of ₹50
       <p>Delivery Time:</p>
         <ul class="text-left">
           <li>Metro Cities: 2-3 business days</li>
@@ -1429,7 +1434,7 @@
       isDefault: document.getElementById("isDefault").checked,
     };
 
-    fetch("/save-address", {
+    fetch("/users/addresses", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

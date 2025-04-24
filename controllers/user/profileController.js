@@ -296,7 +296,7 @@ const saveAddress = async (req, res) => {
 //set default funcion
 const setDefaultAddress = async (req, res) => {
   try {
-    const addressId = req.body.addressId;
+    const addressId = req.params.id;
     const userId = req.user.userId;
     const addressDoc = await Address.findOne({ userId: userId });
     addressDoc.address = addressDoc.address.map((addr) => ({
@@ -317,7 +317,7 @@ const setDefaultAddress = async (req, res) => {
 
 const deleteAddress = async (req, res) => {
   try {
-    const addressId = req.body.addressId;
+    const addressId = req.params.id;
     const userId = req.user.userId;
 
     const addresses = await Address.findOne({ userId: userId });

@@ -209,7 +209,7 @@
                 <a href="/">Home</a>
               </li>
               <li class="megamenu-holder active">
-                <a href="/shop">Shop</a>
+                <a href="/products">Shop</a>
               </li>
               <li><a href="/cart">Cart</a></li>
               <li><a href="/about">About Us</a></li>
@@ -247,7 +247,7 @@
     <!-- Sidebar -->
     <div class="col-md-3 col-sm-9 sidebar mx-1">
       <h2>My Account</h2>
-      <a href="/userProfile">
+      <a href="/users/profile">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="16"
@@ -262,7 +262,7 @@
         </svg>
         Details
       </a>
-      <a href="/address">
+      <a href="/users/addresses">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="16"
@@ -421,7 +421,7 @@
                 <i class="bi bi-cart-plus"></i> Add to Cart
               </button>
               <a
-                href="/product?id=<%= item.productId._id %>"
+                href="/products/<%= item.productId._id %>"
                 class="btn btn-sm btn-outline-secondary"
               >
                 <i class="bi bi-eye"></i> View Details
@@ -434,7 +434,7 @@
           <i class="bi bi-heart" style="font-size: 3rem; color: #ddd"></i>
           <h4 class="mt-3">Your wishlist is empty</h4>
           <p>Add items that you like to your wishlist</p>
-          <a href="/shop" class="btn btn-primary mt-2">
+          <a href="/products" class="btn btn-primary mt-2">
             <i class="bi bi-shop"></i> Continue Shopping
           </a>
         </div>
@@ -498,12 +498,11 @@
       confirmButtonText: "Yes, remove it",
     }).then((result) => {
       if (result.isConfirmed) {
-        fetch("/removeFromWishlist", {
-          method: "POST",
+        fetch(`/wishlist/${productId}`, {
+          method: "DELETE",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ productId: productId }),
         })
           .then((response) => response.json())
           .then((data) => {
@@ -524,7 +523,7 @@
                   <i class="bi bi-heart" style="font-size: 3rem; color: #ddd"></i>
                   <h4 class="mt-3">Your wishlist is empty</h4>
                   <p>Add items that you like to your wishlist</p>
-                  <a href="/shop" class="btn btn-primary mt-2">
+                  <a href="/products" class="btn btn-primary mt-2">
                     <i class="bi bi-shop"></i> Continue Shopping
                   </a>
                 </div>
@@ -546,11 +545,13 @@
             }
           })
           .catch((error) => {
-            console.error("Error:", error);
+            console.error("Error removing from wishlist:", error);
             Swal.fire({
               icon: "error",
               title: "Error",
-              text: "An error occurred. Please try again.",
+              text:
+                error.message ||
+                "An unexpected error occurred. Please try again.",
             });
           });
       }
@@ -613,7 +614,12 @@
       confirmButtonText: "Yes, logout",
     }).then((result) => {
       if (result.isConfirmed) {
-        window.location.href = "/logout";
+        fetch("/logout", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }).then((window.location.href = "/"));
       }
     });
   }

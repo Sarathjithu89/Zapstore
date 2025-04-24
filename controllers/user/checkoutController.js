@@ -526,6 +526,8 @@ const razorpayPayment = async (req, res) => {
     const couponDiscount = req.session.cart?.discount || 0;
     const shippingCost = 50;
 
+    cart.items.map((item) => (subtotal += item.totalPrice));
+
     const totalAmount = subtotal - couponDiscount + shippingCost;
 
     const options = {

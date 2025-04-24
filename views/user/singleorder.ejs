@@ -269,7 +269,7 @@
               <h2>Order Details</h2>
               <ol>
                 <li><a href="/">Home</a></li>
-                <li><a href="/userProfile">My Account</a></li>
+                <li><a href="/users/profile">My Account</a></li>
                 <li><a href="/orders">Orders</a></li>
                 <li>Order #<%= order.orderId %></li>
               </ol>
@@ -708,7 +708,7 @@
 
       // Download invoice
       function downloadInvoice(orderId) {
-        window.location.href = `/invoice/${orderId}`;
+        window.location.href = `/orders/${orderId}/invoice`;
       }
 
       // Cancel order
@@ -730,12 +730,11 @@
             const otherReason = document.getElementById("otherReason").value;
 
             const cancelData = {
-              orderId: orderId,
               reason: reason === "Other" ? otherReason : reason,
             };
 
-            fetch("/cancelOrder", {
-              method: "POST",
+            fetch(`/orders/${orderId}/cancel`, {
+              method: "PATCH",
               headers: {
                 "Content-Type": "application/json",
               },

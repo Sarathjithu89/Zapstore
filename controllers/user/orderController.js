@@ -14,10 +14,11 @@ const getUserOrders = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = 2;
     const searchQuery = req.query.search ? req.query.search.trim() : "";
-
+    const filterQuery = req.query.filter || "";
     let query = { userId: userId };
-    let productQuery = {};
-
+    if (filterQuery && filterQuery !== "all") {
+      query.status = filterQuery;
+    }
     if (searchQuery) {
       const matchingProducts = await Product.find({
         productName: { $regex: searchQuery, $options: "i" },
@@ -25,13 +26,24 @@ const getUserOrders = async (req, res) => {
 
       const matchingProductIds = matchingProducts.map((product) => product._id);
 
-      query = {
-        userId: userId,
-        $or: [
-          { orderId: { $regex: searchQuery, $options: "i" } },
-          { "orderedItems.product": { $in: matchingProductIds } },
-        ],
-      };
+      if (filterQuery && filterQuery !== "all") {
+        query = {
+          userId: userId,
+          status: filterQuery,
+          $or: [
+            { orderId: { $regex: searchQuery, $options: "i" } },
+            { "orderedItems.product": { $in: matchingProductIds } },
+          ],
+        };
+      } else {
+        query = {
+          userId: userId,
+          $or: [
+            { orderId: { $regex: searchQuery, $options: "i" } },
+            { "orderedItems.product": { $in: matchingProductIds } },
+          ],
+        };
+      }
     }
 
     const totalOrders = await Order.countDocuments(query);
@@ -63,6 +75,7 @@ const getUserOrders = async (req, res) => {
         hasNextPage,
         hasPrevPage,
         searchQuery,
+        filterQuery,
       },
     });
   } catch (error) {
@@ -75,7 +88,8 @@ const getUserOrders = async (req, res) => {
 //order cancellation
 const cancelOrder = async (req, res) => {
   try {
-    const { orderId, reason } = req.body;
+    const orderId=req.params.id;
+    const {  reason } = req.body;
     const userId = req.user?.userId;
 
     const order = await Order.findOne({ _id: orderId, userId: userId });
@@ -163,6 +177,17 @@ const requestReturn = async (req, res) => {
       });
     }
 
+    const totalorderedItemqty = order.orderedItems
+      .map((item) => item.quantity)
+      .reduce((acc, curr) => (acc += curr));
+
+    if (totalorderedItemqty >= 10) {
+      return res.status(400).json({
+        success: false,
+        message: "Your order Quantity exeeds the allowed return qunatity",
+      });
+    }
+
     const deliveryDate = order.deliveredAt || order.updatedAt;
     const daysAfterDelivery = Math.floor(
       (new Date() - deliveryDate) / (1000 * 60 * 60 * 24)
@@ -195,7 +220,7 @@ const requestReturn = async (req, res) => {
 //invoice
 const generateInvoice = async (req, res) => {
   try {
-    const orderId = req.params.orderId;
+    const orderId = req.params.id;
     const userId = req.user?.userId;
 
     const order = await Order.findOne({ _id: orderId, userId })

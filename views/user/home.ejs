@@ -133,9 +133,24 @@
                   </button>
                   <ul class="dropdown-menu">
                     <li>
-                      <a href="/userProfile" class="dropdown-item">Profile</a>
+                      <a href="/users/profile" class="dropdown-item">Profile</a>
                     </li>
-                    <li><a href="/logout" class="dropdown-item">Logout</a></li>
+                    <form
+                      action="/logout"
+                      method="POST"
+                      style="display: none"
+                      id="logout-form"
+                    ></form>
+
+                    <li>
+                      <a
+                        href="#"
+                        class="dropdown-item"
+                        onclick="document.getElementById('logout-form').submit();"
+                      >
+                        Logout
+                      </a>
+                    </li>
                   </ul>
                 </div>
                 <% } else { %>
@@ -301,7 +316,7 @@
                     <a href="/">Home</a>
                   </li>
                   <li class="megamenu-holder">
-                    <a href="/shop">Shop</a>
+                    <a href="/products">Shop</a>
                   </li>
 
                   <li><a href="/about">About Us</a></li>
@@ -344,7 +359,7 @@
                   <h2>Chamcham Galaxy S9 | S9+</h2>
                   <h3>Starting at <span>₹1209.00</span></h3>
                   <div class="default-btn slide-btn">
-                    <a class="links" href="/shop">Shop Now</a>
+                    <a class="links" href="/products">Shop Now</a>
                   </div>
                 </div>
               </div>
@@ -359,7 +374,7 @@
                   <h2>Work Desk Surface Studio</h2>
                   <h3>Starting at <span>₹824.00</span></h3>
                   <div class="default-btn slide-btn">
-                    <a class="links" href="/shop">Shop Now</a>
+                    <a class="links" href="/products">Shop Now</a>
                   </div>
                 </div>
               </div>
@@ -374,7 +389,7 @@
                   <h2>Phantom 4 Pro+ Obsidian</h2>
                   <h3>Starting at <span>₹1849.00</span></h3>
                   <div class="default-btn slide-btn">
-                    <a class="links" href="/shop">Shop Now</a>
+                    <a class="links" href="/products">Shop Now</a>
                   </div>
                 </div>
               </div>
@@ -439,7 +454,7 @@
               <div class="col-lg-12">
                 <div class="single-product-wrap">
                   <div class="product-image">
-                    <a href="/product?id=<%= product._id %>">
+                    <a href="/products/<%= product._id %>">
                       <img
                         src="/uploads/product-images/<%= product.productImage[0] %>"
                         alt="<%= product.productName %>"
@@ -454,7 +469,7 @@
                       <h4>
                         <a
                           class="product_name"
-                          href="/product?id=<%= product._id %>"
+                          href="/products/<%= product._id %>"
                         >
                           <%= product.productName %>
                         </a>
@@ -537,10 +552,10 @@
             </h2>
             <ul class="li-sub-category-list">
               <li class="active">
-                <a href="/shop">Prime Video</a>
+                <a href="/products">Prime Video</a>
               </li>
-              <li><a href="/shop">Computers</a></li>
-              <li><a href="/shop">Electronics</a></li>
+              <li><a href="/products">Computers</a></li>
+              <li><a href="/products">Electronics</a></li>
             </ul>
           </div>
           <div class="row">
@@ -550,7 +565,7 @@
               <div class="col-lg-12">
                 <div class="single-product-wrap">
                   <div class="product-image">
-                    <a href="/product?id=<%= product._id %>">
+                    <a href="/products/<%= product._id %>">
                       <img
                         src="/uploads/product-images/<%= product.productImage[0] %>"
                         alt="<%= product.productName %>"
@@ -565,7 +580,7 @@
                       <h4>
                         <a
                           class="product_name"
-                          href="/product?id=<%= product._id %>"
+                          href="/products/<%= product._id %>"
                         >
                           <%= product.productName %>
                         </a>
@@ -645,10 +660,10 @@
             </h2>
             <ul class="li-sub-category-list">
               <li class="active">
-                <a href="/shop">Chamcham</a>
+                <a href="/products">Chamcham</a>
               </li>
-              <li><a href="/shop">Sanai</a></li>
-              <li><a href="/shop">Meito</a></li>
+              <li><a href="/products">Sanai</a></li>
+              <li><a href="/products">Meito</a></li>
             </ul>
           </div>
           <div class="row">
@@ -658,7 +673,7 @@
               <div class="col-lg-12">
                 <div class="single-product-wrap">
                   <div class="product-image">
-                    <a href="/product?id=<%= product._id %>">
+                    <a href="/products/<%= product._id %>">
                       <img
                         src="/uploads/product-images/<%= product.productImage[0] %>"
                         alt="<%= product.productName %>"
@@ -673,7 +688,7 @@
                       <h4>
                         <a
                           class="product_name"
-                          href="/product?id=<%= product._id %>"
+                          href="/products/<%= product._id %>"
                         >
                           <%= product.productName %>
                         </a>
@@ -760,7 +775,7 @@
               <span> ₹1209.00</span>
             </p>
             <div class="default-btn">
-              <a href="/shop" class="links">Shopping Now</a>
+              <a href="/products" class="links">Shopping Now</a>
             </div>
           </div>
           <!-- Li's Static Home Content Area End Here -->
@@ -805,7 +820,7 @@
                   <div class="col-lg-12">
                     <div class="single-product-wrap">
                       <div class="product-image">
-                        <a href="/product?id=<%= product._id %>">
+                        <a href="/products/<%= product._id %>">
                           <img
                             src="/uploads/product-images/<%= product.productImage[0] %>"
                             alt="<%= product.productName %>"
@@ -820,7 +835,7 @@
                           <h4>
                             <a
                               class="product_name"
-                              href="/product?id=<%= product._id %>"
+                              href="/products/<%= product._id %>"
                             >
                               <%= product.productName %>
                             </a>
@@ -892,7 +907,7 @@
                   <div class="col-lg-12">
                     <div class="single-product-wrap">
                       <div class="product-image">
-                        <a href="/product?id=<%= product._id %>">
+                        <a href="/products/<%= product._id %>">
                           <img
                             src="/uploads/product-images/<%= product.productImage[0] %>"
                             alt="<%= product.productName %>"
@@ -907,7 +922,7 @@
                           <h4>
                             <a
                               class="product_name"
-                              href="/product?id=<%= product._id %>"
+                              href="/products/<%= product._id %>"
                             >
                               <%= product.productName %>
                             </a>
@@ -979,7 +994,7 @@
                   <div class="col-lg-12">
                     <div class="single-product-wrap">
                       <div class="product-image">
-                        <a href="/product?id=<%= product._id %>">
+                        <a href="/products/<%= product._id %>">
                           <img
                             src="/uploads/product-images/<%= product.productImage[0] %>"
                             alt="<%= product.productName %>"
@@ -994,7 +1009,7 @@
                           <h4>
                             <a
                               class="product_name"
-                              href="/product?id=<%= product._id %>"
+                              href="/products/<%= product._id %>"
                             >
                               <%= product.productName %>
                             </a>
@@ -1086,7 +1101,7 @@
               <div class="col-lg-12">
                 <div class="single-product-wrap">
                   <div class="product-image">
-                    <a href="/product?id=<%= product._id %>">
+                    <a href="/products/<%= product._id %>">
                       <img
                         src="/uploads/product-images/<%= product.productImage[0] %>"
                         alt="<%= product.productName %>"
@@ -1101,7 +1116,7 @@
                       <h4>
                         <a
                           class="product_name"
-                          href="/product?id=<%= product._id %>"
+                          href="/products/<%= product._id %>"
                         >
                           <%= product.productName %>
                         </a>
@@ -1234,8 +1249,7 @@
   }
 
   function addtowishlist(productId) {
-    console.log("wishlist");
-    fetch("/addtowishlisht", {
+    fetch("/wishlist", {
       method: "POST",
       headers: { "Content-type": "application/json" },
 

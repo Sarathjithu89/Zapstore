@@ -152,6 +152,8 @@ const exportSalesReport = async (req, res) => {
       endDate
     );
 
+    console.log(start, end);
+
     // Build query
     const query = {
       createdAt: { $gte: start, $lte: end },

@@ -9,30 +9,31 @@ const walletController = require("../controllers/user/walletController.js");
 const couponController = require("../controllers/user/couponController.js");
 const passport = require("passport");
 const { authToken } = require("../middleware/authToken");
-const { json } = require("body-parser");
 const { profileImageUpload } = require("../uility/multer.js");
 const wishlistController = require("../controllers/user/wishlistController.js");
 
-userRouter.get("/pageNotFound", userController.pageNotFound);
 //user login
+userRouter.get("/pageNotFound", userController.pageNotFound);
 userRouter.get("/", authToken, userController.loadHomepage);
 userRouter.get("/login", authToken, userController.loadLogin);
 userRouter.post("/login", authToken, userController.login);
+
 //register routes
 userRouter.get("/register", userController.loadRegister);
 userRouter.post("/register", userController.register);
 userRouter.get("/verify-otp", userController.loadOtpVerification);
 userRouter.post("/verify-otp", userController.otpVerification);
-userRouter.post("/resend-otp", userController.resendOtp);
+userRouter.post("/auth/otp/resend", userController.resendOtp);
+
 //user logout
-userRouter.get("/logout", userController.logout);
+userRouter.post("/logout", userController.logout);
+
 //reset password routes
-userRouter.get("/forgotPassword", userController.loadforgotPassword);
+userRouter.get("/auth/password/forgot", userController.loadforgotPassword);
 userRouter.get("/resetPassword", userController.loadResetPassword);
-userRouter.post("/forgotPassword", userController.forgotPassword);
-userRouter.post("/verifyForgotOtp", userController.verifyForgotOtp);
+userRouter.post("/auth/password/forgot", userController.forgotPassword);
+userRouter.post("/auth/otp/verify", userController.verifyForgotOtp);
 userRouter.post("/resetPassword", userController.changePassword);
-userRouter.post("/resetPassword", userController.resetPassword);
 
 //google signin routes
 userRouter.get(
@@ -47,17 +48,22 @@ userRouter.get(
   }),
   userController.googleCallback
 );
+
 //for adding new password in Google sign in
 userRouter.get("/addpassword", userController.getAddPassword);
 userRouter.post("/addpassword", userController.addPassword);
 
 //product routes
-userRouter.get("/product", authToken, userController.getSingleProduct);
-userRouter.get("/shop", authToken, userController.getCategoryPage);
-userRouter.get("/category", authToken, userController.getCategoryPage);
+userRouter.get("/products", authToken, userController.getCategoryPage);
+userRouter.get("/products/:id", authToken, userController.getSingleProduct);
+userRouter.get(
+  "/categories/:id/products",
+  authToken,
+  userController.getCategoryPage
+);
 
 //profile routes
-userRouter.get("/userProfile", authToken, profileController.getUserProfile);
+userRouter.get("/users/profile", authToken, profileController.getUserProfile);
 userRouter.post(
   "/uploadProfileImage",
   authToken,
@@ -69,8 +75,8 @@ userRouter.post(
   authToken,
   profileController.removeProfileImage
 );
-userRouter.post("/profileUpdate", authToken, profileController.profileUpdate);
-userRouter.post(
+userRouter.patch("/profileUpdate", authToken, profileController.profileUpdate);
+userRouter.patch(
   "/changePasswordProfile",
   authToken,
   profileController.changePasswordProfile
@@ -90,30 +96,37 @@ userRouter.post(
   authToken,
   profileController.sendEmailVerification
 );
-
-userRouter.post("/updateEmail", authToken, profileController.updateEmail);
+userRouter.patch("/updateEmail", authToken, profileController.updateEmail);
 
 //address routes
-userRouter.get("/address", authToken, profileController.getUserAddress);
-userRouter.post("/save-address", authToken, profileController.saveAddress);
-userRouter.post(
-  "/setDefaultAddress",
+userRouter.get("/users/addresses", authToken, profileController.getUserAddress);
+userRouter.post("/users/addresses", authToken, profileController.saveAddress);
+userRouter.patch(
+  "/users/addresses/:id/default",
   authToken,
   profileController.setDefaultAddress
 );
-userRouter.post("/deleteAddress", authToken, profileController.deleteAddress);
+userRouter.delete(
+  "/users/addresses/:id",
+  authToken,
+  profileController.deleteAddress
+);
 
 //cart
 userRouter.get("/cart", authToken, cartController.viewCart);
 userRouter.post("/cart/add", authToken, cartController.addToCart);
-userRouter.post("/changeQuantity", authToken, cartController.changeQuantity);
-userRouter.get("/deleteItem", authToken, cartController.deleteItem);
+userRouter.patch("/changeQuantity", authToken, cartController.changeQuantity);
+userRouter.delete("/deleteItem", authToken, cartController.deleteItem);
 
 //checkout
 userRouter.get("/checkout", authToken, checkoutController.getCheckoutPage);
 userRouter.get("/checkStock", authToken, checkoutController.checkStock);
 userRouter.post("/placeOrder", authToken, checkoutController.placeOrder);
-userRouter.post("/palceWalletOrder", authToken, checkoutController.WalletOrder);
+userRouter.post(
+  "/checkout/wallet-order",
+  authToken,
+  checkoutController.WalletOrder
+);
 userRouter.post(
   "/razorpay-order",
   authToken,
@@ -127,8 +140,12 @@ userRouter.post(
 
 //orders
 userRouter.get("/orders", authToken, orderController.getUserOrders);
-userRouter.post("/cancelOrder", authToken, orderController.cancelOrder);
-userRouter.get("/invoice/:orderId", authToken, orderController.generateInvoice);
+userRouter.patch("/orders/:id/cancel", authToken, orderController.cancelOrder);
+userRouter.get(
+  "/orders/:id/invoice",
+  authToken,
+  orderController.generateInvoice
+);
 userRouter.post("/requestReturn", authToken, orderController.requestReturn);
 userRouter.get("/order/:id", authToken, orderController.getOrderDetails);
 userRouter.get("/ordersuccess", authToken, orderController.orderSuccess);
@@ -142,11 +159,10 @@ userRouter.post("/withdraw", authToken, walletController.withdrawMoney);
 userRouter.post("/refund", authToken, walletController.refundToWallet);
 
 //wishlist
-
 userRouter.get("/wishlist", authToken, wishlistController.getWishlist);
-userRouter.post("/addtowishlisht", authToken, wishlistController.addToWishlist);
-userRouter.post(
-  "/removeFromWishlist",
+userRouter.post("/wishlist", authToken, wishlistController.addToWishlist);
+userRouter.delete(
+  "/wishlist/:id",
   authToken,
   wishlistController.removeFromWishlist
 );
@@ -154,6 +170,6 @@ userRouter.post(
 //coupons
 userRouter.get("/mycoupons", authToken, couponController.getMyCoupons);
 userRouter.post("/apply-coupon", authToken, couponController.applyCoupon);
-userRouter.post("/remove-coupon", authToken, couponController.removeCoupon);
+userRouter.delete("/checkout/coupon", authToken, couponController.removeCoupon);
 
 module.exports = userRouter;

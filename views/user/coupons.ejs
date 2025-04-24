@@ -405,7 +405,7 @@
                 <a href="/">Home</a>
               </li>
               <li class="megamenu-holder active">
-                <a href="/shop">Shop</a>
+                <a href="/products">Shop</a>
               </li>
               <li><a href="/cart">Cart</a></li>
               <li><a href="/about">About Us</a></li>
@@ -443,7 +443,7 @@
     <!-- Sidebar -->
     <div class="col-md-3 col-sm-9 sidebar mx-1">
       <h2>My Account</h2>
-      <a href="/userProfile"
+      <a href="/users/profile"
         ><svg
           xmlns="http://www.w3.org/2000/svg"
           width="16"
@@ -458,7 +458,7 @@
         </svg>
         Details</a
       >
-      <a href="/address"
+      <a href="/users/addresses"
         ><svg
           xmlns="http://www.w3.org/2000/svg"
           width="16"
@@ -877,7 +877,12 @@
       confirmButtonText: "Yes, Logout",
     }).then((result) => {
       if (result.isConfirmed) {
-        window.location.href = "/logout";
+        fetch("/logout", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }).then((window.location.href = "/"));
       }
     });
   }

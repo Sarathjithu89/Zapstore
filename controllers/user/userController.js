@@ -363,30 +363,6 @@ const addPassword = async (req, res) => {
   }
 };
 
-//reset password function
-const resetPassword = async (req, res) => {
-  try {
-    const { password, cpassword } = req.body;
-    if (password !== cpassword) {
-      return res.render("resetPassword.ejs", {
-        error: "Password not matched",
-      });
-    }
-    const { token } = req.params;
-    const user = await User.findOne({ resetToken: token });
-    if (!user) {
-      return res.render("resetPassword.ejs", { message: "Invalid token" });
-    }
-    const passwordHash = await securePassword(password);
-    user.password = passwordHash;
-    user.resetToken = null;
-    await user.save();
-    return res.redirect("/login");
-  } catch (error) {
-    res.redirect("/pageNotFound");
-  }
-};
-
 //forgot password function
 const forgotPassword = async (req, res) => {
   try {
@@ -481,7 +457,7 @@ const register = async (req, res) => {
 //single Product function
 const getSingleProduct = async (req, res) => {
   try {
-    const productId = req.query.id;
+    const productId = req.params.id;
     const product = await Product.findById(productId)
       .populate("category")
       .populate("brand");
@@ -512,7 +488,7 @@ const getSingleProduct = async (req, res) => {
 //category page function
 const getCategoryPage = async (req, res, next) => {
   try {
-    const categoryId = req.query.id;
+    const categoryId = req.params.id||req.query.id;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 9;
     const minPrice = parseInt(req.query.minPrice) || 0;
@@ -618,7 +594,7 @@ const getCategoryPage = async (req, res, next) => {
       limit: limit,
       startIndex: skip,
       endIndex: skip + products.length - 1,
-      baseUrl: category ? `/category/${categoryId}` : "/shop",
+      baseUrl: categoryId ? `/categories/${categoryId}/products` : "/products",
     };
 
     res.render("Categorys.ejs", {
@@ -700,7 +676,6 @@ module.exports = {
   loadforgotPassword,
   forgotPassword,
   loadResetPassword,
-  resetPassword,
   verifyForgotOtp,
   changePassword,
   getSingleProduct,

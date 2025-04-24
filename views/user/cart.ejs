@@ -328,7 +328,7 @@
                 <a href="/">Home</a>
               </li>
               <li class="megamenu-holder active">
-                <a href="/shop">Shop</a>
+                <a href="/products">Shop</a>
               </li>
               <li><a href="/about">About Us</a></li>
               <li><a href="/contact">Contact</a></li>
@@ -386,7 +386,7 @@
                 </td>
                 <td class="product-details">
                   <h5>
-                    <a href="/product?id=<%= item.product._id %>"
+                    <a href="/products/<%= item.product._id %>"
                       ><%= item.product.productName %></a
                     >
                   </h5>
@@ -440,7 +440,7 @@
               <tr>
                 <td colspan="5" class="empty-cart-message">
                   <p>Your shopping cart is empty</p>
-                  <a href="/shop" class="continue-shopping"
+                  <a href="/products" class="continue-shopping"
                     >Start shopping now</a
                   >
                 </td>
@@ -490,12 +490,12 @@
 
           <% if (cartItems && cartItems.length > 0) { %>
           <a href="/checkout" class="checkout-btn">Proceed to Checkout</a>
-          <a href="/shop" class="continue-shopping">Continue Shopping</a>
+          <a href="/products" class="continue-shopping">Continue Shopping</a>
 
 
                        
           <% } else { %>
-          <a href="/shop" class="checkout-btn">Start Shopping</a>
+          <a href="/products" class="checkout-btn">Start Shopping</a>
           <% } %>
         </div>
       </div>
@@ -533,7 +533,7 @@
 
     $.ajax({
       url: "/changeQuantity",
-      method: "POST",
+      method: "PATCH",
       data: { productId: productId, action: action },
       success: (response) => {
         if (response.status) {
@@ -566,7 +566,7 @@
       if (result.isConfirmed) {
         $.ajax({
           url: `/deleteItem?id=${productId}`,
-          method: "GET",
+          method: "DELETE",
           success: (response) => {
             if (response.status) {
               Swal.fire({icon: "success", title:"Removed!",text:response.message,showConfirmButton: false,timer: 1200} ).then(()=>location.reload());

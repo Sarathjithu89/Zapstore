@@ -305,7 +305,7 @@ JSON.stringify(addresses || []) %>
                 <a href="/">Home</a>
               </li>
               <li class="megamenu-holder active">
-                <a href="/shop">Shop</a>
+                <a href="/products">Shop</a>
               </li> 
               <li><a href="/cart">Cart</a></li>
               <li><a href="/about">About Us</a></li>
@@ -343,7 +343,7 @@ JSON.stringify(addresses || []) %>
       <!-- Sidebar -->
       <div class="col-md-3 col-sm-9 sidebar mx-1">
         <h2>My Account</h2>
-        <a href="/userProfile"
+        <a href="/users/profile"
           ><svg
             xmlns="http://www.w3.org/2000/svg"
             width="16"
@@ -358,7 +358,7 @@ JSON.stringify(addresses || []) %>
           </svg>
           Details</a
         >
-        <a href="/address" class="active"
+        <a href="/users/addresses" class="active"
           ><svg
             xmlns="http://www.w3.org/2000/svg"
             width="16"
@@ -799,7 +799,7 @@ JSON.stringify(addresses || []) %>
         isDefault: document.getElementById("isDefault").checked,
       };
 
-      fetch("/save-address", {
+      fetch("/users/addresses", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -853,12 +853,11 @@ JSON.stringify(addresses || []) %>
     }).then((result) => {
       if (result.isConfirmed) {
         // Here you would send this data to the server
-        fetch("/setDefaultAddress", {
-          method: "POST",
+        fetch(`/users/addresses/${addressId}/default`, {
+          method: "PATCH",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ addressId }),
         })
           .then((response) => response.json())
           .then((data) => {
@@ -906,12 +905,11 @@ JSON.stringify(addresses || []) %>
     }).then((result) => {
       if (result.isConfirmed) {
         // Here you would send this data to the server
-        fetch("/deleteAddress", {
-          method: "POST",
+        fetch(`/users/addresses/${addressId}`, {
+          method: "DELETE",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ addressId }),
         })
           .then((response) => response.json())
           .then((data) => {
@@ -958,7 +956,12 @@ JSON.stringify(addresses || []) %>
       confirmButtonText: "Yes, logout",
     }).then((result) => {
       if (result.isConfirmed) {
-        window.location.href = "/logout";
+        fetch("/logout", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }).then((window.location.href = "/"));
       }
     });
   }

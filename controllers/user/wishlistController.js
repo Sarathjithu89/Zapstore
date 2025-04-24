@@ -110,7 +110,7 @@ const removeFromWishlist = async (req, res) => {
     }
 
     const userId = req.user.userId;
-    const { productId } = req.body;
+    const productId = req.params.id;
 
     const wishlist = await Wishlist.findOne({ userId });
 

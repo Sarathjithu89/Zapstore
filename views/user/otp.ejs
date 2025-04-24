@@ -248,7 +248,7 @@
 
         $.ajax({
           type: "POST",
-          url: "/resend-otp",
+          url: "/auth/otp/resend",
           success: function (response) {
             if (response.success) {
               Swal.fire({
