@@ -2,6 +2,8 @@ const Brand = require("../../models/Brand.js");
 const Product = require("../../models/Products.js");
 const fs = require("fs");
 const path = require("path");
+
+//load brand page
 const getBrandPage = async (req, res) => {
   try {
     const admin = req.admin;
@@ -33,6 +35,7 @@ const getBrandPage = async (req, res) => {
   }
 };
 
+//add brand
 const addBrand = async (req, res) => {
   try {
     const brand = req.body.name;
@@ -103,7 +106,7 @@ const deleteBrand = async (req, res) => {
         "../../public/uploads/brand-images/",
         brand.brandImage[0]
       );
-      await fs.unlink(imagePath, (err) => {
+      fs.unlink(imagePath, (err) => {
         if (err) console.log("Image deletion error", err);
       });
     }

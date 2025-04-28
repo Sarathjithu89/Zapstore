@@ -6,6 +6,7 @@ const fs = require("fs");
 const path = require("path");
 const sharp = require("sharp");
 
+//get product page
 const getProductAddPage = async (req, res) => {
   try {
     const admin = req.admin;
@@ -24,6 +25,8 @@ const getProductAddPage = async (req, res) => {
     res.redirect("/admin/pageerror");
   }
 };
+
+//add products
 const addProducts = async (req, res) => {
   try {
     const products = req.body;
@@ -85,6 +88,7 @@ const addProducts = async (req, res) => {
   }
 };
 
+// get products page
 const getProducts = async (req, res) => {
   try {
     const admin = req.admin;
@@ -136,6 +140,7 @@ const getProducts = async (req, res) => {
   }
 };
 
+//add procuct offer
 const addProductOffer = async (req, res) => {
   try {
     const { productId, percentage } = req.body;
@@ -190,6 +195,7 @@ const addProductOffer = async (req, res) => {
   }
 };
 
+//remove prodcct offer
 const removeProductOffer = async (req, res) => {
   try {
     const { productId } = req.body;
@@ -253,6 +259,7 @@ const toggleProductBlock = async (req, res) => {
   }
 };
 
+//get edit product
 const getEditProduct = async (req, res) => {
   try {
     const admin = req.admin;
@@ -357,20 +364,17 @@ const updateProduct = async (req, res) => {
       }
     });
 
-    // Add new images
     if (req.files && req.files.length > 0) {
       for (const file of req.files) {
         updatedImages.push(file.filename);
       }
     }
 
-    // Ensure at least one image remains
     if (updatedImages.length === 0) {
       req.flash("error", "Product must have at least one image.");
       return res.redirect(`/admin/editProduct/${id}`);
     }
 
-    // Update product in the database
     product = await Product.findByIdAndUpdate(
       id,
       {
@@ -400,6 +404,7 @@ const updateProduct = async (req, res) => {
   }
 };
 
+//delete product soft delete
 const deleteProduct = async (req, res) => {
   try {
     const { id } = req.params;

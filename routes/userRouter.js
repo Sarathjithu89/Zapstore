@@ -65,13 +65,13 @@ userRouter.get(
 //profile routes
 userRouter.get("/users/profile", authToken, profileController.getUserProfile);
 userRouter.post(
-  "/uploadProfileImage",
+  "/user/profile/image",
   authToken,
   profileImageUpload.single("profileImage"),
   profileController.uploadProfileImage
 );
-userRouter.post(
-  "/removeProfileImage",
+userRouter.delete(
+  "/user/profile/image",
   authToken,
   profileController.removeProfileImage
 );
@@ -139,7 +139,7 @@ userRouter.post(
 );
 
 //orders
-userRouter.get("/orders", authToken, orderController.getUserOrders);
+userRouter.get("/user/orders", authToken, orderController.getUserOrders);
 userRouter.patch("/orders/:id/cancel", authToken, orderController.cancelOrder);
 userRouter.get(
   "/orders/:id/invoice",
@@ -159,10 +159,10 @@ userRouter.post("/withdraw", authToken, walletController.withdrawMoney);
 userRouter.post("/refund", authToken, walletController.refundToWallet);
 
 //wishlist
-userRouter.get("/wishlist", authToken, wishlistController.getWishlist);
-userRouter.post("/wishlist", authToken, wishlistController.addToWishlist);
+userRouter.get("/user/wishlist", authToken, wishlistController.getWishlist);
+userRouter.post("/user/wishlist", authToken, wishlistController.addToWishlist);
 userRouter.delete(
-  "/wishlist/:id",
+  "/user/wishlist/:id",
   authToken,
   wishlistController.removeFromWishlist
 );

@@ -1083,11 +1083,18 @@
             if (result.isConfirmed) {
               window.location.href = "/ordersuccess";
             } else {
-              window.location.href = "/orders";
+              window.location.href = "/user/orders";
             }
           });
         } else {
           Swal.fire("Error", data.message, "error");
+        }
+        if (data.info) {
+          Swal.fire({
+            title: "info",
+            text: data.message,
+            icon: "info",
+          });
         }
       })
       .catch((error) => {
@@ -1136,7 +1143,7 @@
             if (result.isConfirmed) {
               window.location.href = "/ordersuccess";
             } else {
-              window.location.href = "/orders";
+              window.location.href = "/user/orders";
             }
           });
         } else {
@@ -1366,7 +1373,7 @@
             if (result.isConfirmed) {
               window.location.href = "/ordersuccess";
             } else {
-              window.location.href = "/orders";
+              window.location.href = "/user/orders";
             }
           });
         } else {

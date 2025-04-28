@@ -280,7 +280,7 @@
         </svg>
         Address
       </a>
-      <a href="/orders">
+      <a href="/user/orders">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="16"
@@ -295,7 +295,7 @@
         </svg>
         Orders
       </a>
-      <a href="/wishlist" class="active">
+      <a href="/user/wishlist" class="active">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="16"
@@ -498,7 +498,7 @@
       confirmButtonText: "Yes, remove it",
     }).then((result) => {
       if (result.isConfirmed) {
-        fetch(`/wishlist/${productId}`, {
+        fetch(`/user/wishlist/${productId}`, {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",

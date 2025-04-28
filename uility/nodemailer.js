@@ -1,14 +1,12 @@
 const nodemailer = require("nodemailer");
+const crypto = require("crypto");
 
 //otp generation function
 function generateOtp() {
-  var digits = "0123456789";
-  let OTP = "";
-  for (let i = 0; i < 6; i++) {
-    OTP += digits[Math.floor(Math.random() * 10)];
-  }
+  const OTP = crypto.randomInt(100000, 999999).toString();
   return OTP;
 }
+
 //email verification function
 async function sendVerificationEmail(emailData) {
   try {
@@ -24,12 +22,13 @@ async function sendVerificationEmail(emailData) {
       },
     });
     const mailOptions = {
-      from: process.env.EMAIL,
+      from: `Zapstore <${process.env.EMAIL}>`,
       to: emailData.to,
       subject: emailData.subject,
       text: emailData.text,
-      html: `<p>${emailData.text}</p>`,
+      html: emailData.text,
     };
+
     const info = await transporter.sendMail(mailOptions);
     if (info.accepted && info.accepted.length > 0) {
       return true;

@@ -1,12 +1,14 @@
 const User = require("../../models/User.js");
 const Wishlist = require("../../models/Wishlist.js");
 const Product = require("../../models/Products.js");
+const HTTP_STATUS = require("../../config/statusCodes.js");
+const MESSAGES = require("../../config/messages.js");
 
-//load wishlist
+// Load wishlist
 const getWishlist = async (req, res) => {
   try {
     if (!req.user) {
-      req.flash("error", "Please login to access your wishlist");
+      req.flash("error", MESSAGES.ERROR.AUTHENTICATION_REQUIRED);
       return res.redirect("/");
     }
     const userId = req.user.userId;
@@ -26,9 +28,9 @@ const getWishlist = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching wishlist:", error);
-    res.status(500).render("error", {
-      message: "Failed to load wishlist. Please try again later.",
-      error: { status: 500 },
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).render("error", {
+      message: MESSAGES.ERROR.SOMETHING_WRONG,
+      error: { status: HTTP_STATUS.INTERNAL_SERVER_ERROR },
     });
   }
 };
@@ -36,9 +38,9 @@ const getWishlist = async (req, res) => {
 const addToWishlist = async (req, res) => {
   try {
     if (!req.user) {
-      return res.status(401).json({
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({
         success: false,
-        message: "Please login to add products to wishlist",
+        message: MESSAGES.ERROR.AUTHENTICATION_REQUIRED,
       });
     }
 
@@ -47,9 +49,9 @@ const addToWishlist = async (req, res) => {
 
     const product = await Product.findById(productId);
     if (!product) {
-      return res.status(404).json({
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
         success: false,
-        message: "Product not found",
+        message: MESSAGES.ERROR.PRODUCT_NOT_FOUND,
       });
     }
 
@@ -67,7 +69,7 @@ const addToWishlist = async (req, res) => {
     );
 
     if (existingProduct) {
-      return res.status(200).json({
+      return res.status(HTTP_STATUS.CONFLICT).json({
         success: false,
         message: "Product already in your wishlist",
       });
@@ -86,26 +88,26 @@ const addToWishlist = async (req, res) => {
       await user.save();
     }
 
-    res.status(200).json({
+    res.status(HTTP_STATUS.OK).json({
       success: true,
       message: "Product added to wishlist successfully",
     });
   } catch (error) {
     console.error("Error adding to wishlist:", error);
-    res.status(500).json({
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
-      message: "Failed to add product to wishlist",
+      message: MESSAGES.ERROR.SOMETHING_WRONG,
     });
   }
 };
 
-//Remove from wishlist
+// Remove from wishlist
 const removeFromWishlist = async (req, res) => {
   try {
     if (!req.user) {
-      return res.status(401).json({
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({
         success: false,
-        message: "Please login to remove products from wishlist",
+        message: MESSAGES.ERROR.AUTHENTICATION_REQUIRED,
       });
     }
 
@@ -115,7 +117,7 @@ const removeFromWishlist = async (req, res) => {
     const wishlist = await Wishlist.findOne({ userId });
 
     if (!wishlist) {
-      return res.status(404).json({
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
         success: false,
         message: "Wishlist not found",
       });
@@ -127,7 +129,7 @@ const removeFromWishlist = async (req, res) => {
     );
 
     if (initialLength === wishlist.products.length) {
-      return res.status(404).json({
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
         success: false,
         message: "Product not found in wishlist",
       });
@@ -135,15 +137,15 @@ const removeFromWishlist = async (req, res) => {
 
     await wishlist.save();
 
-    res.status(200).json({
+    res.status(HTTP_STATUS.OK).json({
       success: true,
       message: "Product removed from wishlist successfully",
     });
   } catch (error) {
     console.error("Error removing from wishlist:", error);
-    res.status(500).json({
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
-      message: "Failed to remove product from wishlist",
+      message: MESSAGES.ERROR.SOMETHING_WRONG,
     });
   }
 };

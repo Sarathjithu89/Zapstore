@@ -12,11 +12,33 @@ const walletTransactionSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["credit", "debit"],
+      enum: ["credit", "debit", "refund", "payment"],
       required: true,
     },
     description: {
       type: String,
+    },
+    balanceAfter: {
+      type: Number,
+      required: true,
+    },
+    referenceType: {
+      type: String,
+      enum: ["order", "admin", "system"],
+      default: "admin",
+    },
+    referenceId: {
+      type: String,
+    },
+    reason: {
+      type: String,
+    },
+    notes: {
+      type: String,
+    },
+    performedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
     },
     orderId: {
       type: mongoose.Schema.Types.ObjectId,

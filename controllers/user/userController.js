@@ -12,6 +12,8 @@ const {
   sendVerificationEmail,
   generateOtp,
 } = require("../../uility/nodemailer.js");
+const HTTP_STATUS = require("../../config/statusCodes.js");
+const MESSAGE = require("../../config/messages.js");
 
 /*-----------------------------------------Loading Pages----------------------------------------------------*/
 
@@ -48,7 +50,9 @@ const loadHomepage = async (req, res) => {
     });
   } catch (error) {
     console.error("Home page error:", error);
-    res.status(500).send("Server error");
+    res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .send(MESSAGE.ERROR.SERVER_ERROR);
   }
 };
 
@@ -58,7 +62,9 @@ const loadOtpVerification = async (req, res) => {
     return res.render("otp.ejs");
   } catch (error) {
     console.log("Home page not found", error);
-    res.status(500).send("Server error");
+    res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .send(MESSAGE.ERROR.SERVER_ERROR);
   }
 };
 
@@ -78,7 +84,10 @@ const loadLogin = async (req, res) => {
 const loadRegister = async (req, res) => {
   try {
     if (req.cookies.token) {
-      req.flash("error", "you are already signied in");
+      req.flash(
+        "error",
+        MESSAGE.ERROR.ALREADY_SIGNED_IN || "You are already signed in"
+      );
       return res.redirect("/");
     }
 
@@ -92,7 +101,9 @@ const loadRegister = async (req, res) => {
     return res.redirect("/");
   } catch (error) {
     console.log("Home page not found", error);
-    res.status(500).send("Server error");
+    res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .send(MESSAGE.ERROR.SERVER_ERROR);
   }
 };
 
@@ -136,7 +147,10 @@ async function googleCallback(req, res) {
   const userEmail = decoded.email;
   const user = await User.findOne({ email: userEmail });
   if (!user.password) {
-    req.flash("success", "Please Enter New Password");
+    req.flash(
+      "success",
+      MESSAGE.SUCCESS.ENTER_NEW_PASSWORD || "Please Enter New Password"
+    );
     return res.redirect("/addpassword");
   }
   return res.redirect("/login");
@@ -153,16 +167,16 @@ const login = async (req, res) => {
     });
 
     if (!findUser) {
-      req.flash("error", "User not found");
+      req.flash("error", MESSAGE.ERROR.USER_NOT_FOUND);
       return res.redirect("/login");
     }
     if (findUser.is_blocked) {
-      req.flash("error", "Your account has been blocked");
+      req.flash("error", MESSAGE.ERROR.BLOCKED_ACCOUNT);
       return res.redirect("/login");
     }
     const passwordMatch = await bcrypt.compare(password, findUser.password);
     if (!passwordMatch) {
-      req.flash("error", "Incorrect password");
+      req.flash("error", MESSAGE.ERROR.INCORRECT_PASSWORD);
       return res.redirect("/login");
     }
     const payLoad = {
@@ -172,11 +186,11 @@ const login = async (req, res) => {
     };
     const token = createJwtToken(payLoad);
     res.cookie("token", token, { httpOnly: true, secure: true });
-    req.flash("success", "Login successful");
+    req.flash("success", MESSAGE.SUCCESS.LOGIN);
     return res.redirect("/");
   } catch (error) {
     console.log("Login Error", error);
-    req.flash("error", "Login failed. Please try again");
+    req.flash("error", MESSAGE.ERROR.LOGIN_FAILED);
     return res.redirect("/login");
   }
 };
@@ -190,13 +204,16 @@ const logout = async (req, res) => {
     //   }
     // });
 
-    req.flash("success", "You have been logged out successfully");
+    req.flash("success", MESSAGE.SUCCESS.LOGOUT);
     res.clearCookie("token");
 
     return res.redirect("/");
   } catch (error) {
     console.error("Logout Error:", error);
-    req.flash("error", "An error occurred during logout");
+    req.flash(
+      "error",
+      MESSAGE.ERROR.LOGOUT_FAILED || "An error occurred during logout"
+    );
     res.redirect("/pageNotFound");
   }
 };
@@ -206,9 +223,9 @@ const otpVerification = async (req, res) => {
   try {
     const { otp } = req.body;
     if (!req.session.user || !req.session.user.otp) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
-        message: "Session expired or invalid request",
+        message: MESSAGE.ERROR.SESSION_EXPIRED,
       });
     }
     const {
@@ -249,7 +266,7 @@ const otpVerification = async (req, res) => {
           wallet: wallet._id,
           amount: 100,
           type: "credit",
-          description: `Referal reward for ${saveUser.name}`,
+          description: MESSAGE.WALLET.REFERRAL_REWARD(saveUser.name),
         });
 
         await transaction.save();
@@ -259,17 +276,20 @@ const otpVerification = async (req, res) => {
       delete req.session.user;
       return res.json({
         success: true,
-        message: "OTP verified successfully!",
+        message: MESSAGE.SUCCESS.OTP_VERIFIED,
         redirectUrl: "/login",
       });
     } else {
       return res
-        .status(400)
-        .json({ success: false, message: "Invalid OTP, please try again" });
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ success: false, message: MESSAGE.ERROR.INVALID_OTP });
     }
   } catch (error) {
     console.error("OTP verification error:", error);
-    return res.status(500).json({ success: false, message: "Server error" });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: MESSAGE.ERROR.SERVER_ERROR,
+    });
   }
 };
 
@@ -286,7 +306,9 @@ const changePassword = async (req, res) => {
     const findUser = await User.findOne({ email: email });
 
     if (!findUser) {
-      return res.status(401).json({ message: "User not found" });
+      return res
+        .status(HTTP_STATUS.UNAUTHORIZED)
+        .json({ message: MESSAGE.ERROR.USER_NOT_FOUND });
     }
 
     const hashPassword = await securePassword(password);
@@ -297,7 +319,9 @@ const changePassword = async (req, res) => {
     res.redirect("/login");
   } catch (error) {
     console.error("Password change error:", error);
-    res.status(500).json({ message: "Internal server error" });
+    res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ message: MESSAGE.ERROR.SERVER_ERROR });
   }
 };
 
@@ -306,27 +330,40 @@ const resendOtp = async (req, res) => {
   try {
     const { email } = req.session.user;
     if (!email) {
-      res.status(400).json({ success: false, message: "Email is required" });
+      res
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ success: false, message: "Email is required" });
     }
     const otp = generateOtp();
+
     req.session.user.otp = otp;
+
     const emailData = {
       to: email,
       subject: "OTP for registration",
       text: `Your OTP is ${otp}`,
     };
+
     const emailSent = await sendVerificationEmail(emailData);
+
     if (emailSent) {
       console.log("OTP sent successfully", otp);
-      res.status(200).json({ success: true, message: "OTP sent successfully" });
-    } else {
       res
-        .status(500)
-        .json({ success: false, message: "Faid to send OTP,Please try again" });
+        .status(HTTP_STATUS.OK)
+        .json({ success: true, message: MESSAGE.SUCCESS.OTP_SENT });
+    } else {
+      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message:
+          MESSAGE.ERROR.EMAIL_NOT_SENT ||
+          "Failed to send OTP, Please try again",
+      });
     }
   } catch (error) {
     console.log("Resend OTP error", error);
-    res.status(500).json({ success: false, message: "Server error" });
+    res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ success: false, message: MESSAGE.ERROR.SERVER_ERROR });
   }
 };
 
@@ -345,7 +382,7 @@ const addPassword = async (req, res) => {
     const trimmedPassword = password.trim();
     const trimmedCassword = cpassword.trim();
     if (trimmedPassword !== trimmedCassword) {
-      req.flash("error", "Passwords donot Match");
+      req.flash("error", MESSAGE.ERROR.PASSWORD_MISMATCH);
       return res.redirect("/addpassword");
     }
     const token = req.cookies.token;
@@ -355,7 +392,7 @@ const addPassword = async (req, res) => {
     const user = await User.findOne({ email: email });
     user.password = hashedPassword;
     await user.save();
-    req.flash("success", "Success! Please Login");
+    req.flash("success", MESSAGE.SUCCESS.PASSWORD_ADDED);
     return res.redirect("/login");
   } catch (error) {
     console.log("Adding Password Error :", error);
@@ -369,18 +406,39 @@ const forgotPassword = async (req, res) => {
     const { email } = req.body;
     const find = await User.findOne({ email: email });
     if (!find) {
-      req.flash("error", "User not found");
-      return res.render("forgotpassEmail.ejs", { message: "User not found" });
+      req.flash("error", MESSAGE.ERROR.USER_NOT_FOUND);
+      return res.render("forgotpassEmail.ejs", {
+        message: MESSAGE.ERROR.USER_NOT_FOUND,
+      });
     }
     const otp = generateOtp(); //generating the OTP
+
     const emainData = {
       to: email,
       subject: "OTP for Password Reset",
-      text: `Your OTP is ${otp}`,
+      text: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e4e4e4; border-radius: 5px;">
+          <h2 style="color: #487379; text-align: center;">Email Verification</h2>
+          <p>Hello ${find.name},</p>
+          <p>You've requested to change your Password. Please use the verification code below to complete this process:</p>
+          <div style="background-color: #f6f6f6; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 5px; margin: 20px 0;">
+              ${otp}
+          </div>
+          <p>This code will expire in 30 minutes.</p>
+          <p>If you didn't request this change, please ignore this email or contact our support team immediately.</p>
+          <p style="margin-top: 30px; font-size: 12px; color: #777; text-align: center;">
+              &copy; ${new Date().getFullYear()} Zapstore. All rights reserved.
+          </p>
+      </div>
+  `,
     };
+
     const emailSent = await sendVerificationEmail(emainData);
+
     if (!emailSent) {
-      return res.render("forgotpassEmail.ejs", { message: "Email not sent" });
+      return res.render("forgotpassEmail.ejs", {
+        message: MESSAGE.ERROR.EMAIL_NOT_SENT,
+      });
     }
     req.session.user = { email, otp };
     console.log("OTP is:", req.session.user.otp); //console.log otp in session
@@ -396,26 +454,29 @@ const verifyForgotOtp = async (req, res) => {
   try {
     const { otp } = req.body;
     if (!req.session.user || !req.session.user.otp) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
-        message: "Session expired or invalid request",
+        message: MESSAGE.ERROR.SESSION_EXPIRED,
       });
     }
     const { email, otp: userotp } = req.session.user;
     if (parseInt(otp) === parseInt(userotp)) {
       return res.json({
         success: true,
-        message: "OTP verified successfully!",
+        message: MESSAGE.SUCCESS.OTP_VERIFIED,
         redirectUrl: "/resetPassword",
       });
     } else {
       return res
-        .status(400)
-        .json({ success: false, message: "Invalid OTP, please try again" });
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ success: false, message: MESSAGE.ERROR.INVALID_OTP });
     }
   } catch (error) {
     console.error("OTP verification error:", error);
-    return res.status(500).json({ success: false, message: "Server error" });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: MESSAGE.ERROR.SERVER_ERROR,
+    });
   }
 };
 
@@ -425,24 +486,41 @@ const register = async (req, res) => {
     const { name, email, password, cpassword, phone, referral } = req.body;
 
     if (password !== cpassword) {
-      req.flash("error", "Password not matched");
+      req.flash("error", MESSAGE.ERROR.PASSWORD_MISMATCH);
       return res.redirect("/register");
     }
     const existingUser = await User.findOne({ email: email });
     if (existingUser) {
-      req.flash("error", "User already exists");
+      req.flash("error", MESSAGE.ERROR.USER_EXISTS);
       return res.redirect("/register");
     }
 
     const otp = generateOtp();
+
     const emainData = {
       to: email,
       subject: "OTP for registration",
-      text: `Your OTP is ${otp}`,
+      text: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e4e4e4; border-radius: 5px;">
+          <h2 style="color: #487379; text-align: center;">Email Verification</h2>
+          <p>Hello ${name},</p>
+          <p>Please use the verification code below to complete the Registration process:</p>
+          <div style="background-color: #f6f6f6; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 5px; margin: 20px 0;">
+              ${otp}
+          </div>
+          <p>This code will expire in 30 minutes.</p>
+          <p>If you didn't request this change, please ignore this email or contact our support team immediately.</p>
+          <p style="margin-top: 30px; font-size: 12px; color: #777; text-align: center;">
+              &copy; ${new Date().getFullYear()} Zapstore. All rights reserved.
+          </p>
+      </div>
+  `,
     };
+
     const emailSent = await sendVerificationEmail(emainData);
+
     if (!emailSent) {
-      req.flash("error", "Email not sent");
+      req.flash("error", MESSAGE.ERROR.EMAIL_NOT_SENT);
       return res.redirect("/register");
     }
     req.session.user = { name, email, otp, password, phone, referral };
@@ -463,7 +541,7 @@ const getSingleProduct = async (req, res) => {
       .populate("brand");
 
     if (!product) {
-      req.flash("error", "Product not found");
+      req.flash("error", MESSAGE.ERROR.PRODUCT_NOT_FOUND);
       return res.redirect("/");
     }
     // Find related
@@ -480,7 +558,7 @@ const getSingleProduct = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching product:", error);
-    req.flash("error", "Something went wrong");
+    req.flash("error", MESSAGE.ERROR.SOMETHING_WRONG);
     res.redirect("/");
   }
 };
@@ -488,7 +566,7 @@ const getSingleProduct = async (req, res) => {
 //category page function
 const getCategoryPage = async (req, res, next) => {
   try {
-    const categoryId = req.params.id||req.query.id;
+    const categoryId = req.params.id || req.query.id;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 9;
     const minPrice = parseInt(req.query.minPrice) || 0;
@@ -500,16 +578,16 @@ const getCategoryPage = async (req, res, next) => {
     if (categoryId) {
       category = await Category.findById(categoryId);
       if (!category) {
-        return res.status(404).render("error", {
+        return res.status(HTTP_STATUS.NOT_FOUND).render("error", {
           message: "Category not found",
-          error: { status: 404 },
+          error: { status: HTTP_STATUS.NOT_FOUND },
         });
       }
 
       if (category && category.isListed === false) {
-        return res.status(404).render("error", {
+        return res.status(HTTP_STATUS.NOT_FOUND).render("error", {
           message: "Category not found",
-          error: { status: 404 },
+          error: { status: HTTP_STATUS.NOT_FOUND },
         });
       }
     }

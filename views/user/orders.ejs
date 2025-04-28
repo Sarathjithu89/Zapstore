@@ -359,7 +359,7 @@
         </svg>
         Address
       </a>
-      <a href="/orders" class="active">
+      <a href="/user/orders" class="active">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="16"
@@ -374,7 +374,7 @@
         </svg>
         Orders
       </a>
-      <a href="/wishlist">
+      <a href="/user/wishlist">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="16"
@@ -472,7 +472,7 @@
           <% if (pagination?.filterQuery && pagination.filterQuery !== 'all') {
           %>
           <a
-            href="/orders<%= pagination?.searchQuery ? '?search=' + pagination.searchQuery : '' %>"
+            href="/user/orders<%= pagination?.searchQuery ? '?search=' + pagination.searchQuery : '' %>"
             class="btn btn-outline-secondary ms-2"
           >
             <i class="bi bi-funnel-fill"></i> Clear
@@ -481,7 +481,7 @@
         </div>
 
         <div style="width: 70%">
-          <form action="/orders" method="GET" class="d-flex">
+          <form action="/user/orders" method="GET" class="d-flex">
             <input
               type="text"
               name="search"
@@ -503,7 +503,7 @@
             </button>
             <% if (pagination?.searchQuery) { %>
             <a
-              href="/orders<%= pagination?.filterQuery && pagination.filterQuery !== 'all' ? '?filter=' + pagination.filterQuery : '' %>"
+              href="/user/orders<%= pagination?.filterQuery && pagination.filterQuery !== 'all' ? '?filter=' + pagination.filterQuery : '' %>"
               class="btn btn-outline-secondary ms-2"
             >
               <i class="bi bi-x"></i>
@@ -661,18 +661,18 @@
           </p>
           <div class="mt-3">
             <a
-              href="/orders?filter=<%= pagination.filterQuery %>"
+              href="/user/orders?filter=<%= pagination.filterQuery %>"
               class="btn btn-outline-secondary me-2"
             >
               <i class="bi bi-x"></i> Clear Search
             </a>
             <a
-              href="/orders?search=<%= pagination.searchQuery %>"
+              href="/user/orders?search=<%= pagination.searchQuery %>"
               class="btn btn-outline-secondary me-2"
             >
               <i class="bi bi-funnel"></i> Clear Filter
             </a>
-            <a href="/orders" class="btn btn-primary">
+            <a href="/user/orders" class="btn btn-primary">
               <i class="bi bi-arrow-counterclockwise"></i> Reset All
             </a>
           </div>
@@ -681,7 +681,7 @@
             No orders containing "<%= pagination.searchQuery %>" were found.
           </p>
           <a
-            href="/orders<%= pagination?.filterQuery && pagination.filterQuery !== 'all' ? '?filter=' + pagination.filterQuery : '' %>"
+            href="/user/orders<%= pagination?.filterQuery && pagination.filterQuery !== 'all' ? '?filter=' + pagination.filterQuery : '' %>"
             class="btn btn-primary mt-2"
           >
             <i class="bi bi-x"></i> Clear Search
@@ -692,7 +692,7 @@
             No orders with status "<%= pagination.filterQuery %>" were found.
           </p>
           <a
-            href="/orders<%= pagination?.searchQuery ? '?search=' + pagination.searchQuery : '' %>"
+            href="/user/orders<%= pagination?.searchQuery ? '?search=' + pagination.searchQuery : '' %>"
             class="btn btn-primary mt-2"
           >
             <i class="bi bi-funnel"></i> Clear Filter
@@ -717,7 +717,7 @@
             >
               <a
                 class="page-link"
-                href="/orders?page=<%= pagination.page - 1 %><%= pagination.searchQuery ? '&search=' + pagination.searchQuery : '' %><%= pagination.filterQuery ? '&filter=' + pagination.filterQuery : '' %>"
+                href="/user/orders?page=<%= pagination.page - 1 %><%= pagination.searchQuery ? '&search=' + pagination.searchQuery : '' %><%= pagination.filterQuery ? '&filter=' + pagination.filterQuery : '' %>"
                 aria-label="Previous"
               >
                 <span aria-hidden="true">&laquo;</span>
@@ -729,7 +729,7 @@
             <li class="page-item <%= pagination.page === i ? 'active' : '' %>">
               <a
                 class="page-link"
-                href="/orders?page=<%= i %><%= pagination.searchQuery ? '&search=' + pagination.searchQuery : '' %><%= pagination.filterQuery ? '&filter=' + pagination.filterQuery : '' %>"
+                href="/user/orders?page=<%= i %><%= pagination.searchQuery ? '&search=' + pagination.searchQuery : '' %><%= pagination.filterQuery ? '&filter=' + pagination.filterQuery : '' %>"
               >
                 <%= i %>
               </a>
@@ -742,7 +742,7 @@
             >
               <a
                 class="page-link"
-                href="/orders?page=<%= pagination.page + 1 %><%= pagination.searchQuery ? '&search=' + pagination.searchQuery : '' %><%= pagination.filterQuery ? '&filter=' + pagination.filterQuery : '' %>"
+                href="/user/orders?page=<%= pagination.page + 1 %><%= pagination.searchQuery ? '&search=' + pagination.searchQuery : '' %><%= pagination.filterQuery ? '&filter=' + pagination.filterQuery : '' %>"
                 aria-label="Next"
               >
                 <span aria-hidden="true">&raquo;</span>
@@ -941,7 +941,7 @@
     const currentUrl = new URL(window.location.href);
     const searchQuery = currentUrl.searchParams.get("search");
 
-    let newUrl = "/orders?";
+    let newUrl = "/user/orders?";
     if (filterValue !== "all") {
       newUrl += `filter=${filterValue}`;
       if (searchQuery) {

@@ -1288,10 +1288,7 @@
           </div>
           <div class="product-card-body">
             <h4>
-              <a
-                class="product-card-title"
-                href="/products/<%= product._id %>"
-              >
+              <a class="product-card-title" href="/products/<%= product._id %>">
                 <%= product.productName %>
               </a>
             </h4>
@@ -1597,8 +1594,7 @@
     });
   });
   function addtowishlist(productId) {
-    
-    fetch("/wishlist", {
+    fetch("/user/wishlist", {
       method: "POST",
       headers: { "Content-type": "application/json" },
 

@@ -8,6 +8,11 @@ const fs = require("fs");
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
 const { securePassword } = require("./userController.js");
+const { text } = require("pdfkit");
+const {
+  generateOtp,
+  sendVerificationEmail,
+} = require("../../uility/nodemailer.js");
 
 //load the user profile
 const getUserProfile = async (req, res) => {
@@ -405,7 +410,8 @@ const sendEmailVerification = async (req, res) => {
         message: "This email is already in use",
       });
     }
-    const verificationCode = await crypto.randomInt(100000, 999999).toString();
+    const verificationCode = generateOtp();
+
     verificationCodes[userId] = {
       code: verificationCode,
       email: newEmail,
@@ -413,6 +419,7 @@ const sendEmailVerification = async (req, res) => {
     };
 
     req.session.verificationCodes = verificationCodes;
+
     const transporter = nodemailer.createTransport({
       service: "gmail",
       port: 587,
@@ -425,27 +432,57 @@ const sendEmailVerification = async (req, res) => {
       },
     });
 
-    await transporter.sendMail({
-      from: `"Zapstore" <${process.env.EMAIL}>`,
+    const emailData = {
       to: newEmail,
       subject: "Email Verification Code",
-      html: `
-              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e4e4e4; border-radius: 5px;">
-                  <h2 style="color: #487379; text-align: center;">Email Verification</h2>
-                  <p>Hello ${user.name},</p>
-                  <p>You've requested to change your email address. Please use the verification code below to complete this process:</p>
-                  <div style="background-color: #f6f6f6; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 5px; margin: 20px 0;">
-                      ${verificationCode}
-                  </div>
-                  <p>This code will expire in 30 minutes.</p>
-                  <p>If you didn't request this change, please ignore this email or contact our support team immediately.</p>
-                  <p style="margin-top: 30px; font-size: 12px; color: #777; text-align: center;">
-                      &copy; ${new Date().getFullYear()} Your Store. All rights reserved.
-                  </p>
-              </div>
-          `,
-    });
+      text: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e4e4e4; border-radius: 5px;">
+          <h2 style="color: #487379; text-align: center;">Email Verification</h2>
+          <p>Hello ${user.name},</p>
+          <p>You've requested to change your email address. Please use the verification code below to complete this process:</p>
+          <div style="background-color: #f6f6f6; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 5px; margin: 20px 0;">
+              ${verificationCode}
+          </div>
+          <p>This code will expire in 30 minutes.</p>
+          <p>If you didn't request this change, please ignore this email or contact our support team immediately.</p>
+          <p style="margin-top: 30px; font-size: 12px; color: #777; text-align: center;">
+              &copy; ${new Date().getFullYear()} Zapstore. All rights reserved.
+          </p>
+      </div>
+  `,
+    };
+    const emailSent = await sendVerificationEmail(emailData);
+
+    if (!emailSent) {
+      req.flash("error", "Mail not send");
+      return res.redirect("/user/profile");
+    }
+
+    // const mailOptions = {
+    //   from: `"Zapstore" <${process.env.EMAIL}>`,
+    //   to: newEmail,
+    //   subject: "Email Verification Code",
+    //   html: `
+    //           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e4e4e4; border-radius: 5px;">
+    //               <h2 style="color: #487379; text-align: center;">Email Verification</h2>
+    //               <p>Hello ${user.name},</p>
+    //               <p>You've requested to change your email address. Please use the verification code below to complete this process:</p>
+    //               <div style="background-color: #f6f6f6; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 5px; margin: 20px 0;">
+    //                   ${verificationCode}
+    //               </div>
+    //               <p>This code will expire in 30 minutes.</p>
+    //               <p>If you didn't request this change, please ignore this email or contact our support team immediately.</p>
+    //               <p style="margin-top: 30px; font-size: 12px; color: #777; text-align: center;">
+    //                   &copy; ${new Date().getFullYear()} Your Store. All rights reserved.
+    //               </p>
+    //           </div>
+    //       `,
+    // };
+
+    // await transporter.sendMail(mailOptions);
+
     console.log(verificationCodes[userId]);
+
     return res.status(200).json({
       success: true,
       message: "Verification code sent successfully",

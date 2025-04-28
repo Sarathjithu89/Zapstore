@@ -1,6 +1,7 @@
 const Category = require("../../models/Category.js");
 const Product = require("../../models/Products.js");
 
+//load category
 const categoryInfo = async (req, res) => {
   try {
     const admin = req.admin;
@@ -36,6 +37,7 @@ const categoryInfo = async (req, res) => {
   }
 };
 
+//add new category
 const addcategory = async (req, res) => {
   const nameTrimmed = req.body.name.trim();
   const descriptionTrimmed = req.body.description.trim();
@@ -226,6 +228,7 @@ const editCategory = async (req, res) => {
   }
 };
 
+//delete category
 const deleteCategory = async (req, res) => {
   try {
     const { categoryId } = req.body;

@@ -33,7 +33,7 @@
   }
 
   .breadcrumb-content li + li:before {
-    content: "›";
+    content: "/";
     padding: 0 8px;
     color: #777;
   }
@@ -233,7 +233,7 @@
         </svg>
         Address
       </a>
-      <a href="/orders">
+      <a href="/user/orders">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="16"
@@ -248,7 +248,7 @@
         </svg>
         Orders
       </a>
-      <a href="/wishlist">
+      <a href="/user/wishlist">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="16"
@@ -482,6 +482,10 @@
       }
 
       if (!isValid) return;
+
+      document.getElementById("sendVerificationBtn").innerHTML =
+        'Please wait... <span class="spinner-border spinner-border-sm"></span>';
+      document.getElementById("sendVerificationBtn").disabled = true;
 
       try {
         const response = await fetch("/sendEmailVerification", {

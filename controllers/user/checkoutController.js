@@ -214,6 +214,15 @@ const placeOrder = async (req, res) => {
         };
       });
 
+      if (subtotal > 1000) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(403).json({
+          info: true,
+          message: "Cash on Delivary is not available for orders above ₹1000",
+        });
+      }
+
       const shippingCost = 50; // fixed
       const grandTotal = subtotal - couponDiscount + shippingCost;
       const discount = couponDiscount + (totalRegularPrice - subtotal);

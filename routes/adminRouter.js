@@ -10,6 +10,7 @@ const orderController = require("../controllers/admin/orderController.js");
 const inventoryController = require("../controllers/admin/inventoryController.js");
 const couponController = require("../controllers/admin/couponController.js");
 const dashboardController = require("../controllers/admin/dashboardController.js");
+const walletController = require("../controllers/admin/walletController.js");
 
 const { BrandUploads, ProductUploads } = require("../uility/multer.js");
 
@@ -181,6 +182,34 @@ adminRouter.get(
   "/export-sales-report",
   adminAuth,
   dashboardController.exportSalesReport
+);
+
+//wallets
+adminRouter.get("/wallet", adminAuth, walletController.getWalletDashboard);
+adminRouter.post(
+  "/wallet/add-credit",
+  adminAuth,
+  walletController.addWalletCredit
+);
+adminRouter.post(
+  "/wallet/deduct-balance",
+  adminAuth,
+  walletController.deductWalletBalance
+);
+adminRouter.get(
+  "/api/user-wallet-info",
+  adminAuth,
+  walletController.getUserWalletInfo
+);
+adminRouter.get(
+  "/export-wallet-data",
+  adminAuth,
+  walletController.exportWalletData
+);
+adminRouter.get(
+  "/wallet/reverse-transaction/:id",
+  adminAuth,
+  walletController.reverseTransaction
 );
 
 module.exports = adminRouter;

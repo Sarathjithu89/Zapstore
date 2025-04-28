@@ -3,6 +3,7 @@ const ExcelJS = require("exceljs");
 const PDFDocument = require("pdfkit");
 const fs = require("fs");
 const path = require("path");
+const { name } = require("ejs");
 
 // Main sales report page
 const getSalesReport = async (req, res) => {
@@ -16,7 +17,6 @@ const getSalesReport = async (req, res) => {
       orderStatus = "all",
     } = req.query;
 
-    // Get date range based on report type
     const { start, end } = getDateRange(
       reportType,
       singleDate,
@@ -24,27 +24,23 @@ const getSalesReport = async (req, res) => {
       endDate
     );
 
-    // Build query
     const query = {
       createdAt: { $gte: start, $lte: end },
     };
 
-    // Add payment method filter if specified
     if (paymentMethod !== "all") {
       query.paymentMethod = paymentMethod;
     }
 
-    // Add order status filter if specified
     if (orderStatus !== "all") {
       query.status = orderStatus;
     }
 
-    // Fetch orders based on filters
     const orders = await Order.find(query)
       .populate("userId", "name email")
       .sort({ createdAt: -1 });
 
-    // Calculate totals
+    // totals
     const totalOrders = orders.length;
     const totalSubtotal = orders.reduce(
       (sum, order) => sum + order.totalPrice,
@@ -64,46 +60,12 @@ const getSalesReport = async (req, res) => {
         ? ((totalDiscounts / totalSubtotal) * 100).toFixed(2)
         : 0;
 
-    // Prepare chart data
-    const chartData = {
-      dates: [],
-      revenue: [],
-      paymentMethods: {},
-      orderStatuses: {},
-      totalRevenue,
-      totalDiscounts,
-    };
+    const chartData = prepareChartData(orders, reportType, start, end);
 
-    // Group orders by date for chart
-    const groupedByDate = {};
-    orders.forEach((order) => {
-      const dateKey = new Date(order.createdAt).toLocaleDateString();
+    chartData.totalRevenue = totalRevenue;
+    chartData.totalDiscounts = totalDiscounts;
 
-      if (!groupedByDate[dateKey]) {
-        groupedByDate[dateKey] = { revenue: 0 };
-      }
-
-      groupedByDate[dateKey].revenue += order.finalAmount;
-
-      // Count payment methods
-      if (!chartData.paymentMethods[order.paymentMethod]) {
-        chartData.paymentMethods[order.paymentMethod] = 0;
-      }
-      chartData.paymentMethods[order.paymentMethod]++;
-
-      // Count order statuses
-      if (!chartData.orderStatuses[order.status]) {
-        chartData.orderStatuses[order.status] = 0;
-      }
-      chartData.orderStatuses[order.status]++;
-    });
-
-    // Format chart data
-    const dates = Object.keys(groupedByDate).sort(
-      (a, b) => new Date(a) - new Date(b)
-    );
-    chartData.dates = dates;
-    chartData.revenue = dates.map((date) => groupedByDate[date].revenue);
+    const topSellingProducts = await getTopSellingProducts(start, end);
 
     res.render("admin/dashboard.ejs", {
       title: "Sales Report",
@@ -121,6 +83,9 @@ const getSalesReport = async (req, res) => {
       endDate,
       paymentMethod,
       orderStatus,
+      topProducts: topSellingProducts.products,
+      topCategories: topSellingProducts.categories,
+      topBrands: topSellingProducts.brands,
     });
   } catch (error) {
     console.error("Error generating sales report:", error);
@@ -130,6 +95,186 @@ const getSalesReport = async (req, res) => {
     });
   }
 };
+
+//Top selling prducts
+async function getTopSellingProducts(startDate, endDate) {
+  const orders = await Order.find({
+    createdAt: { $gte: startDate, $lte: endDate },
+    status: { $ne: "cancelled" },
+  }).populate({
+    path: "orderedItems.product",
+    populate: [{ path: "category", select: "name" }],
+  });
+
+  const productSales = {};
+  const categorySales = {};
+  const brandSales = {};
+
+  orders.forEach((order) => {
+    order.orderedItems.forEach((item) => {
+      if (item.product) {
+        const productId = item.product._id.toString();
+        if (!productSales[productId]) {
+          productSales[productId] = {
+            _id: productId,
+            name: item.product.productName,
+            quantity: 0,
+            revenue: 0,
+            image: item.product.productImage || "",
+          };
+        }
+
+        productSales[productId].quantity += item.quantity;
+        productSales[productId].revenue += item.price * item.quantity;
+
+        if (item.product.category) {
+          const categoryId = item.product.category._id.toString();
+          if (!categorySales[categoryId]) {
+            categorySales[categoryId] = {
+              _id: categoryId,
+              name: item.product.category.name,
+              quantity: 0,
+              revenue: 0,
+            };
+          }
+          categorySales[categoryId].quantity += item.quantity;
+          categorySales[categoryId].revenue += item.price * item.quantity;
+        }
+
+        if (item.product.brand) {
+          const brandName = item.product.brand;
+          if (!brandSales[brandName]) {
+            brandSales[brandName] = {
+              name: brandName,
+              quantity: 0,
+              revenue: 0,
+            };
+          }
+          brandSales[brandName].quantity += item.quantity;
+          brandSales[brandName].revenue += item.price * item.quantity;
+        }
+      }
+    });
+  });
+
+  const products = Object.values(productSales)
+    .sort((a, b) => b.quantity - a.quantity)
+    .slice(0, 10);
+
+  const categories = Object.values(categorySales)
+    .sort((a, b) => b.quantity - a.quantity)
+    .slice(0, 10);
+
+  const brands = Object.values(brandSales)
+    .sort((a, b) => b.quantity - a.quantity)
+    .slice(0, 10);
+
+  return { products, categories, brands };
+}
+
+//chart data function
+function prepareChartData(orders, reportType, startDate, endDate) {
+  const chartData = {
+    dates: [],
+    revenue: [],
+    paymentMethods: {},
+    orderStatuses: {},
+  };
+
+  if (orders.length === 0) {
+    return chartData;
+  }
+  const groupedData = {};
+
+  let currentDate = new Date(startDate);
+  const lastDate = new Date(endDate);
+
+  let formatKey;
+  let incrementDate;
+
+  if (reportType === "daily") {
+    formatKey = (date) => `${date.getHours()}:00`;
+    incrementDate = (date) => date.setHours(date.getHours() + 1);
+
+    for (let hour = 0; hour < 24; hour++) {
+      const hourKey = `${hour}:00`;
+      groupedData[hourKey] = { revenue: 0, count: 0 };
+    }
+  } else if (reportType === "weekly") {
+    formatKey = (date) => date.toLocaleDateString();
+    incrementDate = (date) => date.setDate(date.getDate() + 1);
+
+    while (currentDate <= lastDate) {
+      const dateKey = currentDate.toLocaleDateString();
+      groupedData[dateKey] = { revenue: 0, count: 0 };
+      currentDate = new Date(incrementDate(currentDate));
+    }
+  } else if (reportType === "monthly") {
+    formatKey = (date) => date.toLocaleDateString();
+    incrementDate = (date) => date.setDate(date.getDate() + 1);
+    while (currentDate <= lastDate) {
+      const dateKey = currentDate.toLocaleDateString();
+      groupedData[dateKey] = { revenue: 0, count: 0 };
+      currentDate = new Date(incrementDate(currentDate));
+    }
+  } else if (reportType === "yearly") {
+    formatKey = (date) => `${date.getMonth() + 1}/${date.getFullYear()}`;
+    incrementDate = (date) => date.setMonth(date.getMonth() + 1);
+
+    currentDate = new Date(startDate.getFullYear(), 0, 1); // Start from January
+    while (currentDate <= lastDate) {
+      const dateKey = `${
+        currentDate.getMonth() + 1
+      }/${currentDate.getFullYear()}`;
+      groupedData[dateKey] = { revenue: 0, count: 0 };
+      currentDate = new Date(incrementDate(currentDate));
+    }
+  } else {
+    formatKey = (date) => date.toLocaleDateString();
+    incrementDate = (date) => date.setDate(date.getDate() + 1);
+
+    while (currentDate <= lastDate) {
+      const dateKey = currentDate.toLocaleDateString();
+      groupedData[dateKey] = { revenue: 0, count: 0 };
+      currentDate = new Date(incrementDate(currentDate));
+    }
+  }
+
+  orders.forEach((order) => {
+    const orderDate = new Date(order.createdAt);
+    const dateKey = formatKey(orderDate);
+
+    if (!groupedData[dateKey]) {
+      groupedData[dateKey] = { revenue: 0, count: 0 };
+    }
+
+    groupedData[dateKey].revenue += order.finalAmount;
+    groupedData[dateKey].count += 1;
+
+    if (!chartData.paymentMethods[order.paymentMethod]) {
+      chartData.paymentMethods[order.paymentMethod] = 0;
+    }
+    chartData.paymentMethods[order.paymentMethod]++;
+
+    if (!chartData.orderStatuses[order.status]) {
+      chartData.orderStatuses[order.status] = 0;
+    }
+    chartData.orderStatuses[order.status]++;
+  });
+
+  const sortedDates = Object.keys(groupedData).sort((a, b) => {
+    if (reportType === "daily") {
+      return parseInt(a) - parseInt(b);
+    }
+    return new Date(a) - new Date(b);
+  });
+
+  chartData.dates = sortedDates;
+  chartData.revenue = sortedDates.map((date) => groupedData[date].revenue);
+  chartData.orderCounts = sortedDates.map((date) => groupedData[date].count);
+
+  return chartData;
+}
 
 // Export sales report
 const exportSalesReport = async (req, res) => {
@@ -151,8 +296,6 @@ const exportSalesReport = async (req, res) => {
       startDate,
       endDate
     );
-
-    console.log(start, end);
 
     // Build query
     const query = {
@@ -229,41 +372,48 @@ const exportSalesReport = async (req, res) => {
 };
 
 //function for date range
-const getDateRange = (reportType, singleDate, startDate, endDate) => {
+function getDateRange(reportType, singleDate, startDate, endDate) {
   const now = new Date();
   let start = new Date();
   let end = new Date();
 
   if (reportType === "custom" && startDate && endDate) {
     start = new Date(startDate);
+    start.setHours(0, 0, 0, 0);
+
     end = new Date(endDate);
     end.setHours(23, 59, 59, 999);
   } else if (singleDate) {
     start = new Date(singleDate);
-    start.setHours(0, 0, 0, 0); //Day Start
+    start.setHours(0, 0, 0, 0);
 
     if (reportType === "daily") {
       end = new Date(singleDate);
-      end.setHours(23, 59, 59, 999); //Day end
+      end.setHours(23, 59, 59, 999); // Day end
     } else if (reportType === "weekly") {
       end = new Date(start);
       end.setDate(start.getDate() + 6);
       end.setHours(23, 59, 59, 999);
     } else if (reportType === "monthly") {
-      end = new Date(start);
-      end.setMonth(end.getMonth() + 1);
-      end.setDate(0); //month last
+      start = new Date(start.getFullYear(), start.getMonth(), 1);
+      start.setHours(0, 0, 0, 0);
+
+      end = new Date(start.getFullYear(), start.getMonth() + 1, 0);
       end.setHours(23, 59, 59, 999);
     } else if (reportType === "yearly") {
-      start = new Date(start.getFullYear(), 0, 1); //january 1st
-      end = new Date(start.getFullYear(), 11, 31, 23, 59, 59, 999); //december 31st
+      start = new Date(start.getFullYear(), 0, 1);
+      start.setHours(0, 0, 0, 0);
+
+      end = new Date(start.getFullYear(), 11, 31);
+      end.setHours(23, 59, 59, 999);
     }
   } else {
     start.setHours(0, 0, 0, 0);
     end.setHours(23, 59, 59, 999);
   }
+
   return { start, end };
-};
+}
 
 //function export to Excel
 async function exportToExcel(res, orders, summary) {
