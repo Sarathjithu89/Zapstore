@@ -7,12 +7,14 @@ const Transaction = require("../../models/Transactions.js");
 const { createObjectCsvWriter } = require("csv-writer");
 const path = require("path");
 const fs = require("fs");
+const HTTP_STATUS = require("../../config/statusCodes.js");
+const MESSAGES = require("../../config/adminMessages.js");
 
 const getAllOrders = async (req, res) => {
   try {
     const admin = req.admin;
     if (!admin) {
-      req.flash("error", "session expired please Login");
+      req.flash("error", MESSAGES.ERROR.SESSION_EXPIRED);
       return res.redirect("/admin");
     }
     const page = parseInt(req.query.page) || 1;
@@ -92,7 +94,7 @@ const getAllOrders = async (req, res) => {
       currentPage: 1,
       totalPages: 0,
       totalOrders: 0,
-      error: "Failed to fetch orders. " + error.message,
+      error: MESSAGES.ERROR.ORDER_UPDATE_FAILED + ": " + error.message,
     });
   }
 };
@@ -103,9 +105,9 @@ const getOrderDetails = async (req, res) => {
     const orderId = req.params.id;
 
     if (!mongoose.Types.ObjectId.isValid(orderId)) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         status: false,
-        message: "Invalid order ID",
+        message: MESSAGES.ERROR.INVALID_PRODUCT_DATA,
       });
     }
 
@@ -117,21 +119,22 @@ const getOrderDetails = async (req, res) => {
       });
 
     if (!order) {
-      return res.status(404).json({
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
         status: false,
-        message: "Order not found",
+        message: MESSAGES.ERROR.ORDER_NOT_FOUND,
       });
     }
 
-    res.json({
+    return res.status(HTTP_STATUS.OK).json({
       status: true,
       order,
+      message: MESSAGES.SUCCESS.ORDER_DETAILS_FETCHED
     });
   } catch (error) {
     console.error("Error in getOrderDetails:", error);
-    res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       status: false,
-      message: "Server error: " + error.message,
+      message: MESSAGES.ERROR.ORDER_UPDATE_FAILED + ": " + error.message,
     });
   }
 };
@@ -142,9 +145,9 @@ const updateOrderStatus = async (req, res) => {
     const { orderId, status } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(orderId)) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         status: false,
-        message: "Invalid order ID",
+        message: MESSAGES.ERROR.INVALID_PRODUCT_DATA,
       });
     }
     const validStatuses = [
@@ -155,25 +158,25 @@ const updateOrderStatus = async (req, res) => {
       "Cancelled",
     ];
     if (!validStatuses.includes(status)) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         status: false,
-        message: "Invalid status value",
+        message: MESSAGES.ERROR.INVALID_PRODUCT_DATA,
       });
     }
 
     const order = await Order.findById(orderId);
 
     if (!order) {
-      return res.status(404).json({
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
         status: false,
-        message: "Order not found",
+        message: MESSAGES.ERROR.ORDER_NOT_FOUND,
       });
     }
     //canceled orders
     if (status === "Cancelled" && order.status !== "Cancelled") {
       if (order.paymentMethod !== "COD" && order.paymentStatus === "Paid") {
         const user = await User.findById(order.userId);
-        const wallet = await Wallet.findOne({ user: user._id });
+        let wallet = await Wallet.findOne({ user: user._id });
         if (!wallet) {
           wallet = new Wallet({
             user: user._id,
@@ -182,7 +185,7 @@ const updateOrderStatus = async (req, res) => {
         }
 
         wallet.balance = (wallet.balance || 0) + order.finalAmount;
-        const Transaction = new Transaction({
+        const transaction = new Transaction({
           wallet: wallet._id,
           amount: order.finalAmount,
           type: "credit",
@@ -191,7 +194,7 @@ const updateOrderStatus = async (req, res) => {
         });
 
         await wallet.save();
-        await Transaction.save();
+        await transaction.save();
       }
 
       order.paymentStatus = "Refunded";
@@ -219,45 +222,44 @@ const updateOrderStatus = async (req, res) => {
 
     await order.save();
 
-    res.json({
+    return res.status(HTTP_STATUS.OK).json({
       status: true,
-      message: `Order status updated to ${status} successfully`,
+      message: MESSAGES.SUCCESS.ORDER_STATUS_UPDATED,
     });
   } catch (error) {
     console.error("Error in updateOrderStatus:", error);
-    res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       status: false,
-      message: "Server error: " + error.message,
+      message: MESSAGES.ERROR.ORDER_UPDATE_FAILED + ": " + error.message,
     });
   }
 };
 
 // Process return request
-
 const processReturn = async (req, res) => {
   try {
     const { orderId, returnAction, notes } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(orderId)) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         status: false,
-        message: "Invalid order ID",
+        message: MESSAGES.ERROR.INVALID_PRODUCT_DATA,
       });
     }
 
     const order = await Order.findById({ _id: orderId });
 
     if (!order) {
-      return res.status(404).json({
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
         status: false,
-        message: "Order not found",
+        message: MESSAGES.ERROR.ORDER_NOT_FOUND,
       });
     }
 
     if (order.status !== "Return Requested") {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         status: false,
-        message: "This order is not in return request status",
+        message: MESSAGES.ERROR.ORDER_UPDATE_FAILED,
       });
     }
 
@@ -366,12 +368,9 @@ const processReturn = async (req, res) => {
       await session.commitTransaction();
       session.endSession();
 
-      res.json({
+      return res.status(HTTP_STATUS.OK).json({
         status: true,
-        message:
-          returnAction === "approve"
-            ? "Return request approved and refund processed"
-            : "Return request rejected",
+        message: MESSAGES.SUCCESS.RETURN_PROCESSED,
       });
     } catch (error) {
       // Abort transaction on error
@@ -381,9 +380,9 @@ const processReturn = async (req, res) => {
     }
   } catch (error) {
     console.error("Error in processReturn:", error);
-    res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       status: false,
-      message: "Server error: " + error.message,
+      message: MESSAGES.ERROR.RETURN_PROCESS_FAILED + ": " + error.message,
     });
   }
 };
@@ -503,6 +502,7 @@ const exportOrders = async (req, res) => {
     res.download(filePath, fileName, (err) => {
       if (err) {
         console.error("Error sending file:", err);
+        req.flash("error", MESSAGES.ERROR.ORDERS_EXPORT_FAILED);
       }
 
       // Delete file after downloading
@@ -514,9 +514,10 @@ const exportOrders = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in exportOrders:", error);
+    req.flash("error", MESSAGES.ERROR.ORDERS_EXPORT_FAILED);
     res.redirect(
       "/admin/orders?error=" +
-        encodeURIComponent("Failed to export orders: " + error.message)
+        encodeURIComponent(MESSAGES.ERROR.ORDERS_EXPORT_FAILED + ": " + error.message)
     );
   }
 };

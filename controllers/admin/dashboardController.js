@@ -3,7 +3,8 @@ const ExcelJS = require("exceljs");
 const PDFDocument = require("pdfkit");
 const fs = require("fs");
 const path = require("path");
-const { name } = require("ejs");
+const HTTP_STATUS = require("../../config/statusCodes.js");
+const MESSAGES = require("../../config/adminMessages.js");
 
 // Main sales report page
 const getSalesReport = async (req, res) => {
@@ -23,6 +24,7 @@ const getSalesReport = async (req, res) => {
       startDate,
       endDate
     );
+    console.log(start, end);
 
     const query = {
       createdAt: { $gte: start, $lte: end },
@@ -67,8 +69,9 @@ const getSalesReport = async (req, res) => {
 
     const topSellingProducts = await getTopSellingProducts(start, end);
 
-    res.render("admin/dashboard.ejs", {
+    res.status(HTTP_STATUS.OK).render("admin/dashboard.ejs", {
       title: "Sales Report",
+      message: MESSAGES.SUCCESS.SALES_REPORT_GENERATED,
       orders,
       totalOrders,
       totalSubtotal,
@@ -89,14 +92,14 @@ const getSalesReport = async (req, res) => {
     });
   } catch (error) {
     console.error("Error generating sales report:", error);
-    res.status(500).render("error", {
-      message: "Error generating sales report",
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).render("error", {
+      message: MESSAGES.ERROR.REPORT_GENERATION_FAILED,
       error,
     });
   }
 };
 
-//Top selling prducts
+//Top selling products
 async function getTopSellingProducts(startDate, endDate) {
   const orders = await Order.find({
     createdAt: { $gte: startDate, $lte: endDate },
@@ -172,7 +175,7 @@ async function getTopSellingProducts(startDate, endDate) {
   return { products, categories, brands };
 }
 
-//chart data function
+//Chart data function
 function prepareChartData(orders, reportType, startDate, endDate) {
   const chartData = {
     dates: [],
@@ -317,6 +320,12 @@ const exportSalesReport = async (req, res) => {
       .populate("userId", "name email")
       .sort({ createdAt: -1 });
 
+    if (orders.length === 0) {
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
+        message: MESSAGES.INFO.NO_ORDERS,
+      });
+    }
+
     // Calculate totals
     const totalOrders = orders.length;
     const totalSubtotal = orders.reduce(
@@ -363,15 +372,20 @@ const exportSalesReport = async (req, res) => {
         averageOrderValue,
       });
     } else {
-      return res.status(400).send("Invalid export format");
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        message: "Invalid export format",
+      });
     }
   } catch (error) {
     console.error("Error exporting sales report:", error);
-    res.status(500).send("Error exporting sales report");
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      message: MESSAGES.ERROR.REPORT_EXPORT_FAILED,
+      error: error.message,
+    });
   }
 };
 
-//function for date range
+//Function for date range
 function getDateRange(reportType, singleDate, startDate, endDate) {
   const now = new Date();
   let start = new Date();
@@ -415,283 +429,297 @@ function getDateRange(reportType, singleDate, startDate, endDate) {
   return { start, end };
 }
 
-//function export to Excel
+//Function export to Excel
 async function exportToExcel(res, orders, summary) {
-  // Create a new Excel workbook
-  const workbook = new ExcelJS.Workbook();
-  const worksheet = workbook.addWorksheet("Sales Report");
+  try {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Sales Report");
 
-  // Add title
-  worksheet.mergeCells("A1:I1");
-  const titleCell = worksheet.getCell("A1");
-  titleCell.value = `Sales Report - ${summary.reportType.toUpperCase()}`;
-  titleCell.font = { size: 16, bold: true };
-  titleCell.alignment = { horizontal: "center" };
+    // title
+    worksheet.mergeCells("A1:I1");
+    const titleCell = worksheet.getCell("A1");
+    titleCell.value = `Sales Report - ${summary.reportType.toUpperCase()}`;
+    titleCell.font = { size: 16, bold: true };
+    titleCell.alignment = { horizontal: "center" };
 
-  // Add summary section
-  worksheet.mergeCells("A2:I2");
-  worksheet.getCell("A2").value = "Summary";
-  worksheet.getCell("A2").font = { size: 12, bold: true };
+    //summary section
+    worksheet.mergeCells("A2:I2");
+    worksheet.getCell("A2").value = "Summary";
+    worksheet.getCell("A2").font = { size: 12, bold: true };
 
-  worksheet.getCell("A3").value = "Date Range:";
-  worksheet.getCell("B3").value = summary.dateRange;
+    worksheet.getCell("A3").value = "Date Range:";
+    worksheet.getCell("B3").value = summary.dateRange;
 
-  worksheet.getCell("A4").value = "Total Orders:";
-  worksheet.getCell("B4").value = summary.totalOrders;
+    worksheet.getCell("A4").value = "Total Orders:";
+    worksheet.getCell("B4").value = summary.totalOrders;
 
-  worksheet.getCell("A5").value = "Total Subtotal:";
-  worksheet.getCell("B5").value = summary.totalSubtotal;
-  worksheet.getCell("B5").numFmt = "₹#,##0.00";
+    worksheet.getCell("A5").value = "Total Subtotal:";
+    worksheet.getCell("B5").value = summary.totalSubtotal;
+    worksheet.getCell("B5").numFmt = "₹#,##0.00";
 
-  worksheet.getCell("A6").value = "Total Discounts:";
-  worksheet.getCell("B6").value = summary.totalDiscounts;
-  worksheet.getCell("B6").numFmt = "₹#,##0.00";
+    worksheet.getCell("A6").value = "Total Discounts:";
+    worksheet.getCell("B6").value = summary.totalDiscounts;
+    worksheet.getCell("B6").numFmt = "₹#,##0.00";
 
-  worksheet.getCell("A7").value = "Total Revenue:";
-  worksheet.getCell("B7").value = summary.totalRevenue;
-  worksheet.getCell("B7").numFmt = "₹#,##0.00";
+    worksheet.getCell("A7").value = "Total Revenue:";
+    worksheet.getCell("B7").value = summary.totalRevenue;
+    worksheet.getCell("B7").numFmt = "₹#,##0.00";
 
-  worksheet.getCell("A8").value = "Average Order Value:";
-  worksheet.getCell("B8").value = summary.averageOrderValue;
-  worksheet.getCell("B8").numFmt = "₹#,##0.00";
+    worksheet.getCell("A8").value = "Average Order Value:";
+    worksheet.getCell("B8").value = summary.averageOrderValue;
+    worksheet.getCell("B8").numFmt = "₹#,##0.00";
 
-  // Style summary section
-  for (let i = 3; i <= 8; i++) {
-    worksheet.getCell(`A${i}`).font = { bold: true };
-  }
-
-  // Add a gap
-  worksheet.addRow([]);
-
-  // Add order details header
-  const headerRow = worksheet.addRow([
-    "Order ID",
-    "Date",
-    "Customer",
-    "Payment Method",
-    "Status",
-    "Items",
-    "Subtotal",
-    "Discount",
-    "Total",
-  ]);
-  headerRow.font = { bold: true };
-  headerRow.alignment = { horizontal: "center" };
-
-  // Add header styling
-  headerRow.eachCell((cell) => {
-    cell.fill = {
-      type: "pattern",
-      pattern: "solid",
-      fgColor: { argb: "FFCCCCCC" },
-    };
-    cell.border = {
-      top: { style: "thin" },
-      left: { style: "thin" },
-      bottom: { style: "thin" },
-      right: { style: "thin" },
-    };
-  });
-
-  // Add order data
-  orders.forEach((order) => {
-    const items = order.items ? order.items.length : 0;
-    const row = worksheet.addRow([
-      order._id.toString(),
-      new Date(order.createdAt).toLocaleString(),
-      order.userId ? order.userId.name : "Guest",
-      order.paymentMethod,
-      order.status,
-      items,
-      order.totalPrice,
-      order.discount,
-      order.finalAmount,
-    ]);
-
-    // Format currency cells
-    row.getCell(7).numFmt = "₹#,##0.00"; // Subtotal
-    row.getCell(8).numFmt = "₹#,##0.00"; // Discount
-    row.getCell(9).numFmt = "₹#,##0.00"; // Total
-
-    // Add alternating row colors
-    if (worksheet.rowCount % 2 === 0) {
-      row.eachCell((cell) => {
-        cell.fill = {
-          type: "pattern",
-          pattern: "solid",
-          fgColor: { argb: "FFEEEEEE" },
-        };
-      });
+    //Style summary section
+    for (let i = 3; i <= 8; i++) {
+      worksheet.getCell(`A${i}`).font = { bold: true };
     }
-  });
 
-  // Adjust column widths
-  worksheet.columns.forEach((column) => {
-    let maxLength = 0;
-    column.eachCell({ includeEmpty: true }, (cell) => {
-      const columnLength = cell.value ? cell.value.toString().length : 10;
-      if (columnLength > maxLength) {
-        maxLength = columnLength;
+    // Add a gap
+    worksheet.addRow([]);
+
+    // Add order details header
+    const headerRow = worksheet.addRow([
+      "Order ID",
+      "Date",
+      "Customer",
+      "Payment Method",
+      "Status",
+      "Items",
+      "Subtotal",
+      "Discount",
+      "Total",
+    ]);
+    headerRow.font = { bold: true };
+    headerRow.alignment = { horizontal: "center" };
+
+    // Add header styling
+    headerRow.eachCell((cell) => {
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFCCCCCC" },
+      };
+      cell.border = {
+        top: { style: "thin" },
+        left: { style: "thin" },
+        bottom: { style: "thin" },
+        right: { style: "thin" },
+      };
+    });
+
+    // Add order data
+    orders.forEach((order) => {
+      const items = order.items ? order.items.length : 0;
+      const row = worksheet.addRow([
+        order._id.toString(),
+        new Date(order.createdAt).toLocaleString(),
+        order.userId ? order.userId.name : "Guest",
+        order.paymentMethod,
+        order.status,
+        items,
+        order.totalPrice,
+        order.discount,
+        order.finalAmount,
+      ]);
+
+      // Format currency cells
+      row.getCell(7).numFmt = "₹#,##0.00"; // Subtotal
+      row.getCell(8).numFmt = "₹#,##0.00"; // Discount
+      row.getCell(9).numFmt = "₹#,##0.00"; // Total
+
+      // Add alternating row colors
+      if (worksheet.rowCount % 2 === 0) {
+        row.eachCell((cell) => {
+          cell.fill = {
+            type: "pattern",
+            pattern: "solid",
+            fgColor: { argb: "FFEEEEEE" },
+          };
+        });
       }
     });
-    column.width = Math.min(maxLength + 2, 30);
-  });
 
-  // Set response headers for file download
-  res.setHeader(
-    "Content-Type",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-  );
-  res.setHeader(
-    "Content-Disposition",
-    `attachment; filename=sales_report_${summary.dateRange}.xlsx`
-  );
+    // Adjust column widths
+    worksheet.columns.forEach((column) => {
+      let maxLength = 0;
+      column.eachCell({ includeEmpty: true }, (cell) => {
+        const columnLength = cell.value ? cell.value.toString().length : 10;
+        if (columnLength > maxLength) {
+          maxLength = columnLength;
+        }
+      });
+      column.width = Math.min(maxLength + 2, 30);
+    });
 
-  // Write to response
-  await workbook.xlsx.write(res);
+    // Set response headers for file download
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=sales_report_${summary.dateRange}.xlsx`
+    );
+
+    // Write to response
+    await workbook.xlsx.write(res);
+    console.log(`Excel report exported successfully for ${summary.dateRange}`);
+  } catch (error) {
+    console.error("Error generating Excel export:", error);
+    throw new Error("Failed to generate Excel export");
+  }
 }
 
-//export to PDF
+//Export to PDF
 async function exportToPdf(res, orders, summary) {
-  // Create a new PDF document
-  const doc = new PDFDocument({ margin: 50 });
+  try {
+    // Create a new PDF document
+    const doc = new PDFDocument({ margin: 50 });
 
-  const fontPath = path.join(
-    "public",
-    "assets",
-    "fonts",
-    "NotoSans-Regular.ttf"
-  );
-  doc.registerFont("Unicode", fontPath);
-  doc.font("Unicode");
+    const fontPath = path.join(
+      "public",
+      "assets",
+      "fonts",
+      "NotoSans-Regular.ttf"
+    );
+    doc.registerFont("Unicode", fontPath);
+    doc.font("Unicode");
 
-  // Set response headers for file download
-  res.setHeader("Content-Type", "application/pdf");
-  res.setHeader(
-    "Content-Disposition",
-    `attachment; filename=sales_report_${summary.dateRange}.pdf`
-  );
+    // Set response headers for file download
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=sales_report_${summary.dateRange}.pdf`
+    );
 
-  // Pipe the PDF document to the response
-  doc.pipe(res);
+    // Pipe the PDF document to the response
+    doc.pipe(res);
 
-  // Add title
-  doc
-    .fontSize(18)
-    .font("Unicode")
-    .text(`Sales Report - ${summary.reportType.toUpperCase()}`, {
-      align: "center",
-    });
-  doc.moveDown();
+    // Add title
+    doc
+      .fontSize(18)
+      .font("Unicode")
+      .text(`Sales Report - ${summary.reportType.toUpperCase()}`, {
+        align: "center",
+      });
+    doc.moveDown();
 
-  // Add summary section
-  doc.fontSize(14).font("Unicode").text("Summary", { underline: true });
-  doc.moveDown(0.5);
+    // Add summary section
+    doc.fontSize(14).font("Unicode").text("Summary", { underline: true });
+    doc.moveDown(0.5);
 
-  doc.fontSize(12).font("Unicode");
-  doc.text(`Date Range: ${summary.dateRange}`);
-  doc.text(`Total Orders: ${summary.totalOrders}`);
-  doc.text(`Total Subtotal: ₹${summary.totalSubtotal.toFixed(2)}`);
-  doc.text(`Total Discounts: ₹${summary.totalDiscounts.toFixed(2)}`);
-  doc.text(`Total Revenue: ₹${summary.totalRevenue.toFixed(2)}`);
-  doc.text(`Average Order Value: ₹${summary.averageOrderValue.toFixed(2)}`);
-  doc.moveDown(2);
+    doc.fontSize(12).font("Unicode");
+    doc.text(`Date Range: ${summary.dateRange}`);
+    doc.text(`Total Orders: ${summary.totalOrders}`);
+    doc.text(`Total Subtotal: ₹${summary.totalSubtotal.toFixed(2)}`);
+    doc.text(`Total Discounts: ₹${summary.totalDiscounts.toFixed(2)}`);
+    doc.text(`Total Revenue: ₹${summary.totalRevenue.toFixed(2)}`);
+    doc.text(`Average Order Value: ₹${summary.averageOrderValue.toFixed(2)}`);
+    doc.moveDown(2);
 
-  // Add orders table
-  doc
-    .fontSize(14)
-    .font("Helvetica-Bold")
-    .text("Order Details", { underline: true });
-  doc.moveDown();
+    // Add orders table
+    doc
+      .fontSize(14)
+      .font("Helvetica-Bold")
+      .text("Order Details", { underline: true });
+    doc.moveDown();
 
-  // Define table columns
-  const tableTop = doc.y;
-  const tableColumns = ["Order ID", "Date", "Customer", "Status", "Total"];
-  const columnWidths = [100, 100, 120, 80, 80];
-  let currentLeft = 50; // starting from left margin
+    // Define table columns
+    const tableTop = doc.y;
+    const tableColumns = ["Order ID", "Date", "Customer", "Status", "Total"];
+    const columnWidths = [100, 100, 120, 80, 80];
+    let currentLeft = 50; // starting from left margin
 
-  // Draw table header
-  doc.fontSize(10).font("Unicode");
-  tableColumns.forEach((column, i) => {
-    doc.text(column, currentLeft, tableTop, {
-      width: columnWidths[i],
-      align: "left",
-    });
-    currentLeft += columnWidths[i];
-  });
-
-  const headerHeight = 20;
-  doc
-    .moveTo(50, tableTop - 5)
-    .lineTo(
-      50 + columnWidths.reduce((sum, width) => sum + width, 0),
-      tableTop - 5
-    )
-    .stroke();
-
-  doc
-    .moveTo(50, tableTop + headerHeight)
-    .lineTo(
-      50 + columnWidths.reduce((sum, width) => sum + width, 0),
-      tableTop + headerHeight
-    )
-    .stroke();
-
-  // Draw table rows
-  let rowTop = tableTop + headerHeight + 5;
-  doc.fontSize(9).font("Unicode");
-
-  // Function to check if we need a new page
-  const checkNewPage = (y, height = 20) => {
-    if (y + height > doc.page.height - 50) {
-      doc.addPage();
-      rowTop = 50;
-      return 50;
-    }
-    return y;
-  };
-
-  // Add order data
-  orders.forEach((order, index) => {
-    // Check if we need a new page
-    rowTop = checkNewPage(rowTop);
-
-    // Format date
-    const orderDate = new Date(order.createdAt).toLocaleDateString();
-
-    // Draw row
-    currentLeft = 50;
-    [
-      order._id.toString().substring(0, 8) + "...",
-      orderDate,
-      order.userId ? order.userId.name : "Guest",
-      order.status,
-      `₹${order.finalAmount.toFixed(2)}`,
-    ].forEach((text, i) => {
-      doc.text(text, currentLeft, rowTop, {
+    // Draw table header
+    doc.fontSize(10).font("Unicode");
+    tableColumns.forEach((column, i) => {
+      doc.text(column, currentLeft, tableTop, {
         width: columnWidths[i],
         align: "left",
       });
       currentLeft += columnWidths[i];
     });
 
-    // Add row separator
-    rowTop += 20;
+    const headerHeight = 20;
     doc
-      .moveTo(50, rowTop)
-      .lineTo(50 + columnWidths.reduce((sum, width) => sum + width, 0), rowTop)
+      .moveTo(50, tableTop - 5)
+      .lineTo(
+        50 + columnWidths.reduce((sum, width) => sum + width, 0),
+        tableTop - 5
+      )
       .stroke();
 
-    // Move down for the next row
-    rowTop += 5;
-  });
+    doc
+      .moveTo(50, tableTop + headerHeight)
+      .lineTo(
+        50 + columnWidths.reduce((sum, width) => sum + width, 0),
+        tableTop + headerHeight
+      )
+      .stroke();
 
-  // Finalize the PDF and end the stream
-  doc.end();
+    // Draw table rows
+    let rowTop = tableTop + headerHeight + 5;
+    doc.fontSize(9).font("Unicode");
+
+    // Function to check if we need a new page
+    const checkNewPage = (y, height = 20) => {
+      if (y + height > doc.page.height - 50) {
+        doc.addPage();
+        rowTop = 50;
+        return 50;
+      }
+      return y;
+    };
+
+    // Add order data
+    orders.forEach((order, index) => {
+      // Check if we need a new page
+      rowTop = checkNewPage(rowTop);
+
+      // Format date
+      const orderDate = new Date(order.createdAt).toLocaleDateString();
+
+      // Draw row
+      currentLeft = 50;
+      [
+        order._id.toString().substring(0, 8) + "...",
+        orderDate,
+        order.userId ? order.userId.name : "Guest",
+        order.status,
+        `₹${order.finalAmount.toFixed(2)}`,
+      ].forEach((text, i) => {
+        doc.text(text, currentLeft, rowTop, {
+          width: columnWidths[i],
+          align: "left",
+        });
+        currentLeft += columnWidths[i];
+      });
+
+      // Add row separator
+      rowTop += 20;
+      doc
+        .moveTo(50, rowTop)
+        .lineTo(
+          50 + columnWidths.reduce((sum, width) => sum + width, 0),
+          rowTop
+        )
+        .stroke();
+
+      // Move down for the next row
+      rowTop += 5;
+    });
+
+    // Finalize the PDF and end the stream
+    doc.end();
+    console.log(`PDF report exported successfully for ${summary.dateRange}`);
+  } catch (error) {
+    console.error("Error generating PDF export:", error);
+    throw new Error("Failed to generate PDF export");
+  }
 }
 
-// Add export endpoint for detailed order report
-exports.exportOrderDetails = async (req, res) => {
+// detailed order report
+const exportOrderDetails = async (req, res) => {
   try {
     const { orderId, format = "excel" } = req.params;
 
@@ -701,7 +729,9 @@ exports.exportOrderDetails = async (req, res) => {
       .populate("items.productId");
 
     if (!order) {
-      return res.status(404).send("Order not found");
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
+        message: MESSAGES.ERROR.ORDER_NOT_FOUND,
+      });
     }
 
     // Generate the report based on format
@@ -710,15 +740,20 @@ exports.exportOrderDetails = async (req, res) => {
     } else if (format === "pdf") {
       await exportOrderToPdf(res, order);
     } else {
-      return res.status(400).send("Invalid export format");
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        message: "Invalid export format",
+      });
     }
   } catch (error) {
     console.error("Error exporting order details:", error);
-    res.status(500).send("Error exporting order details");
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      message: MESSAGES.ERROR.ORDERS_EXPORT_FAILED,
+      error: error.message,
+    });
   }
 };
 
-// Helper function to export a single order to Excel
+//function to export to excel
 async function exportOrderToExcel(res, order) {
   // Create a new Excel workbook
   const workbook = new ExcelJS.Workbook();
@@ -1028,4 +1063,5 @@ async function exportOrderToPdf(res, order) {
 module.exports = {
   getSalesReport,
   exportSalesReport,
+  exportOrderDetails,
 };

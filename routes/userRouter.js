@@ -168,7 +168,7 @@ userRouter.delete(
 );
 
 //coupons
-userRouter.get("/mycoupons", authToken, couponController.getMyCoupons);
+userRouter.get("/users/mycoupons", authToken, couponController.getMyCoupons);
 userRouter.post("/apply-coupon", authToken, couponController.applyCoupon);
 userRouter.delete("/checkout/coupon", authToken, couponController.removeCoupon);
 

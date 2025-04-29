@@ -1,17 +1,18 @@
 const Product = require("../../models/Products.js");
 const Category = require("../../models/Category.js");
 const Brand = require("../../models/Brand.js");
-const User = require("../../models/User.js");
 const fs = require("fs");
 const path = require("path");
 const sharp = require("sharp");
+const HTTP_STATUS = require("../../config/statusCodes.js");
+const MESSAGES = require("../../config/adminMessages.js");
 
 //get product page
 const getProductAddPage = async (req, res) => {
   try {
     const admin = req.admin;
     if (!admin) {
-      req.flash("error", "session expired please Login");
+      req.flash("error", MESSAGES.ERROR.SESSION_EXPIRED);
       return res.redirect("/admin");
     }
     const category = await Category.find({ isListed: true });
@@ -63,7 +64,7 @@ const addProducts = async (req, res) => {
         brand: products.brand,
         category: category._id,
         regularPrice: products.regularPrice,
-        salePrice: products.salePrice, // Fixed typo here
+        salePrice: products.salePrice,
         quantity: products.quantity,
         productNumber: products.productNumber,
         color: products.color,
@@ -73,13 +74,10 @@ const addProducts = async (req, res) => {
       });
 
       await newProduct.save();
-      req.flash("success", "Product added successfully");
+      req.flash("success", MESSAGES.SUCCESS.PRODUCT_ADDED);
       return res.redirect("/admin/addProducts");
     } else {
-      req.flash(
-        "error",
-        "Product already exists. Please try with another name"
-      );
+      req.flash("error", MESSAGES.ERROR.PRODUCT_ADD_FAILED);
       return res.redirect("/admin/addProducts");
     }
   } catch (error) {
@@ -93,7 +91,7 @@ const getProducts = async (req, res) => {
   try {
     const admin = req.admin;
     if (!admin) {
-      req.flash("error", "session expired please Login");
+      req.flash("error", MESSAGES.ERROR.SESSION_EXPIRED);
       return res.redirect("/admin");
     }
     const search = req.query.search || "";
@@ -140,7 +138,7 @@ const getProducts = async (req, res) => {
   }
 };
 
-//add procuct offer
+//add product offer
 const addProductOffer = async (req, res) => {
   try {
     const { productId, percentage } = req.body;
@@ -149,24 +147,24 @@ const addProductOffer = async (req, res) => {
       isDeleted: false,
     });
     if (!findProduct) {
-      return res.status(404).json({
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
         status: false,
-        message: "Product not found",
+        message: MESSAGES.ERROR.PRODUCT_NOT_FOUND,
       });
     }
 
     const findCategory = await Category.findOne({ _id: findProduct.category });
     if (!findCategory) {
-      return res.status(404).json({
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
         status: false,
-        message: "Category not found",
+        message: MESSAGES.ERROR.CATEGORY_NOT_FOUND,
       });
     }
 
     if (findCategory.categoryOffer >= percentage) {
-      return res.json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         status: false,
-        message: `This product category already has a category offer,Please add offer greater than ${findCategory.categoryOffer}% to add Product offer`,
+        message: `This product category already has a category offer, Please add offer greater than ${findCategory.categoryOffer}% to add Product offer`,
       });
     }
 
@@ -180,22 +178,19 @@ const addProductOffer = async (req, res) => {
       await findProduct.save();
     }
 
-    // Only set category offer to 0 if we're changing the category settings
-    // if (findCategory.categoryOffer > 0) {
-    //   findCategory.categoryOffer = 0;
-    //   await findCategory.save();
-    // }
-
-    return res.json({ status: true });
+    return res.status(HTTP_STATUS.OK).json({ 
+      status: true,
+      message: MESSAGES.SUCCESS.PRODUCT_OFFER_ADDED 
+    });
   } catch (error) {
     console.error("Error in addProductOffer:", error);
     return res
-      .status(500)
-      .json({ status: false, message: "Internal Server Error" });
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ status: false, message: MESSAGES.ERROR.PRODUCT_OFFER_FAILED });
   }
 };
 
-//remove prodcct offer
+//remove product offer
 const removeProductOffer = async (req, res) => {
   try {
     const { productId } = req.body;
@@ -205,9 +200,9 @@ const removeProductOffer = async (req, res) => {
     });
 
     if (!findProduct) {
-      return res.status(404).json({
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
         status: false,
-        message: "Product not found",
+        message: MESSAGES.ERROR.PRODUCT_NOT_FOUND,
       });
     }
 
@@ -226,12 +221,15 @@ const removeProductOffer = async (req, res) => {
     }
 
     await findProduct.save();
-    return res.json({ status: true });
+    return res.status(HTTP_STATUS.OK).json({ 
+      status: true,
+      message: MESSAGES.SUCCESS.PRODUCT_OFFER_REMOVED 
+    });
   } catch (error) {
     console.error("Error in removeProductOffer:", error);
     return res
-      .status(500)
-      .json({ status: false, message: "Internal Server Error" });
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ status: false, message: MESSAGES.ERROR.PRODUCT_OFFER_FAILED });
   }
 };
 
@@ -241,7 +239,7 @@ const toggleProductBlock = async (req, res) => {
     const { id } = req.query;
     const product = await Product.findById(id);
     if (!product) {
-      req.flash("error", "Product not found.");
+      req.flash("error", MESSAGES.ERROR.PRODUCT_NOT_FOUND);
       return res.redirect("/admin/products");
     }
 
@@ -250,11 +248,12 @@ const toggleProductBlock = async (req, res) => {
 
     req.flash(
       "success",
-      `Product ${product.isBlocked ? "blocked" : "unblocked"} successfully.`
+      MESSAGES.SUCCESS.PRODUCT_STATUS_TOGGLED
     );
     res.redirect("/admin/products");
   } catch (error) {
     console.error("Error toggling product block:", error);
+    req.flash("error", MESSAGES.ERROR.STATUS_UPDATE_FAILED);
     res.redirect("/admin/pageerror");
   }
 };
@@ -265,6 +264,12 @@ const getEditProduct = async (req, res) => {
     const admin = req.admin;
     const id = req.params.id;
     const product = await Product.findOne({ _id: id, isDeleted: false });
+    
+    if (!product) {
+      req.flash("error", MESSAGES.ERROR.PRODUCT_NOT_FOUND);
+      return res.redirect("/admin/products");
+    }
+    
     const category = await Category.find({});
     const brand = await Brand.find({});
 
@@ -285,7 +290,7 @@ const updateProduct = async (req, res) => {
     const { id } = req.params;
     let product = await Product.findById(id);
     if (!product) {
-      req.flash("error", "Product not found.");
+      req.flash("error", MESSAGES.ERROR.PRODUCT_NOT_FOUND);
       return res.redirect("/admin/products");
     }
 
@@ -314,12 +319,12 @@ const updateProduct = async (req, res) => {
       !regularPrice ||
       !salePrice
     ) {
-      req.flash("error", "Please fill all required fields.");
+      req.flash("error", MESSAGES.ERROR.INVALID_PRODUCT_DATA);
       return res.redirect(`/admin/editProduct/${id}`);
     }
 
     if (parseFloat(salePrice) > parseFloat(regularPrice)) {
-      req.flash("error", "Sale price must be lower than the regular price.");
+      req.flash("error", MESSAGES.ERROR.INVALID_PRODUCT_DATA);
       return res.redirect(`/admin/editProduct/${id}`);
     }
 
@@ -371,7 +376,7 @@ const updateProduct = async (req, res) => {
     }
 
     if (updatedImages.length === 0) {
-      req.flash("error", "Product must have at least one image.");
+      req.flash("error", MESSAGES.ERROR.INVALID_PRODUCT_DATA);
       return res.redirect(`/admin/editProduct/${id}`);
     }
 
@@ -395,11 +400,11 @@ const updateProduct = async (req, res) => {
       { new: true }
     );
 
-    req.flash("success", "Product updated successfully.");
+    req.flash("success", MESSAGES.SUCCESS.PRODUCT_UPDATED);
     return res.redirect("/admin/products");
   } catch (error) {
     console.error("Error updating product:", error);
-    req.flash("error", "Failed to update product.");
+    req.flash("error", MESSAGES.ERROR.PRODUCT_UPDATE_FAILED);
     return res.redirect("/admin/products");
   }
 };
@@ -411,7 +416,7 @@ const deleteProduct = async (req, res) => {
     let product = await Product.findById(id);
 
     if (!product) {
-      req.flash("error", "Product not found.");
+      req.flash("error", MESSAGES.ERROR.PRODUCT_NOT_FOUND);
       return res.redirect("/admin/products");
     }
     // Mark as deleted (soft delete)
@@ -419,11 +424,11 @@ const deleteProduct = async (req, res) => {
     product.deletedAt = new Date();
     await product.save();
 
-    req.flash("success", "Product deleted successfully.");
+    req.flash("success", MESSAGES.SUCCESS.PRODUCT_DELETED);
     return res.redirect("/admin/products");
   } catch (error) {
     console.error("Error deleting product:", error);
-    req.flash("error", "Failed to delete product.");
+    req.flash("error", MESSAGES.ERROR.PRODUCT_DELETE_FAILED);
     return res.redirect("/admin/products");
   }
 };

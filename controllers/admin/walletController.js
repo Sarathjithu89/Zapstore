@@ -4,8 +4,10 @@ const User = require("../../models/User.js");
 const mongoose = require("mongoose");
 const ExcelJS = require("exceljs");
 const PDFDocument = require("pdfkit");
+const HTTP_STATUS = require("../../config/statusCodes.js");
+const MESSAGES = require("../../config/adminMessages.js");
 
-// Dashboard - GET /admin/wallet
+// Dashboard
 const getWalletDashboard = async (req, res) => {
   try {
     // Parse query parameters for filtering
@@ -20,11 +22,9 @@ const getWalletDashboard = async (req, res) => {
       endDate = "",
     } = req.query;
 
-    // Build query based on filters
     let walletQuery = {};
     let transactionQuery = {};
 
-    // User filter
     if (filterType === "user" && userId) {
       const user = await User.findOne({
         $or: [
@@ -39,7 +39,6 @@ const getWalletDashboard = async (req, res) => {
       }
     }
 
-    // Balance range filter
     if (filterType === "balance") {
       if (minBalance !== "") {
         walletQuery.balance = { $gte: Number(minBalance) };
@@ -50,12 +49,10 @@ const getWalletDashboard = async (req, res) => {
       }
     }
 
-    // Transaction type filter
     if (transactionType !== "all") {
       transactionQuery.type = transactionType;
     }
 
-    // Date range filter
     if (dateRange !== "all") {
       const now = new Date();
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -80,7 +77,6 @@ const getWalletDashboard = async (req, res) => {
       }
     }
 
-    // Get wallet statistics
     const totalWalletBalance = await Wallet.aggregate([
       { $group: { _id: null, total: { $sum: "$balance" } } },
     ]);
@@ -96,7 +92,6 @@ const getWalletDashboard = async (req, res) => {
       { $group: { _id: null, avg: { $avg: "$balance" } } },
     ]);
 
-    // Fetch transactions with pagination
     const page = parseInt(req.query.page) || 1;
     const limit = 10;
     const skip = (page - 1) * limit;
@@ -136,10 +131,10 @@ const getWalletDashboard = async (req, res) => {
       {
         $project: {
           _id: 1,
-          transactionId: { $toString: "$_id" }, // Using _id as transactionId
+          transactionId: { $toString: "$_id" },
           type: 1,
           amount: 1,
-          balanceAfter: "$walletDetails.balance", // Note: This is the current balance, not after transaction
+          balanceAfter: "$walletDetails.balance",
           description: 1,
           createdAt: 1,
           userId: {
@@ -162,7 +157,7 @@ const getWalletDashboard = async (req, res) => {
       },
     ]);
 
-    // Get top wallet users
+    //top wallet users
     const topUsers = await Wallet.aggregate([
       { $match: { balance: { $gt: 0 } } },
       { $sort: { balance: -1 } },
@@ -198,31 +193,27 @@ const getWalletDashboard = async (req, res) => {
       },
     ]);
 
-    // Prepare chart data for visualization
-    // You'll need to implement this function based on your requirements
     const chartData = await getChartData(transactionQuery);
 
-    // Calculate active wallet percentage
     const totalUsers = await User.countDocuments();
     const activeWalletPercentage = Math.round(
       (activeWallets / totalUsers) * 100
     );
 
-    const totalPages=Math.ceil(totalTransactions/limit)
+    const totalPages = Math.ceil(totalTransactions / limit);
 
     const queryString = new URLSearchParams({
       filterType,
       userId,
-      minBalance: minBalance || '',
-      maxBalance: maxBalance || '',
+      minBalance: minBalance || "",
+      maxBalance: maxBalance || "",
       transactionType,
       dateRange,
-      startDate: startDate || '',
-      endDate: endDate || ''
+      startDate: startDate || "",
+      endDate: endDate || "",
     }).toString();
 
-    // Send response
-    res.render("admin/wallet", {
+    res.status(HTTP_STATUS.OK).render("admin/wallet", {
       totalWalletBalance: totalWalletBalance[0]?.total || 0,
       activeWallets,
       totalTransactions,
@@ -241,19 +232,22 @@ const getWalletDashboard = async (req, res) => {
       endDate,
       totalPages,
       page,
-      query:queryString,
+      query: queryString,
+      message: MESSAGES.SUCCESS.WALLET_DASHBOARD_LOADED,
     });
   } catch (error) {
     console.error("Error in wallet dashboard:", error);
-    req.flash("error", "Failed to load wallet data");
-    res.redirect("/admin/dashboard");
+    req.flash(
+      "error",
+      MESSAGES.ERROR.DASHBOARD_LOAD_FAILED || "Failed to load wallet data"
+    );
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).redirect("/admin/dashboard");
   }
 };
 
-// Get chart data for wallet transactions
+//chart data
 async function getChartData(baseQuery = {}) {
   try {
-    // Dates for chart (last 30 days)
     const dates = [];
     const credits = [];
     const debits = [];
@@ -262,7 +256,6 @@ async function getChartData(baseQuery = {}) {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - 30);
 
-    // Create array of 30 days
     for (let i = 0; i < 30; i++) {
       const date = new Date(startDate);
       date.setDate(date.getDate() + i);
@@ -270,12 +263,10 @@ async function getChartData(baseQuery = {}) {
         date.toLocaleDateString("en-US", { month: "short", day: "numeric" })
       );
 
-      // Date range for this data point
       const dayStart = new Date(date);
       const dayEnd = new Date(date);
       dayEnd.setHours(23, 59, 59, 999);
 
-      // Get credits for this day
       const creditResult = await Transaction.aggregate([
         {
           $match: {
@@ -287,7 +278,6 @@ async function getChartData(baseQuery = {}) {
         { $group: { _id: null, total: { $sum: "$amount" } } },
       ]);
 
-      // Get debits for this day
       const debitResult = await Transaction.aggregate([
         {
           $match: {
@@ -303,7 +293,6 @@ async function getChartData(baseQuery = {}) {
       debits.push(debitResult[0]?.total || 0);
     }
 
-    // Transaction summary by type
     const transactionSummary = {
       credits: await Transaction.countDocuments({
         ...baseQuery,
@@ -337,41 +326,36 @@ async function getChartData(baseQuery = {}) {
   }
 }
 
-// Add credit to wallet
+//credit to wallet
 const addWalletCredit = async (req, res) => {
   try {
     const { email, amount, reason, notes } = req.body;
     const amountValue = parseFloat(amount);
 
     if (!email || !amountValue || amountValue <= 0) {
-      req.flash("error", "Valid email and amount are required");
-      return res.redirect("/admin/wallet");
+      req.flash("error", MESSAGES.ERROR.WALLET_CREDIT_FAILED);
+      return res.status(HTTP_STATUS.BAD_REQUEST).redirect("/admin/wallet");
     }
 
-    // Find user
     const user = await User.findOne({ email });
     if (!user) {
-      req.flash("error", "User not found");
-      return res.redirect("/admin/wallet");
+      req.flash("error", MESSAGES.ERROR.CUSTOMER_NOT_FOUND);
+      return res.status(HTTP_STATUS.NOT_FOUND).redirect("/admin/wallet");
     }
 
-    // Find or create wallet
     let wallet = await Wallet.findOne({ user: user._id });
     if (!wallet) {
       wallet = new Wallet({ user: user._id, balance: 0 });
       await wallet.save();
 
-      // Update user with wallet reference
       user.wallet = wallet._id;
       await user.save();
     }
 
-    // Add credit
     const newBalance = wallet.balance + amountValue;
     wallet.balance = newBalance;
     await wallet.save();
 
-    // Create transaction record
     const transaction = new Transaction({
       wallet: wallet._id,
       amount: amountValue,
@@ -385,52 +369,47 @@ const addWalletCredit = async (req, res) => {
 
     await transaction.save();
 
-    req.flash("success", `₹${amountValue} credited to ${user.name}'s wallet`);
-    res.redirect("/admin/wallet");
+    req.flash("success", MESSAGES.SUCCESS.WALLET_CREDIT_ADDED);
+    res.status(HTTP_STATUS.OK).redirect("/admin/wallet");
   } catch (error) {
     console.error("Error adding credit:", error);
-    req.flash("error", "Failed to add credit");
-    res.redirect("/admin/wallet");
+    req.flash("error", MESSAGES.ERROR.WALLET_CREDIT_FAILED);
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).redirect("/admin/wallet");
   }
 };
 
-// Deduct balance from wallet
+// Deduct from wallet
 const deductWalletBalance = async (req, res) => {
   try {
     const { email, amount, reason, notes } = req.body;
     const amountValue = parseFloat(amount);
 
     if (!email || !amountValue || amountValue <= 0) {
-      req.flash("error", "Valid email and amount are required");
-      return res.redirect("/admin/wallet");
+      req.flash("error", MESSAGES.ERROR.WALLET_DEDUCTION_FAILED);
+      return res.status(HTTP_STATUS.BAD_REQUEST).redirect("/admin/wallet");
     }
 
-    // Find user
     const user = await User.findOne({ email });
     if (!user) {
-      req.flash("error", "User not found");
-      return res.redirect("/admin/wallet");
+      req.flash("error", MESSAGES.ERROR.CUSTOMER_NOT_FOUND);
+      return res.status(HTTP_STATUS.NOT_FOUND).redirect("/admin/wallet");
     }
 
-    // Find wallet
     const wallet = await Wallet.findOne({ user: user._id });
     if (!wallet) {
-      req.flash("error", "User has no wallet");
-      return res.redirect("/admin/wallet");
+      req.flash("error", MESSAGES.ERROR.WALLET_NOT_FOUND);
+      return res.status(HTTP_STATUS.NOT_FOUND).redirect("/admin/wallet");
     }
 
-    // Check if sufficient balance
     if (wallet.balance < amountValue) {
-      req.flash("error", "Insufficient wallet balance");
-      return res.redirect("/admin/wallet");
+      req.flash("error", MESSAGES.ERROR.WALLET_DEDUCTION_FAILED);
+      return res.status(HTTP_STATUS.BAD_REQUEST).redirect("/admin/wallet");
     }
 
-    // Deduct amount
     const newBalance = wallet.balance - amountValue;
     wallet.balance = newBalance;
     await wallet.save();
 
-    // Create transaction record
     const transaction = new Transaction({
       wallet: wallet._id,
       amount: amountValue,
@@ -444,36 +423,38 @@ const deductWalletBalance = async (req, res) => {
 
     await transaction.save();
 
-    req.flash("success", `₹${amountValue} deducted from ${user.name}'s wallet`);
-    res.redirect("/admin/wallet");
+    req.flash("success", MESSAGES.SUCCESS.WALLET_BALANCE_DEDUCTED);
+    res.status(HTTP_STATUS.OK).redirect("/admin/wallet");
   } catch (error) {
     console.error("Error deducting balance:", error);
-    req.flash("error", "Failed to deduct balance");
-    res.redirect("/admin/wallet");
+    req.flash("error", MESSAGES.ERROR.WALLET_DEDUCTION_FAILED);
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).redirect("/admin/wallet");
   }
 };
-// Get user wallet info - GET /admin/api/user-wallet-info
+
+//user wallet info
 const getUserWalletInfo = async (req, res) => {
   try {
     const { email } = req.query;
 
     if (!email) {
       return res
-        .status(400)
-        .json({ success: false, message: "Email is required" });
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ success: false, message: MESSAGES.ERROR.WALLET_NOT_FOUND });
     }
 
     const user = await User.findOne({ email });
     if (!user) {
       return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json({ success: false, message: MESSAGES.ERROR.CUSTOMER_NOT_FOUND });
     }
 
     const wallet = await Wallet.findOne({ user: user._id });
 
-    return res.json({
+    return res.status(HTTP_STATUS.OK).json({
       success: true,
+      message: MESSAGES.SUCCESS.USER_WALLET_INFO_FETCHED,
       user: {
         id: user._id,
         name: user.name,
@@ -483,20 +464,20 @@ const getUserWalletInfo = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching user wallet info:", error);
-    res.status(500).json({ success: false, message: "Server error" });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: MESSAGES.ERROR.WALLET_NOT_FOUND,
+    });
   }
 };
 
-// Export wallet data - GET /admin/export-wallet-data
+// Export wallet data
 const exportWalletData = async (req, res) => {
   try {
     const { format, ...filters } = req.query;
 
-    // Build query based on filters (same logic as in getWalletDashboard)
     let query = {};
-    // ... [same filter logic as the dashboard function]
 
-    // Get transactions based on filters
     const transactions = await Transaction.find(query)
       .populate("wallet", "user")
       .populate({
@@ -508,7 +489,6 @@ const exportWalletData = async (req, res) => {
       })
       .sort({ createdAt: -1 });
 
-    // Format data for export
     const formattedData = transactions.map((transaction) => ({
       transactionId: transaction.paymentId,
       date: transaction.createdAt.toLocaleDateString(),
@@ -534,7 +514,7 @@ const exportWalletData = async (req, res) => {
         "Content-Disposition",
         `attachment; filename=wallet-transactions-${Date.now()}.xlsx`
       );
-      return res.send(buffer);
+      return res.status(HTTP_STATUS.OK).send(buffer);
     } else if (format === "pdf") {
       // Generate PDF
       const buffer = await generatePDF(
@@ -546,75 +526,63 @@ const exportWalletData = async (req, res) => {
         "Content-Disposition",
         `attachment; filename=wallet-transactions-${Date.now()}.pdf`
       );
-      return res.send(buffer);
+      return res.status(HTTP_STATUS.OK).send(buffer);
     } else {
-      return res.status(400).json({ error: "Invalid export format" });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        success: false,
+        message: MESSAGES.ERROR.WALLET_EXPORT_FAILED,
+      });
     }
   } catch (error) {
     console.error("Error exporting wallet data:", error);
-    req.flash("error", "Failed to export wallet data");
-    res.redirect("/admin/wallet");
+    req.flash("error", MESSAGES.ERROR.WALLET_EXPORT_FAILED);
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).redirect("/admin/wallet");
   }
 };
 
-// Reverse transaction - GET /admin/wallet/reverse-transaction/:id
+// Reverse transaction
 const reverseTransaction = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Find the transaction to reverse
     const transaction = await Transaction.findById(id);
     if (!transaction) {
-      req.flash("error", "Transaction not found");
-      return res.redirect("/admin/wallet");
+      req.flash("error", MESSAGES.ERROR.TRANSACTION_REVERSAL_FAILED);
+      return res.status(HTTP_STATUS.NOT_FOUND).redirect("/admin/wallet");
     }
 
-    // Check if transaction is less than 24 hours old and is an admin action
     const isRecent = transaction.createdAt > Date.now() - 24 * 60 * 60 * 1000;
     if (!isRecent || transaction.referenceType !== "admin") {
-      req.flash(
-        "error",
-        "Only recent administrative transactions can be reversed"
-      );
-      return res.redirect("/admin/wallet");
+      req.flash("error", MESSAGES.ERROR.TRANSACTION_REVERSAL_FAILED);
+      return res.status(HTTP_STATUS.BAD_REQUEST).redirect("/admin/wallet");
     }
 
-    // Find the wallet
     const wallet = await Wallet.findOne({ user: transaction.wallet });
     if (!wallet) {
-      req.flash("error", "Wallet not found");
-      return res.redirect("/admin/wallet");
+      req.flash("error", MESSAGES.ERROR.WALLET_NOT_FOUND);
+      return res.status(HTTP_STATUS.NOT_FOUND).redirect("/admin/wallet");
     }
 
-    // Calculate new balance based on transaction type
     let newBalance = wallet.balance;
     let reverseType;
     let reverseAmount = transaction.amount;
 
     if (transaction.type === "credit" || transaction.type === "refund") {
-      // If it was a credit, we need to deduct
       newBalance -= transaction.amount;
       reverseType = "debit";
 
-      // Check if sufficient balance
       if (newBalance < 0) {
-        req.flash(
-          "error",
-          "Cannot reverse credit: Insufficient wallet balance"
-        );
-        return res.redirect("/admin/wallet");
+        req.flash("error", MESSAGES.ERROR.TRANSACTION_REVERSAL_FAILED);
+        return res.status(HTTP_STATUS.BAD_REQUEST).redirect("/admin/wallet");
       }
     } else {
-      // If it was a debit or payment, we need to add back
       newBalance += transaction.amount;
       reverseType = "credit";
     }
 
-    // Update wallet balance
     wallet.balance = newBalance;
     await wallet.save();
 
-    // Create reverse transaction
     const reverseTransaction = new Transaction({
       wallet: transaction.wallet,
       amount: reverseAmount,
@@ -630,22 +598,21 @@ const reverseTransaction = async (req, res) => {
 
     await reverseTransaction.save();
 
-    req.flash("success", "Transaction successfully reversed");
-    res.redirect("/admin/wallet");
+    req.flash("success", MESSAGES.SUCCESS.TRANSACTION_REVERSED);
+    res.status(HTTP_STATUS.OK).redirect("/admin/wallet");
   } catch (error) {
     console.error("Error reversing transaction:", error);
-    req.flash("error", "Failed to reverse transaction");
-    res.redirect("/admin/wallet");
+    req.flash("error", MESSAGES.ERROR.TRANSACTION_REVERSAL_FAILED);
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).redirect("/admin/wallet");
   }
 };
 
-//functions
+//  functions
 // Generate Excel file
 const generateExcel = async (data, sheetName = "Data") => {
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet(sheetName);
 
-  // Add headers
   if (data.length > 0) {
     const headers = Object.keys(data[0]);
     worksheet.addRow(

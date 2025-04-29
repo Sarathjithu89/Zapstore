@@ -1,14 +1,17 @@
 const Coupon = require("../../models/Coupon.js");
 const User = require("../../models/User.js");
+const HTTP_STATUS = require("../../config/statusCodes.js");
+const MESSAGES = require("../../config/adminMessages.js");
 
-//get coupons
+//Get all coupons
 const getCoupons = async (req, res) => {
   try {
     const admin = req.admin;
     if (!admin) {
-      req.flash("error", "session expired please Login");
+      req.flash("error", MESSAGES.ERROR.SESSION_EXPIRED);
       return res.redirect("/admin");
     }
+
     const page = parseInt(req.query.page) || 1;
     const limit = 10;
     const skip = (page - 1) * limit;
@@ -24,7 +27,11 @@ const getCoupons = async (req, res) => {
     const totalCoupons = await Coupon.countDocuments(searchQuery);
     const totalPages = Math.ceil(totalCoupons / limit);
 
-    res.render("admin/couponsMangment.ejs", {
+    if (coupons.length === 0 && !req.query.search) {
+      req.flash("info", MESSAGES.INFO.NO_COUPONS);
+    }
+
+    res.status(HTTP_STATUS.OK).render("admin/couponsMangment.ejs", {
       coupons,
       currentPage: page,
       totalPages,
@@ -32,8 +39,8 @@ const getCoupons = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching coupons:", error);
-    req.flash("error", "Failed to load coupons");
-    res.redirect("/admin/dashboard.ejs");
+    req.flash("error", MESSAGES.ERROR.COUPON_NOT_FOUND);
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).redirect("/admin/dashboard");
   }
 };
 
@@ -44,9 +51,10 @@ const addCoupon = async (req, res) => {
 
     const existingCoupon = await Coupon.findOne({ name });
     if (existingCoupon) {
-      req.flash("error", "A coupon with this name already exists");
-      return res.redirect("/admin/coupons");
+      req.flash("error", MESSAGES.ERROR.COUPON_EXISTS);
+      return res.status(HTTP_STATUS.CONFLICT).redirect("/admin/coupons");
     }
+
     const newCoupon = new Coupon({
       name,
       offerPrice,
@@ -57,28 +65,36 @@ const addCoupon = async (req, res) => {
 
     await newCoupon.save();
 
-    req.flash("success", "Coupon added successfully");
-    res.redirect("/admin/coupons");
+    req.flash("success", MESSAGES.SUCCESS.COUPON_ADDED);
+    res.status(HTTP_STATUS.CREATED).redirect("/admin/coupons");
   } catch (error) {
     console.error("Error adding coupon:", error);
-    req.flash("error", "Failed to add coupon");
-    res.redirect("/admin/coupons");
+    req.flash("error", MESSAGES.ERROR.COUPON_ADD_FAILED);
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).redirect("/admin/coupons");
   }
 };
 
-//Edit coupon
+// Edit  coupon
 const editCoupon = async (req, res) => {
   try {
     const { couponId, name, offerPrice, minimumPrice, expireOn } = req.body;
+    s;
+    const coupon = await Coupon.findById(couponId);
+    if (!coupon) {
+      req.flash("error", MESSAGES.ERROR.COUPON_NOT_FOUND);
+      return res.status(HTTP_STATUS.NOT_FOUND).redirect("/admin/coupons");
+    }
+
     const existingCoupon = await Coupon.findOne({
       name,
       _id: { $ne: couponId },
     });
 
     if (existingCoupon) {
-      req.flash("error", "Another coupon with this name already exists");
-      return res.redirect("/admin/coupons");
+      req.flash("error", MESSAGES.ERROR.COUPON_EXISTS);
+      return res.status(HTTP_STATUS.CONFLICT).redirect("/admin/coupons");
     }
+
     await Coupon.findByIdAndUpdate(couponId, {
       name,
       offerPrice,
@@ -86,35 +102,41 @@ const editCoupon = async (req, res) => {
       expireOn,
     });
 
-    req.flash("success", "Coupon updated successfully");
-    res.redirect("/admin/coupons");
+    req.flash("success", MESSAGES.SUCCESS.COUPON_UPDATED);
+    res.status(HTTP_STATUS.OK).redirect("/admin/coupons");
   } catch (error) {
     console.error("Error updating coupon:", error);
-    req.flash("error", "Failed to update coupon");
-    res.redirect("/admin/coupons");
+    req.flash("error", MESSAGES.ERROR.COUPON_UPDATE_FAILED);
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).redirect("/admin/coupons");
   }
 };
 
+// coupon active status
 const toggleCouponStatus = async (req, res) => {
   try {
     const couponId = req.query.id;
     const coupon = await Coupon.findById(couponId);
 
     if (!coupon) {
-      req.flash("error", "Coupon not found");
-      return res.redirect("/admin/couponsMangment.ejs");
+      req.flash("error", MESSAGES.ERROR.COUPON_NOT_FOUND);
+      return res.status(HTTP_STATUS.NOT_FOUND).redirect("/admin/coupons");
     }
 
     coupon.isListed = !coupon.isListed;
     await coupon.save();
 
-    const statusMessage = coupon.isListed ? "activated" : "deactivated";
-    req.flash("success", `Coupon ${statusMessage} successfully`);
-    res.redirect("/admin/coupons");
+    req.flash(
+      "success",
+      coupon.isListed
+        ? MESSAGES.SUCCESS.COUPON_STATUS_UPDATED
+        : MESSAGES.SUCCESS.COUPON_STATUS_UPDATED
+    );
+
+    res.status(HTTP_STATUS.OK).redirect("/admin/coupons");
   } catch (error) {
     console.error("Error toggling coupon status:", error);
-    req.flash("error", "Failed to update coupon status");
-    res.redirect("/admin/coupons");
+    req.flash("error", MESSAGES.ERROR.COUPON_UPDATE_FAILED);
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).redirect("/admin/coupons");
   }
 };
 
@@ -122,32 +144,45 @@ const toggleCouponStatus = async (req, res) => {
 const deleteCoupon = async (req, res) => {
   try {
     const couponId = req.params.id;
+    const coupon = await Coupon.findById(couponId);
+
+    if (!coupon) {
+      req.flash("error", MESSAGES.ERROR.COUPON_NOT_FOUND);
+      return res.status(HTTP_STATUS.NOT_FOUND).redirect("/admin/coupons");
+    }
 
     await Coupon.findByIdAndDelete(couponId);
 
-    req.flash("success", "Coupon deleted successfully");
-    res.redirect("/admin/coupons");
+    req.flash("success", MESSAGES.SUCCESS.COUPON_DELETED);
+    res.status(HTTP_STATUS.OK).redirect("/admin/coupons");
   } catch (error) {
     console.error("Error deleting coupon:", error);
-    req.flash("error", "Failed to delete coupon");
-    res.redirect("/admin/coupons");
+    req.flash("error", MESSAGES.ERROR.COUPON_DELETE_FAILED);
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).redirect("/admin/coupons");
   }
 };
 
-//users who used a coupon
+//Get users who have coupon
 const getCouponUsers = async (req, res) => {
   try {
     const couponId = req.params.id;
-
     const coupon = await Coupon.findById(couponId).populate("UserId");
 
     if (!coupon) {
-      return res.status(404).json({
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
         success: false,
-        message: "Coupon not found",
+        message: MESSAGES.ERROR.COUPON_NOT_FOUND,
       });
     }
-    //maping the users
+
+    if (!coupon.UserId || coupon.UserId.length === 0) {
+      return res.status(HTTP_STATUS.OK).json({
+        success: true,
+        message: MESSAGES.INFO.NO_COUPON_USERS,
+        users: [],
+      });
+    }
+
     const users = coupon.UserId.map((user) => {
       return {
         _id: user._id,
@@ -157,12 +192,16 @@ const getCouponUsers = async (req, res) => {
       };
     });
 
-    res.json({ success: true, users });
+    res.status(HTTP_STATUS.OK).json({
+      success: true,
+      message: MESSAGES.SUCCESS.COUPON_USERS_FETCHED,
+      users,
+    });
   } catch (error) {
     console.error("Error getting coupon users:", error);
-    res.status(500).json({
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
-      message: "Failed to get coupon users",
+      message: MESSAGES.ERROR.COUPON_NOT_FOUND,
     });
   }
 };

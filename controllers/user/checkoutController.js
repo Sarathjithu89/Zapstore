@@ -9,6 +9,8 @@ const Coupon = require("../../models/Coupon.js");
 const Transaction = require("../../models/Transactions.js");
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
+const MESSAGES = require("../../config/messages.js");
+const HTTP_STATUS = require("../../config/statusCodes.js");
 
 //initialize Razorpay
 const razorpay = new Razorpay({
@@ -70,8 +72,8 @@ const getCheckoutPage = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching checkout data:", error);
-    res.status(500).render("error", {
-      message: "Error loading checkout page",
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).render("error", {
+      message: MESSAGES.ERROR.SOMETHING_WRONG,
       error,
     });
   }
@@ -85,7 +87,11 @@ const checkStock = async (req, res) => {
     const cart = await Cart.findOne({ userId }).populate("items.productId");
 
     if (!cart || cart.items.length === 0) {
-      return res.json({ success: true, items: [] });
+      return res.status(HTTP_STATUS.OK).json({ 
+        success: true, 
+        message: MESSAGES.SUCCESS.DATA_FETCHED,
+        items: [] 
+      });
     }
 
     const stockStatus = [];
@@ -125,6 +131,7 @@ const checkStock = async (req, res) => {
           requestedQuantity,
           availableQuantity: newQuantity,
           stockChanged: true,
+          message: MESSAGES.PRODUCT.OUT_OF_STOCK
         });
       } else {
         stockStatus.push({
@@ -139,12 +146,16 @@ const checkStock = async (req, res) => {
 
     await cart.save();
 
-    return res.json({ success: true, items: stockStatus });
+    return res.status(HTTP_STATUS.OK).json({ 
+      success: true, 
+      message: MESSAGES.SUCCESS.DATA_FETCHED,
+      items: stockStatus 
+    });
   } catch (error) {
     console.error("Error checking stock:", error);
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
-      message: "Error checking product availability",
+      message: MESSAGES.ERROR.SOMETHING_WRONG,
     });
   }
 };
@@ -156,9 +167,9 @@ const placeOrder = async (req, res) => {
     const userId = req.user.userId;
 
     if (!addressId) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
-        message: "Shipping address is required",
+        message: MESSAGES.ERROR.INVALID_REQUEST,
       });
     }
 
@@ -178,7 +189,7 @@ const placeOrder = async (req, res) => {
       if (cartItems.length === 0) {
         await session.abortTransaction();
         session.endSession();
-        return res.status(400).json({
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({
           success: false,
           message: "Your cart is empty",
         });
@@ -192,7 +203,7 @@ const placeOrder = async (req, res) => {
       if (!shippingAddress) {
         await session.abortTransaction();
         session.endSession();
-        return res.status(400).json({
+        return res.status(HTTP_STATUS.NOT_FOUND).json({
           success: false,
           message: "Invalid shipping address",
         });
@@ -217,9 +228,9 @@ const placeOrder = async (req, res) => {
       if (subtotal > 1000) {
         await session.abortTransaction();
         session.endSession();
-        return res.status(403).json({
+        return res.status(HTTP_STATUS.FORBIDDEN).json({
           info: true,
-          message: "Cash on Delivary is not available for orders above ₹1000",
+          message: "Cash on Delivery is not available for orders above ₹1000",
         });
       }
 
@@ -285,9 +296,9 @@ const placeOrder = async (req, res) => {
 
       delete req.session.cart;
 
-      return res.json({
+      return res.status(HTTP_STATUS.CREATED).json({
         success: true,
-        message: "Order placed successfully",
+        message: MESSAGES.ORDER.PLACED,
         orderIds: [orderId],
       });
     } catch (error) {
@@ -297,9 +308,9 @@ const placeOrder = async (req, res) => {
     }
   } catch (error) {
     console.error("Error placing order:", error);
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
-      message: "Error processing your order",
+      message: MESSAGES.ERROR.SOMETHING_WRONG,
     });
   }
 };
@@ -310,8 +321,8 @@ const addAddressCheckout = (req, res) => {
     res.render("users/addAddress", { returnUrl: "/checkout" });
   } catch (error) {
     console.error("Error rendering add address page:", error);
-    res.status(500).render("error", {
-      message: "Error loading address form",
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).render("error", {
+      message: MESSAGES.ERROR.SOMETHING_WRONG,
       error,
     });
   }
@@ -323,9 +334,9 @@ const WalletOrder = async (req, res) => {
     const userId = req.user.userId;
 
     if (!addressId || !amount || amount <= 0) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
-        message: "Invalid request parameters",
+        message: MESSAGES.ERROR.INVALID_REQUEST,
       });
     }
     const orderIds = [];
@@ -340,7 +351,7 @@ const WalletOrder = async (req, res) => {
       if (!wallet) {
         await session.abortTransaction();
         session.endSession();
-        return res.status(404).json({
+        return res.status(HTTP_STATUS.NOT_FOUND).json({
           success: false,
           message: "Wallet not Found",
         });
@@ -359,7 +370,7 @@ const WalletOrder = async (req, res) => {
       if (!cart || cart.items.length === 0) {
         await session.abortTransaction();
         session.endSession();
-        return res.status(400).json({
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({
           success: false,
           message: "Your cart is Empty",
         });
@@ -372,7 +383,7 @@ const WalletOrder = async (req, res) => {
       if (!userAddress) {
         await session.abortTransaction();
         session.endSession();
-        return res.status(400).json({
+        return res.status(HTTP_STATUS.NOT_FOUND).json({
           success: false,
           message: "Shipping address not found",
         });
@@ -414,9 +425,9 @@ const WalletOrder = async (req, res) => {
       if (wallet.balance < grandTotal) {
         await session.abortTransaction();
         session.endSession();
-        return res.status(400).json({
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({
           success: false,
-          message: "Insufficient Balance",
+          message: MESSAGES.WALLET.INSUFFICIENT_BALANCE,
         });
       }
       //order
@@ -493,9 +504,9 @@ const WalletOrder = async (req, res) => {
 
       delete req.session.cart;
 
-      return res.status(200).json({
+      return res.status(HTTP_STATUS.CREATED).json({
         success: true,
-        message: "Order placed successfully!",
+        message: MESSAGES.ORDER.PLACED,
         orderIds,
       });
     } catch (error) {
@@ -505,9 +516,9 @@ const WalletOrder = async (req, res) => {
     }
   } catch (error) {
     console.error("Wallet order error:", error);
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
-      message: "Order processing failed",
+      message: MESSAGES.ERROR.SOMETHING_WRONG,
     });
   }
 };
@@ -518,16 +529,16 @@ const razorpayPayment = async (req, res) => {
     const { amount } = req.body;
     if (!amount) {
       return res
-        .status(400)
-        .json({ success: false, message: "Amount is required" });
+        .status(HTTP_STATUS.BAD_REQUEST)
+        .json({ success: false, message: MESSAGES.ERROR.INVALID_REQUEST });
     }
     const userId = req.user.userId;
     const user = await User.findById(userId);
 
     if (!user) {
       return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json({ success: false, message: MESSAGES.ERROR.USER_NOT_FOUND });
     }
     const cart = await Cart.findOne({ userId: userId });
 
@@ -548,8 +559,9 @@ const razorpayPayment = async (req, res) => {
 
     const order = await razorpay.orders.create(options);
 
-    return res.status(200).json({
+    return res.status(HTTP_STATUS.OK).json({
       success: true,
+      message: MESSAGES.SUCCESS.OPERATION_SUCCESS,
       key: process.env.RAZORPAY_KEY_ID,
       order: order,
       user: {
@@ -560,9 +572,9 @@ const razorpayPayment = async (req, res) => {
     });
   } catch (error) {
     console.error("Error creating Razorpay order:", error);
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
-      message: "Failed to create payment order",
+      message: MESSAGES.ERROR.SOMETHING_WRONG,
       error: error.message,
     });
   }
@@ -584,7 +596,7 @@ const verifyRazorpayPayment = async (req, res) => {
       .digest("hex");
 
     if (generatedSignature !== razorpay_signature) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         message: "Payment verification Failed. Invalid signature",
       });
@@ -592,9 +604,9 @@ const verifyRazorpayPayment = async (req, res) => {
 
     const userId = req.user?.userId;
     if (!userId) {
-      return res.status(401).json({
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({
         success: false,
-        message: "User not authenticated",
+        message: MESSAGES.ERROR.AUTHENTICATION_REQUIRED,
       });
     }
     const userAddress = await Address.findOne({ userId: userId });
@@ -609,7 +621,7 @@ const verifyRazorpayPayment = async (req, res) => {
     });
 
     if (!cart || cart.items.length === 0) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         message: "Cart is empty",
       });
@@ -703,16 +715,16 @@ const verifyRazorpayPayment = async (req, res) => {
 
     delete req.session.cart;
 
-    return res.status(200).json({
+    return res.status(HTTP_STATUS.OK).json({
       success: true,
-      message: "Payment verified and order placed successfully",
+      message: MESSAGES.ORDER.PLACED,
       orderId: savedOrder.orderId,
     });
   } catch (error) {
     console.error("Error verifying Razorpay payment:", error);
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
-      message: "An error occurred during payment verification",
+      message: MESSAGES.ERROR.SOMETHING_WRONG,
       error: error.message,
     });
   }

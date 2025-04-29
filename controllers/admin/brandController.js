@@ -2,15 +2,16 @@ const Brand = require("../../models/Brand.js");
 const Product = require("../../models/Products.js");
 const fs = require("fs");
 const path = require("path");
+const HTTP_STATUS = require("../../config/statusCodes.js");
+const MESSAGES = require("../../config/adminMessages.js");
 
-//load brand page
 const getBrandPage = async (req, res) => {
   try {
     const admin = req.admin;
 
     if (!admin) {
-      req.flash("error", "session expired please Login");
-      return res.redirect("/admin");
+      req.flash("error", MESSAGES.ERROR.SESSION_EXPIRED);
+      return res.status(HTTP_STATUS.UNAUTHORIZED).redirect("/admin");
     }
     const page = parseInt(req.query.page) || 1;
     const limit = 4;
@@ -23,7 +24,11 @@ const getBrandPage = async (req, res) => {
     const totalBrands = await Brand.countDocuments();
     const totalPages = Math.ceil(totalBrands / limit);
 
-    res.render("brand.ejs", {
+    if (brandData.length === 0) {
+      req.flash("info", MESSAGES.INFO.NO_BRANDS);
+    }
+
+    res.status(HTTP_STATUS.OK).render("brand.ejs", {
       admin,
       data: brandData,
       currentPage: page,
@@ -31,11 +36,10 @@ const getBrandPage = async (req, res) => {
       totalBrands: totalBrands,
     });
   } catch (error) {
-    res.redirect("admin/pageerror");
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).redirect("admin/pageerror");
   }
 };
 
-//add brand
 const addBrand = async (req, res) => {
   try {
     const brand = req.body.name;
@@ -44,13 +48,13 @@ const addBrand = async (req, res) => {
     });
 
     if (findBrand) {
-      req.flash("error", "This Brand already exists");
-      return res.redirect("/admin/brands");
+      req.flash("error", MESSAGES.ERROR.BRAND_EXISTS);
+      return res.status(HTTP_STATUS.CONFLICT).redirect("/admin/brands");
     }
 
     if (!req.file) {
       req.flash("error", "Brand image is required.");
-      return res.redirect("/admin/brands");
+      return res.status(HTTP_STATUS.BAD_REQUEST).redirect("/admin/brands");
     }
 
     const image = req.file.filename;
@@ -60,45 +64,72 @@ const addBrand = async (req, res) => {
     });
 
     await newBrand.save();
-    req.flash("success", "Brand added successfully");
-    res.redirect("/admin/brands");
+    req.flash("success", MESSAGES.SUCCESS.BRAND_ADDED);
+    res.status(HTTP_STATUS.CREATED).redirect("/admin/brands");
   } catch (error) {
-    console.log("Adding brand Error", error);
-    req.flash("error", "An error occurred while adding the brand");
-    res.redirect("/admin/brands");
+    req.flash("error", MESSAGES.ERROR.BRAND_ADD_FAILED);
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).redirect("/admin/brands");
   }
 };
 
-//block brand
 const blockBrand = async (req, res) => {
   try {
     const id = req.query.id;
+    const brand = await Brand.findById(id);
+
+    if (!brand) {
+      req.flash("error", MESSAGES.ERROR.BRAND_NOT_FOUND);
+      return res.status(HTTP_STATUS.NOT_FOUND).redirect("/admin/brands");
+    }
+
     await Brand.updateOne({ _id: id }, { $set: { isBlocked: true } });
-    req.flash("success", "Brand Blocked successfully");
-    res.redirect("/admin/brands");
+    req.flash("success", MESSAGES.SUCCESS.BRAND_BLOCKED);
+    res.status(HTTP_STATUS.OK).redirect("/admin/brands");
   } catch (error) {
-    res.redirect("admin/pageerror");
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).redirect("admin/pageerror");
   }
 };
+
 const unBlockBrand = async (req, res) => {
   try {
     const id = req.query.id;
+    const brand = await Brand.findById(id);
+
+    if (!brand) {
+      req.flash("error", MESSAGES.ERROR.BRAND_NOT_FOUND);
+      return res.status(HTTP_STATUS.NOT_FOUND).redirect("/admin/brands");
+    }
+
     await Brand.updateOne({ _id: id }, { $set: { isBlocked: false } });
-    req.flash("success", "Brand Unblocked successfully");
-    res.redirect("/admin/brands");
+    req.flash("success", MESSAGES.SUCCESS.BRAND_UNBLOCKED);
+    res.status(HTTP_STATUS.OK).redirect("/admin/brands");
   } catch (error) {
-    res.redirect("admin/pageerror");
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).redirect("admin/pageerror");
   }
 };
-//delete brand
+
 const deleteBrand = async (req, res) => {
   try {
     const { id } = req.query;
     if (!id) {
-      return res.status(400).redirect("/pageerror");
+      return res.status(HTTP_STATUS.BAD_REQUEST).redirect("/pageerror");
     }
 
     const brand = await Brand.findOne({ _id: id });
+    if (!brand) {
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
+        success: false,
+        message: MESSAGES.ERROR.BRAND_NOT_FOUND,
+      });
+    }
+
+    const productsWithBrand = await Product.countDocuments({ brand: id });
+    if (productsWithBrand > 0) {
+      return res.status(HTTP_STATUS.CONFLICT).json({
+        success: false,
+        message: MESSAGES.ERROR.BRAND_DELETE_FAILED,
+      });
+    }
 
     if (brand.brandImage && brand.brandImage.length > 0) {
       const imagePath = path.join(
@@ -113,10 +144,16 @@ const deleteBrand = async (req, res) => {
 
     await Brand.deleteOne({ _id: id });
 
-    return res.status(200).json({ success: true });
+    return res.status(HTTP_STATUS.OK).json({
+      success: true,
+      message: MESSAGES.SUCCESS.BRAND_DELETED,
+    });
   } catch (error) {
     console.log("Error Deleting Brand", error);
-    res.redirect("admin/pageerror");
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: MESSAGES.ERROR.BRAND_DELETE_FAILED,
+    });
   }
 };
 

@@ -1,14 +1,16 @@
 const Category = require("../../models/Category.js");
 const Product = require("../../models/Products.js");
+const HTTP_STATUS = require("../../config/statusCodes.js");
+const MESSAGES = require("../../config/adminMessages.js");
 
-//load category
+// Load categories with pagination
 const categoryInfo = async (req, res) => {
   try {
     const admin = req.admin;
 
     if (!admin) {
-      req.flash("error", "session expired please Login");
-      return res.redirect("/admin");
+      req.flash("error", MESSAGES.ERROR.SESSION_EXPIRED);
+      return res.status(HTTP_STATUS.UNAUTHORIZED).redirect("/admin");
     }
 
     const page = parseInt(req.query.page) || 1;
@@ -24,7 +26,11 @@ const categoryInfo = async (req, res) => {
     const totalCategories = await Category.countDocuments();
     const totalPages = Math.ceil(totalCategories / limit);
 
-    res.render("category.ejs", {
+    if (categoryData.length === 0) {
+      req.flash("info", MESSAGES.INFO.NO_CATEGORIES);
+    }
+
+    res.status(HTTP_STATUS.OK).render("category.ejs", {
       admin: admin,
       cat: categoryData,
       currentPage: page,
@@ -32,12 +38,15 @@ const categoryInfo = async (req, res) => {
       totalCategories: totalCategories,
     });
   } catch (error) {
-    console.log("category Error", error);
-    return res.redirect("admin/pageerror");
+    console.error("Category Error", error);
+    req.flash("error", MESSAGES.ERROR.CATEGORY_NOT_FOUND);
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .redirect("/admin/pageerror");
   }
 };
 
-//add new category
+// Add a new category
 const addcategory = async (req, res) => {
   const nameTrimmed = req.body.name.trim();
   const descriptionTrimmed = req.body.description.trim();
@@ -45,7 +54,7 @@ const addcategory = async (req, res) => {
   try {
     if (!nameTrimmed || !descriptionTrimmed) {
       return res
-        .status(400)
+        .status(HTTP_STATUS.BAD_REQUEST)
         .json({ error: "Name and Description are required" });
     }
 
@@ -54,7 +63,9 @@ const addcategory = async (req, res) => {
     });
 
     if (existingCategory) {
-      return res.status(400).json({ error: "Category already exists" });
+      return res
+        .status(HTTP_STATUS.CONFLICT)
+        .json({ error: MESSAGES.ERROR.CATEGORY_EXISTS });
     }
 
     const newCategory = new Category({
@@ -63,14 +74,20 @@ const addcategory = async (req, res) => {
     });
 
     await newCategory.save();
-    return res.json({ message: "Category added" });
+    return res.status(HTTP_STATUS.CREATED).json({
+      success: true,
+      message: MESSAGES.SUCCESS.CATEGORY_ADDED,
+    });
   } catch (error) {
-    console.log("Add Category Error", error);
-    return res.status(500).json({ error: "Internal Server Error" });
+    console.error("Add Category Error", error);
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      error: MESSAGES.ERROR.CATEGORY_ADD_FAILED,
+    });
   }
 };
 
-//add category offer
+//Add offer to a category
 const addcategoryOffer = async (req, res) => {
   try {
     const percentage = parseInt(req.body.percentage);
@@ -79,43 +96,42 @@ const addcategoryOffer = async (req, res) => {
 
     if (!category) {
       return res
-        .status(404)
-        .json({ status: false, message: "Category not found" });
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json({ success: false, message: MESSAGES.ERROR.CATEGORY_NOT_FOUND });
     }
 
     const products = await Product.find({ category: category._id });
     const hasProductOffer = Math.max(
-      ...products.map((product) => product.productOffer)
+      ...products.map((product) => product.productOffer || 0)
     );
 
-    // if (hasProductOffer > percentage) {
-    //   return res.json({
-    //     status: false,
-    //     message: `Products within this category already have product offer, please add offer greater than ${hasProductOffer}% category offer`,
-    //   });
-    // } else {
     await Category.updateOne(
       { _id: categoryId },
       { $set: { categoryOffer: percentage } }
     );
 
     for (const product of products) {
-      if (product.productOffer || product.productOffer < percentage) {
+      if (!product.productOffer || product.productOffer < percentage) {
         const discountAmount = (percentage / 100) * product.regularPrice;
         product.salePrice = product.regularPrice - discountAmount;
+        await product.save();
       }
-
-      await product.save();
     }
-    // }
 
-    res.json({ status: true });
+    res.status(HTTP_STATUS.OK).json({
+      success: true,
+      message: MESSAGES.SUCCESS.CATEGORY_OFFER_ADDED,
+    });
   } catch (error) {
     console.error("Error in addcategoryOffer:", error);
-    res.status(500).json({ status: false, message: "Internal Server Error" });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: MESSAGES.ERROR.CATEGORY_OFFER_FAILED,
+    });
   }
 };
-//remove offer function
+
+//Remove offer from a category
 const removecategoryOffer = async (req, res) => {
   try {
     const { categoryId } = req.body;
@@ -123,8 +139,8 @@ const removecategoryOffer = async (req, res) => {
     const category = await Category.findById(categoryId);
     if (!category) {
       return res
-        .status(404)
-        .json({ status: false, message: "Category not found" });
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json({ success: false, message: MESSAGES.ERROR.CATEGORY_NOT_FOUND });
     }
 
     const products = await Product.find({ category: category._id });
@@ -153,60 +169,103 @@ const removecategoryOffer = async (req, res) => {
     category.categoryOffer = 0;
     await category.save();
 
-    res.json({
-      status: true,
-      message: "Category offer removed and product prices updated.",
+    res.status(HTTP_STATUS.OK).json({
+      success: true,
+      message: MESSAGES.SUCCESS.CATEGORY_OFFER_REMOVED,
     });
   } catch (error) {
     console.error("Error removing category offer:", error);
-    res.status(500).json({ status: false, message: "Internal Server Error" });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: MESSAGES.ERROR.CATEGORY_OFFER_FAILED,
+    });
   }
 };
 
-//load category list
+//List a category (set isListed to false)
 const getListCategory = async (req, res) => {
   try {
     let id = req.query.id;
+    const category = await Category.findById(id);
+
+    if (!category) {
+      req.flash("error", MESSAGES.ERROR.CATEGORY_NOT_FOUND);
+      return res.status(HTTP_STATUS.NOT_FOUND).redirect("/admin/category");
+    }
+
     await Category.updateOne({ _id: id }, { $set: { isListed: false } });
-    res.redirect("/admin/category");
+    req.flash("success", MESSAGES.SUCCESS.CATEGORY_LISTED);
+    res.status(HTTP_STATUS.OK).redirect("/admin/category");
   } catch (error) {
-    res.redirect("admin/pageerror");
-  }
-};
-//unlist category
-const getUnListCategory = async (req, res) => {
-  try {
-    let id = req.query.id;
-    await Category.updateOne({ _id: id }, { $set: { isListed: true } });
-    res.redirect("/admin/category");
-  } catch (error) {
-    console.log(error);
-    res.redirect("admin/pageerror");
+    console.error("Error listing category:", error);
+    req.flash("error", MESSAGES.ERROR.CATEGORY_UPDATE_FAILED);
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).redirect("/admin/pageerror");
   }
 };
 
-//Load Edit category
+//Unlist a category (set isListed to true)
+const getUnListCategory = async (req, res) => {
+  try {
+    let id = req.query.id;
+    const category = await Category.findById(id);
+
+    if (!category) {
+      req.flash("error", MESSAGES.ERROR.CATEGORY_NOT_FOUND);
+      return res.status(HTTP_STATUS.NOT_FOUND).redirect("/admin/category");
+    }
+
+    await Category.updateOne({ _id: id }, { $set: { isListed: true } });
+    req.flash("success", MESSAGES.SUCCESS.CATEGORY_UNLISTED);
+    res.status(HTTP_STATUS.OK).redirect("/admin/category");
+  } catch (error) {
+    console.error("Error unlisting category:", error);
+    req.flash("error", MESSAGES.ERROR.CATEGORY_UPDATE_FAILED);
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).redirect("/admin/pageerror");
+  }
+};
+
+//Load edit category page
 const getEditCategory = async (req, res) => {
   try {
     const id = req.query.id;
     const category = await Category.findById(id);
-    return res.render("edit-category.ejs", { category: category });
+
+    if (!category) {
+      req.flash("error", MESSAGES.ERROR.CATEGORY_NOT_FOUND);
+      return res.status(HTTP_STATUS.NOT_FOUND).redirect("/admin/category");
+    }
+
+    return res
+      .status(HTTP_STATUS.OK)
+      .render("edit-category.ejs", { category: category });
   } catch (error) {
-    console.log(error);
-    res.redirect("admin/pageerror");
+    console.error("Error loading edit category:", error);
+    req.flash("error", MESSAGES.ERROR.CATEGORY_NOT_FOUND);
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).redirect("/admin/pageerror");
   }
 };
 
-//Edit category
+//Update category details
 const editCategory = async (req, res) => {
   try {
     const id = req.query.id;
     const { categoryName, description } = req.body;
 
-    // Check if the category name already exists
+    const category = await Category.findById(id);
+    if (!category) {
+      req.flash("error", MESSAGES.ERROR.CATEGORY_NOT_FOUND);
+      return res.status(HTTP_STATUS.NOT_FOUND).redirect("/admin/category");
+    }
+
     const existingCategory = await Category.findOne({
       name: categoryName,
+      _id: { $ne: id },
     });
+
+    if (existingCategory) {
+      req.flash("error", MESSAGES.ERROR.CATEGORY_EXISTS);
+      return res.status(HTTP_STATUS.CONFLICT).redirect("/admin/category");
+    }
 
     const updateCategory = await Category.findByIdAndUpdate(
       id,
@@ -215,40 +274,64 @@ const editCategory = async (req, res) => {
     );
 
     if (updateCategory) {
-      req.flash("success", "Category updated successfully");
-      return res.redirect("/admin/category");
+      req.flash("success", MESSAGES.SUCCESS.CATEGORY_UPDATED);
+      return res.status(HTTP_STATUS.OK).redirect("/admin/category");
     } else {
-      req.flash("error", "Category not found");
-      return res.redirect("/admin/category");
+      req.flash("error", MESSAGES.ERROR.CATEGORY_NOT_FOUND);
+      return res.status(HTTP_STATUS.NOT_FOUND).redirect("/admin/category");
     }
   } catch (error) {
     console.error("Error updating category:", error);
-    req.flash("error", "Internal server error");
-    return res.redirect("/admin/category");
+    req.flash("error", MESSAGES.ERROR.CATEGORY_UPDATE_FAILED);
+    return res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .redirect("/admin/category");
   }
 };
 
-//delete category
+//Delete a category
 const deleteCategory = async (req, res) => {
   try {
     const { categoryId } = req.body;
+
     if (!req.admin) {
-      req.flash("error", "please login to delete");
-      return res.redirect("/admin");
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({
+        success: false,
+        message: MESSAGES.ERROR.SESSION_EXPIRED,
+      });
+    }
+
+    const category = await Category.findById(categoryId);
+    if (!category) {
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
+        success: false,
+        message: MESSAGES.ERROR.CATEGORY_NOT_FOUND,
+      });
+    }
+
+    const productsWithCategory = await Product.countDocuments({
+      category: categoryId,
+    });
+    if (productsWithCategory > 0) {
+      return res.status(HTTP_STATUS.CONFLICT).json({
+        success: false,
+        message: MESSAGES.ERROR.CATEGORY_DELETE_FAILED,
+      });
     }
 
     const deletedCategory = await Category.findByIdAndDelete(categoryId);
 
-    if (!deletedCategory) {
-      return res
-        .status(404)
-        .json({ status: false, message: "Category not found" });
-    }
-
-    res.json({
-      status: true,
+    res.status(HTTP_STATUS.OK).json({
+      success: true,
+      message: MESSAGES.SUCCESS.CATEGORY_DELETED,
     });
-  } catch (error) {}
+  } catch (error) {
+    console.error("Error deleting category:", error);
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: MESSAGES.ERROR.CATEGORY_DELETE_FAILED,
+    });
+  }
 };
 
 module.exports = {

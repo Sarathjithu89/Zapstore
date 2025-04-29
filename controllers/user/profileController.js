@@ -5,16 +5,15 @@ const Address = require("../../models/Address.js");
 const sharp = require("sharp");
 const path = require("path");
 const fs = require("fs");
-const nodemailer = require("nodemailer");
-const crypto = require("crypto");
 const { securePassword } = require("./userController.js");
-const { text } = require("pdfkit");
 const {
   generateOtp,
   sendVerificationEmail,
 } = require("../../uility/nodemailer.js");
+const MESSAGES = require("../../config/messages.js");
+const HTTP_STATUS = require("../../config/statusCodes.js");
 
-//load the user profile
+// Load the user profile
 const getUserProfile = async (req, res) => {
   try {
     const decodedUser = req.user;
@@ -22,21 +21,21 @@ const getUserProfile = async (req, res) => {
       const user = await User.findOne({ _id: decodedUser.userId });
       res.render("profile.ejs", { user });
     } else {
-      req.flash("error", "Please Login");
+      req.flash("error", MESSAGES.ERROR.AUTHENTICATION_REQUIRED);
       res.redirect("/");
     }
   } catch (error) {
-    console.log("profile Page Error", error);
+    console.log("Profile Page Error", error);
     return res.redirect("/pageNotFound");
   }
 };
 
-//upload image funciton
+// Upload profile image
 const uploadProfileImage = async (req, res) => {
   if (!req.file) {
     return res
-      .status(400)
-      .json({ success: false, message: "No file uploaded" });
+      .status(HTTP_STATUS.BAD_REQUEST)
+      .json({ success: false, message: MESSAGES.ERROR.INVALID_REQUEST });
   }
 
   const userId = req.user.userId;
@@ -66,17 +65,20 @@ const uploadProfileImage = async (req, res) => {
     user.profileImage = `${outputFilename}`;
     await user.save();
 
-    res.json({
+    res.status(HTTP_STATUS.OK).json({
       success: true,
       imageUrl: "/uploads/user-images/" + user.profileImage,
+      message: MESSAGES.SUCCESS.OPERATION_SUCCESS
     });
   } catch (error) {
     console.error(error);
     res
-      .status(500)
-      .json({ success: false, message: "Image processing failed" });
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ success: false, message: MESSAGES.ERROR.SOMETHING_WRONG });
   }
 };
+
+// Remove profile image
 const removeProfileImage = async (req, res) => {
   const userId = req.user?.userId;
   const DEFAULT_PROFILE_IMAGE = "default/default-user-avatar.png";
@@ -89,8 +91,9 @@ const removeProfileImage = async (req, res) => {
     const user = await User.findById(userId);
     if (!user)
       return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json({ success: false, message: MESSAGES.ERROR.USER_NOT_FOUND });
+        
     if (
       user.profileImage &&
       !user.profileImage.includes("default/default-user-avatar.png")
@@ -106,27 +109,34 @@ const removeProfileImage = async (req, res) => {
     user.profileImage = DEFAULT_PROFILE_IMAGE;
     await user.save();
 
-    res.json({ success: true, defaultImage: DEFAULT_PROFILE_IMAGE });
+    res.status(HTTP_STATUS.OK).json({ 
+      success: true, 
+      defaultImage: DEFAULT_PROFILE_IMAGE,
+      message: MESSAGES.SUCCESS.OPERATION_SUCCESS
+    });
   } catch (err) {
     console.error(err);
     res
-      .status(500)
-      .json({ success: false, message: "Failed to remove profile image" });
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ success: false, message: MESSAGES.ERROR.SERVER_ERROR });
   }
 };
 
-//update Profile
+// Update profile
 const profileUpdate = async (req, res) => {
   try {
     const { name, email, phone } = req.body;
     const trimmdName = name.trim();
     const user = await User.findOne({ email: email });
-    const addressData = await Address.findOne({ userId: user._id });
+    
     if (!user) {
       return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json({ success: false, message: MESSAGES.ERROR.USER_NOT_FOUND });
     }
+    
+    const addressData = await Address.findOne({ userId: user._id });
+    
     if (user.name !== trimmdName) {
       user.name = trimmdName;
     }
@@ -134,54 +144,81 @@ const profileUpdate = async (req, res) => {
     if (!user.phone || user.phone !== phone) {
       user.phone = phone;
     }
-    addressData.address.map((address) => {
-      return (address.phone = phone);
-    });
+    
+    if (addressData) {
+      addressData.address.map((address) => {
+        return (address.phone = phone);
+      });
+      await addressData.save();
+    }
 
-    await addressData.save();
     await user.save();
 
-    return res.json({ success: true });
+    return res.status(HTTP_STATUS.OK).json({ 
+      success: true,
+      message: MESSAGES.SUCCESS.OPERATION_SUCCESS
+    });
   } catch (error) {
-    console.log("profile update Error", error);
+    console.log("Profile update error", error);
     return res
-      .status(500)
-      .json({ success: false, message: "Internal server error" });
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ success: false, message: MESSAGES.ERROR.SERVER_ERROR });
   }
 };
 
-//change password- profile page
+// Change password - profile page
 const changePasswordProfile = async (req, res) => {
   try {
     const userId = req.user.userId;
     const { currentPassword, newPassword, confirmPassword } = req.body;
+    
     if (newPassword !== confirmPassword) {
-      return res.json({ success: false, message: "passwords donot Match" });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ 
+        success: false, 
+        message: MESSAGES.ERROR.PASSWORD_MISMATCH 
+      });
     }
+    
     const user = await User.findOne({ _id: userId });
-    const passwordMatch = await bcrypt.compare(currentPassword, user.password);
-    if (passwordMatch) {
-      user.password = await securePassword(newPassword);
-    } else {
-      return res.json({ success: false, message: "Wrong current Password" });
+    
+    if (!user) {
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ 
+        success: false, 
+        message: MESSAGES.ERROR.USER_NOT_FOUND 
+      });
     }
+    
+    const passwordMatch = await bcrypt.compare(currentPassword, user.password);
+    
+    if (!passwordMatch) {
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({ 
+        success: false, 
+        message: MESSAGES.ERROR.INCORRECT_PASSWORD
+      });
+    }
+    
+    user.password = await securePassword(newPassword);
     await user.save();
-    return res.json({ success: true });
+    
+    return res.status(HTTP_STATUS.OK).json({ 
+      success: true,
+      message: MESSAGES.SUCCESS.PASSWORD_CHANGED
+    });
   } catch (error) {
     console.log("Password Update Error", error);
     return res
-      .status(500)
-      .json({ success: false, message: "Internal server error" });
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ success: false, message: MESSAGES.ERROR.SERVER_ERROR });
   }
 };
 
-//get address function
+// Get address function
 const getUserAddress = async (req, res) => {
   try {
     const decodedUser = req.user;
 
     if (!decodedUser) {
-      req.flash("error", "Please Login");
+      req.flash("error", MESSAGES.ERROR.AUTHENTICATION_REQUIRED);
       return res.redirect("/");
     }
 
@@ -208,18 +245,21 @@ const getUserAddress = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching user address:", error);
-    req.flash("error", "Something went wrong");
+    req.flash("error", MESSAGES.ERROR.SOMETHING_WRONG);
     res.redirect("/");
   }
 };
 
-//save address function
+// Save address function
 const saveAddress = async (req, res) => {
   try {
     const user = req.user;
 
     if (!user) {
-      return res.status(401).json({ success: false, message: "Unauthorized" });
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({ 
+        success: false, 
+        message: MESSAGES.ERROR.AUTHENTICATION_REQUIRED 
+      });
     }
 
     const {
@@ -272,7 +312,7 @@ const saveAddress = async (req, res) => {
           };
         } else {
           return res
-            .status(404)
+            .status(HTTP_STATUS.NOT_FOUND)
             .json({ success: false, message: "Address not found" });
         }
       } else {
@@ -290,20 +330,27 @@ const saveAddress = async (req, res) => {
     }
     await addressDoc.save();
     res
-      .status(200)
-      .json({ success: true, message: "Address saved successfully" });
+      .status(HTTP_STATUS.OK)
+      .json({ success: true, message: MESSAGES.SUCCESS.OPERATION_SUCCESS });
   } catch (error) {
     console.error("Error in saveAddress:", error);
-    res.status(500).json({ success: false, message: "Internal server error" });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ success: false, message: MESSAGES.ERROR.SERVER_ERROR });
   }
 };
 
-//set default funcion
+// Set default address function
 const setDefaultAddress = async (req, res) => {
   try {
     const addressId = req.params.id;
     const userId = req.user.userId;
     const addressDoc = await Address.findOne({ userId: userId });
+    
+    if (!addressDoc) {
+      return res.status(HTTP_STATUS.NOT_FOUND)
+        .json({ success: false, message: "Address document not found" });
+    }
+    
     addressDoc.address = addressDoc.address.map((addr) => ({
       ...addr.toObject(),
       isDefault: addr._id.toString() === addressId,
@@ -312,14 +359,16 @@ const setDefaultAddress = async (req, res) => {
     await addressDoc.save();
 
     return res
-      .status(200)
-      .json({ success: true, message: "Default address updated" });
+      .status(HTTP_STATUS.OK)
+      .json({ success: true, message: MESSAGES.SUCCESS.OPERATION_SUCCESS });
   } catch (error) {
     console.error("Error in changing default:", error);
-    res.status(500).json({ success: false, message: "Internal server error" });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ success: false, message: MESSAGES.ERROR.SERVER_ERROR });
   }
 };
 
+// Delete address
 const deleteAddress = async (req, res) => {
   try {
     const addressId = req.params.id;
@@ -328,7 +377,8 @@ const deleteAddress = async (req, res) => {
     const addresses = await Address.findOne({ userId: userId });
 
     if (!addresses) {
-      return res.json({ success: false, message: "Addresses not found" });
+      return res.status(HTTP_STATUS.NOT_FOUND)
+        .json({ success: false, message: "Addresses not found" });
     }
 
     addresses.address = addresses.address.filter(
@@ -337,32 +387,37 @@ const deleteAddress = async (req, res) => {
 
     await addresses.save();
 
-    res.json({ success: true });
+    res.status(HTTP_STATUS.OK).json({ 
+      success: true,
+      message: MESSAGES.SUCCESS.OPERATION_SUCCESS
+    });
   } catch (error) {
     console.log("Delete Address error", error);
-    return res.json({ success: false, message: "Internal server Error" });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .json({ success: false, message: MESSAGES.ERROR.SERVER_ERROR });
   }
 };
 
+// Forgot password logout
 const forgotPasswordLogout = async (req, res) => {
   try {
     res.clearCookie("token");
     return res.redirect("/forgotPassword");
   } catch (error) {
     console.error("Logout Error:", error);
-    req.flash("error", "An error occurred during logout");
+    req.flash("error", MESSAGES.ERROR.LOGOUT_FAILED);
     res.redirect("/pageNotFound");
   }
 };
 
-//change-email
-
+// Render change email page
 const renderChangeEmailPage = async (req, res) => {
   try {
     const userId = req.user.userId;
     const user = await User.findById(userId);
 
     if (!user) {
+      req.flash("error", MESSAGES.ERROR.USER_NOT_FOUND);
       return res.redirect("/login");
     }
 
@@ -373,43 +428,50 @@ const renderChangeEmailPage = async (req, res) => {
     });
   } catch (error) {
     console.error("Error rendering change email page:", error);
-    req.flash("error", "An error occurred. Please try again later.");
-    return res.redirect("/userProfile");
+    req.flash("error", MESSAGES.ERROR.SOMETHING_WRONG);
+    return res.redirect("/users/profile");
   }
 };
 
+// Send email verification
 const sendEmailVerification = async (req, res) => {
   try {
     const { currentPassword, newEmail } = req.body;
     const userId = req.user.userId;
     const user = await User.findById(userId);
+    
     if (!user) {
-      return res.status(404).json({
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
         success: false,
         error: "user_not_found",
-        message: "User not found",
+        message: MESSAGES.ERROR.USER_NOT_FOUND,
       });
     }
+    
     const isPasswordValid = await bcrypt.compare(
       currentPassword,
       user.password
     );
+    
     if (!isPasswordValid) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({
         success: false,
         error: "invalid_password",
-        message: "Current password is incorrect",
+        message: MESSAGES.ERROR.INCORRECT_PASSWORD,
       });
     }
+    
     let verificationCodes = {};
     const existingUser = await User.findOne({ email: newEmail });
+    
     if (existingUser && existingUser._id.toString() !== userId) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.CONFLICT).json({
         success: false,
         error: "email_exists",
-        message: "This email is already in use",
+        message: MESSAGES.ERROR.USER_EXISTS,
       });
     }
+    
     const verificationCode = generateOtp();
 
     verificationCodes[userId] = {
@@ -419,18 +481,6 @@ const sendEmailVerification = async (req, res) => {
     };
 
     req.session.verificationCodes = verificationCodes;
-
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      port: 587,
-      secure: false,
-      requireTLS: true,
-
-      auth: {
-        user: process.env.EMAIL,
-        pass: process.env.PASSWORD,
-      },
-    });
 
     const emailData = {
       to: newEmail,
@@ -449,90 +499,75 @@ const sendEmailVerification = async (req, res) => {
               &copy; ${new Date().getFullYear()} Zapstore. All rights reserved.
           </p>
       </div>
-  `,
+      `,
     };
+    
     const emailSent = await sendVerificationEmail(emailData);
 
     if (!emailSent) {
-      req.flash("error", "Mail not send");
-      return res.redirect("/user/profile");
+      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+        success: false,
+        message: MESSAGES.ERROR.EMAIL_NOT_SENT
+      });
     }
-
-    // const mailOptions = {
-    //   from: `"Zapstore" <${process.env.EMAIL}>`,
-    //   to: newEmail,
-    //   subject: "Email Verification Code",
-    //   html: `
-    //           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e4e4e4; border-radius: 5px;">
-    //               <h2 style="color: #487379; text-align: center;">Email Verification</h2>
-    //               <p>Hello ${user.name},</p>
-    //               <p>You've requested to change your email address. Please use the verification code below to complete this process:</p>
-    //               <div style="background-color: #f6f6f6; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 5px; margin: 20px 0;">
-    //                   ${verificationCode}
-    //               </div>
-    //               <p>This code will expire in 30 minutes.</p>
-    //               <p>If you didn't request this change, please ignore this email or contact our support team immediately.</p>
-    //               <p style="margin-top: 30px; font-size: 12px; color: #777; text-align: center;">
-    //                   &copy; ${new Date().getFullYear()} Your Store. All rights reserved.
-    //               </p>
-    //           </div>
-    //       `,
-    // };
-
-    // await transporter.sendMail(mailOptions);
 
     console.log(verificationCodes[userId]);
 
-    return res.status(200).json({
+    return res.status(HTTP_STATUS.OK).json({
       success: true,
-      message: "Verification code sent successfully",
+      message: MESSAGES.SUCCESS.OTP_SENT,
     });
   } catch (error) {
     console.error("Error sending verification code:", error);
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
-      message:
-        "An error occurred while sending the verification code. Please try again later.",
+      message: MESSAGES.ERROR.SERVER_ERROR,
     });
   }
 };
 
+// Update email
 const updateEmail = async (req, res) => {
   try {
     const { currentPassword, newEmail, verificationCode } = req.body;
     const userId = req.user.userId;
     const user = await User.findById(userId);
+    
     if (!user) {
-      return res.status(404).json({
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
         success: false,
         error: "user_not_found",
-        message: "User not found",
+        message: MESSAGES.ERROR.USER_NOT_FOUND,
       });
     }
+    
     const isPasswordValid = await bcrypt.compare(
       currentPassword,
       user.password
     );
+    
     if (!isPasswordValid) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({
         success: false,
         error: "invalid_password",
-        message: "Current password is incorrect",
+        message: MESSAGES.ERROR.INCORRECT_PASSWORD,
       });
     }
+    
     const verificationCodes = req.session.verificationCodes;
     console.log(verificationCodes[userId]);
     const storedVerification = verificationCodes[userId];
+    
     if (
       !storedVerification ||
       storedVerification.code !== verificationCode ||
       storedVerification.email !== newEmail ||
       Date.now() > storedVerification.expiresAt
     ) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         error: "invalid_code",
-        message: "Invalid or expired verification code",
+        message: MESSAGES.ERROR.INVALID_OTP,
       });
     }
 
@@ -544,19 +579,17 @@ const updateEmail = async (req, res) => {
         console.error("Error destroying session:", err);
       }
 
-      return res.status(200).json({
+      return res.status(HTTP_STATUS.OK).json({
         success: true,
-        message:
-          "Email updated successfully. Please log in with your new email.",
+        message: MESSAGES.SUCCESS.OPERATION_SUCCESS,
         requireRelogin: true,
       });
     });
   } catch (error) {
     console.error("Error updating email:", error);
-    return res.status(500).json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
-      message:
-        "An error occurred while updating your email. Please try again later.",
+      message: MESSAGES.ERROR.SERVER_ERROR,
     });
   }
 };

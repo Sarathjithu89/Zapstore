@@ -27,12 +27,12 @@ adminRouter;
 adminRouter.get(
   "/blockCustomer",
   adminAuth,
-  customerContorller.custormerBlocked
+  customerContorller.customerBlocked
 );
 adminRouter.get(
   "/unBlockCustomer",
   adminAuth,
-  customerContorller.custormerUnblocked
+  customerContorller.customerUnblocked
 );
 
 //category Mangment

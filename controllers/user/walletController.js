@@ -45,7 +45,7 @@ const getWallet = async (req, res) => {
   } catch (error) {
     console.error("Error fetching wallet:", error);
     req.flash("error", MESSAGES.ERROR.SOMETHING_WRONG);
-    res.redirect("/userProfile");
+    res.redirect("/users/profile");
   }
 };
 

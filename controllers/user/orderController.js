@@ -6,6 +6,8 @@ const Transactions = require("../../models/Transactions.js");
 const Wallet = require("../../models/Wallet.js");
 const Coupon = require("../../models/Coupon.js");
 const path = require("path");
+const MESSAGES = require("../../config/messages.js");
+const HTTP_STATUS = require("../../config/statusCodes.js");
 
 // get Orders
 const getUserOrders = async (req, res) => {
@@ -80,28 +82,28 @@ const getUserOrders = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching user orders:", error);
-    req.flash("error", "Failed to fetch your orders");
-    res.redirect("/userProfile");
+    req.flash("error", MESSAGES.ERROR.SOMETHING_WRONG);
+    res.redirect("/");
   }
 };
 
 //order cancellation
 const cancelOrder = async (req, res) => {
   try {
-    const orderId=req.params.id;
-    const {  reason } = req.body;
+    const orderId = req.params.id;
+    const { reason } = req.body;
     const userId = req.user?.userId;
 
     const order = await Order.findOne({ _id: orderId, userId: userId });
 
     if (!order) {
       return res
-        .status(404)
-        .json({ success: false, message: "Order not found" });
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json({ success: false, message: MESSAGES.ERROR.INVALID_REQUEST });
     }
 
     if (order.status !== "Pending" && order.status !== "Processing") {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         message: "This order cannot be cancelled in its current status",
       });
@@ -118,7 +120,7 @@ const cancelOrder = async (req, res) => {
     }
 
     if (order.paymentStatus === "Paid") {
-      const wallet = await Wallet.findOne({ user: userId });
+      let wallet = await Wallet.findOne({ user: userId });
 
       if (!wallet) {
         wallet = new Wallet({
@@ -131,6 +133,7 @@ const cancelOrder = async (req, res) => {
       const Transaction = new Transactions({
         wallet: wallet._id,
         amount: order.finalAmount,
+        balanceAfter:wallet.balance,
         type: "credit",
         description: `Refund for cancelled order #${order.orderId}`,
         orderId: order._id,
@@ -149,10 +152,16 @@ const cancelOrder = async (req, res) => {
 
     await order.save();
 
-    return res.json({ success: true, message: "Order cancelled successfully" });
+    return res.status(HTTP_STATUS.OK).json({ 
+      success: true, 
+      message: MESSAGES.ORDER.CANCELLED 
+    });
   } catch (error) {
     console.error("Error cancelling order:", error);
-    res.status(500).json({ success: false, message: "An error occurred" });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ 
+      success: false, 
+      message: MESSAGES.ERROR.SOMETHING_WRONG 
+    });
   }
 };
 
@@ -166,12 +175,12 @@ const requestReturn = async (req, res) => {
 
     if (!order) {
       return res
-        .status(404)
-        .json({ success: false, message: "Order not found" });
+        .status(HTTP_STATUS.NOT_FOUND)
+        .json({ success: false, message: MESSAGES.ERROR.INVALID_REQUEST });
     }
 
     if (order.status !== "Delivered") {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         message: "Only delivered orders can be returned",
       });
@@ -182,9 +191,9 @@ const requestReturn = async (req, res) => {
       .reduce((acc, curr) => (acc += curr));
 
     if (totalorderedItemqty >= 10) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
-        message: "Your order Quantity exeeds the allowed return qunatity",
+        message: "Your order Quantity exceeds the allowed return quantity",
       });
     }
 
@@ -194,7 +203,7 @@ const requestReturn = async (req, res) => {
     );
 
     if (daysAfterDelivery > 7) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         message: "Returns can only be requested within 7 days of delivery",
       });
@@ -207,13 +216,16 @@ const requestReturn = async (req, res) => {
 
     await order.save();
 
-    res.json({
+    res.status(HTTP_STATUS.OK).json({
       success: true,
-      message: "Return request submitted successfully",
+      message: MESSAGES.SUCCESS.OPERATION_SUCCESS,
     });
   } catch (error) {
     console.error("Error requesting return:", error);
-    res.status(500).json({ success: false, message: "An error occurred" });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ 
+      success: false, 
+      message: MESSAGES.ERROR.SOMETHING_WRONG 
+    });
   }
 };
 
@@ -231,7 +243,7 @@ const generateInvoice = async (req, res) => {
       .populate("address");
 
     if (!order) {
-      req.flash("error", "Order not found");
+      req.flash("error", MESSAGES.ERROR.INVALID_REQUEST);
       return res.redirect("/orders");
     }
 
@@ -260,7 +272,7 @@ const generateInvoice = async (req, res) => {
     // Company logo and info
     doc
       .fontSize(10)
-      .text("Zapstore", 400, 50, { align: "right" }) // Fixed company name typo "Zapsore" to "Zapstore"
+      .text("Zapstore", 400, 50, { align: "right" })
       .text("123 Business Street", { align: "right" })
       .text("City, State, 874596", { align: "right" })
       .text("Email:", { align: "right" })
@@ -464,7 +476,7 @@ const generateInvoice = async (req, res) => {
   } catch (error) {
     console.error("Error generating invoice:", error);
     if (!res.headersSent) {
-      req.flash("error", `Failed to generate invoice: ${error.message}`);
+      req.flash("error", MESSAGES.ERROR.SOMETHING_WRONG);
       return res.redirect("/orders");
     }
   }
@@ -481,11 +493,11 @@ const getOrderDetails = async (req, res) => {
     });
 
     if (!order) {
-      req.flash("error", "Order not found");
+      req.flash("error", MESSAGES.ERROR.INVALID_REQUEST);
       return res.redirect("/orders");
     }
     if (order.userId.toString() !== req.user.userId.toString()) {
-      req.flash("error", "Unauthorized access");
+      req.flash("error", MESSAGES.ERROR.UNAUTHORIZED_ACCESS);
       return res.redirect("/orders");
     }
 
@@ -518,7 +530,7 @@ const getOrderDetails = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching order details:", error);
-    req.flash("error", "Something went wrong. Please try again.");
+    req.flash("error", MESSAGES.ERROR.SOMETHING_WRONG);
     res.redirect("/orders");
   }
 };
@@ -591,6 +603,7 @@ const orderSuccess = async (req, res) => {
     });
   } catch (error) {
     console.error("Error rendering order success page:", error);
+    req.flash("error", MESSAGES.ERROR.SOMETHING_WRONG);
     res.redirect("/orders");
   }
 };

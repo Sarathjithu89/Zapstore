@@ -1,5 +1,7 @@
 const Product = require("../../models/Products.js");
 const Inventory = require("../../models/Inventory.js");
+const HTTP_STATUS = require("../../config/statusCodes.js");
+const MESSAGES = require("../../config/adminMessages.js");
 
 // Get inventory
 const getInventoryPage = async (req, res) => {
@@ -37,22 +39,29 @@ const getInventoryPage = async (req, res) => {
     });
   } catch (error) {
     console.error("Error loading inventory page:", error);
-    req.flash("error", "Failed to load inventory data");
+    req.flash("error", MESSAGES.ERROR.INVENTORY_UPDATE_FAILED);
     res.redirect("/admin/dashboard");
   }
 };
+
 // Update quantity
 const updateProductQuantity = async (req, res) => {
   try {
     const { productId, quantity } = req.body;
 
     if (!productId || quantity === undefined) {
-      return res.json({ status: false, message: "Invalid input data" });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ 
+        status: false, 
+        message: MESSAGES.ERROR.INVALID_PRODUCT_DATA 
+      });
     }
 
     const product = await Product.findById(productId);
     if (!product) {
-      return res.json({ status: false, message: "Product not found" });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ 
+        status: false, 
+        message: MESSAGES.ERROR.PRODUCT_NOT_FOUND 
+      });
     }
 
     const previousQuantity = product.quantity;
@@ -78,35 +87,45 @@ const updateProductQuantity = async (req, res) => {
       performedBy: req.admin._id,
     }).save();
 
-    return res.json({
+    return res.status(HTTP_STATUS.OK).json({
       status: true,
-      message: "Product quantity updated successfully",
+      message: MESSAGES.SUCCESS.QUANTITY_UPDATED,
     });
   } catch (error) {
     console.error("Error updating product quantity:", error);
-    return res.json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       status: false,
-      message: "Failed to update product quantity",
+      message: MESSAGES.ERROR.QUANTITY_UPDATE_FAILED,
     });
   }
 };
+
 // Update status
 const updateProductStatus = async (req, res) => {
   try {
     const { productId, status } = req.body;
 
     if (!productId || !status) {
-      return res.json({ status: false, message: "Invalid input data" });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ 
+        status: false, 
+        message: MESSAGES.ERROR.INVALID_PRODUCT_DATA 
+      });
     }
 
     const validStatuses = ["Available", "Out of Stock", "Discontinued"];
     if (!validStatuses.includes(status)) {
-      return res.json({ status: false, message: "Invalid status value" });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ 
+        status: false, 
+        message: MESSAGES.ERROR.INVALID_PRODUCT_DATA 
+      });
     }
 
     const product = await Product.findById(productId);
     if (!product) {
-      return res.json({ status: false, message: "Product not found" });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ 
+        status: false, 
+        message: MESSAGES.ERROR.PRODUCT_NOT_FOUND 
+      });
     }
 
     const previousStatus = product.status;
@@ -147,15 +166,15 @@ const updateProductStatus = async (req, res) => {
 
     await product.save();
 
-    return res.json({
+    return res.status(HTTP_STATUS.OK).json({
       status: true,
-      message: "Product status updated successfully",
+      message: MESSAGES.SUCCESS.PRODUCT_STATUS_UPDATED,
     });
   } catch (error) {
     console.error("Error updating product status:", error);
-    return res.json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       status: false,
-      message: "Failed to update product status",
+      message: MESSAGES.ERROR.STATUS_UPDATE_FAILED,
     });
   }
 };
@@ -167,12 +186,18 @@ const adjustInventory = async (req, res) => {
       req.body;
 
     if (!productId || quantity === undefined || !reason || !adjustmentType) {
-      return res.json({ status: false, message: "Invalid input data" });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ 
+        status: false, 
+        message: MESSAGES.ERROR.INVALID_PRODUCT_DATA 
+      });
     }
 
     const product = await Product.findById(productId);
     if (!product) {
-      return res.json({ status: false, message: "Product not found" });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ 
+        status: false, 
+        message: MESSAGES.ERROR.PRODUCT_NOT_FOUND 
+      });
     }
 
     const previousQuantity = product.quantity;
@@ -199,15 +224,15 @@ const adjustInventory = async (req, res) => {
       performedBy: req.admin._id,
     }).save();
 
-    return res.json({
+    return res.status(HTTP_STATUS.OK).json({
       status: true,
-      message: "Inventory adjusted successfully",
+      message: MESSAGES.SUCCESS.INVENTORY_ADJUSTED,
     });
   } catch (error) {
     console.error("Error adjusting inventory:", error);
-    return res.json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       status: false,
-      message: "Failed to adjust inventory",
+      message: MESSAGES.ERROR.INVENTORY_ADJUSTMENT_FAILED,
     });
   }
 };
@@ -218,12 +243,18 @@ const restockProduct = async (req, res) => {
     const { productId, quantity, reason } = req.body;
 
     if (!productId || !quantity) {
-      return res.json({ status: false, message: "Invalid input data" });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ 
+        status: false, 
+        message: MESSAGES.ERROR.INVALID_PRODUCT_DATA 
+      });
     }
 
     const product = await Product.findById(productId);
     if (!product) {
-      return res.json({ status: false, message: "Product not found" });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ 
+        status: false, 
+        message: MESSAGES.ERROR.PRODUCT_NOT_FOUND 
+      });
     }
 
     const previousQuantity = product.quantity;
@@ -248,15 +279,15 @@ const restockProduct = async (req, res) => {
       performedBy: req.admin._id,
     }).save();
 
-    return res.json({
+    return res.status(HTTP_STATUS.OK).json({
       status: true,
-      message: "Product restocked successfully",
+      message: MESSAGES.SUCCESS.INVENTORY_ADJUSTED,
     });
   } catch (error) {
     console.error("Error restocking product:", error);
-    return res.json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       status: false,
-      message: "Failed to restock product",
+      message: MESSAGES.ERROR.INVENTORY_ADJUSTMENT_FAILED,
     });
   }
 };
@@ -279,7 +310,7 @@ const getLowStockProducts = async (req, res) => {
     });
   } catch (error) {
     console.error("Error loading low stock products:", error);
-    req.flash("error", "Failed to load low stock products");
+    req.flash("error", MESSAGES.ERROR.INVENTORY_UPDATE_FAILED);
     res.redirect("/admin/inventory");
   }
 };
@@ -299,7 +330,7 @@ const getOutOfStockProducts = async (req, res) => {
     });
   } catch (error) {
     console.error("Error loading out of stock products:", error);
-    req.flash("error", "Failed to load out of stock products");
+    req.flash("error", MESSAGES.ERROR.INVENTORY_UPDATE_FAILED);
     res.redirect("/admin/inventory");
   }
 };
@@ -310,13 +341,13 @@ const getInventoryHistory = async (req, res) => {
     const productId = req.params.id;
 
     if (!productId) {
-      req.flash("error", "Product ID is required");
+      req.flash("error", MESSAGES.ERROR.PRODUCT_NOT_FOUND);
       return res.redirect("/admin/inventory");
     }
 
     const product = await Product.findById(productId).populate("category");
     if (!product) {
-      req.flash("error", "Product not found");
+      req.flash("error", MESSAGES.ERROR.PRODUCT_NOT_FOUND);
       return res.redirect("/admin/inventory");
     }
 
@@ -325,13 +356,17 @@ const getInventoryHistory = async (req, res) => {
       .populate("performedBy", "name email")
       .sort({ createdAt: -1 });
 
+    if (logs.length === 0) {
+      req.flash("info", MESSAGES.INFO.NO_INVENTORY_HISTORY);
+    }
+
     res.render("admin/inventoryHistory", {
       product: product,
       logs: logs,
     });
   } catch (error) {
     console.error("Error loading inventory history:", error);
-    req.flash("error", "Failed to load inventory history");
+    req.flash("error", MESSAGES.ERROR.INVENTORY_UPDATE_FAILED);
     res.redirect("/admin/inventory");
   }
 };
@@ -370,7 +405,7 @@ const exportInventoryReport = async (req, res) => {
     res.send(csvContent);
   } catch (error) {
     console.error("Error exporting inventory report:", error);
-    req.flash("error", "Failed to export inventory report");
+    req.flash("error", MESSAGES.ERROR.REPORT_EXPORT_FAILED);
     res.redirect("/admin/inventory");
   }
 };
@@ -381,15 +416,18 @@ const bulkUpdateInventory = async (req, res) => {
     const { products } = req.body;
 
     if (!products || !Array.isArray(products)) {
-      return res.json({ status: false, message: "Invalid input data" });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ 
+        status: false, 
+        message: MESSAGES.ERROR.INVALID_PRODUCT_DATA 
+      });
     }
 
     // Validate all products before updating any
     for (const item of products) {
       if (!item.productId || item.quantity === undefined) {
-        return res.json({
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({
           status: false,
-          message: "Invalid data for one or more products",
+          message: MESSAGES.ERROR.INVALID_PRODUCT_DATA,
         });
       }
     }
@@ -434,16 +472,16 @@ const bulkUpdateInventory = async (req, res) => {
       });
     }
 
-    return res.json({
+    return res.status(HTTP_STATUS.OK).json({
       status: true,
       message: `Successfully updated ${updates.length} products`,
       updates,
     });
   } catch (error) {
     console.error("Error in bulk inventory update:", error);
-    return res.json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       status: false,
-      message: "Failed to update inventory in bulk",
+      message: MESSAGES.ERROR.INVENTORY_ADJUSTMENT_FAILED,
     });
   }
 };
@@ -482,7 +520,7 @@ const getInventoryStats = async (req, res) => {
       .limit(5)
       .select("productName sold salePrice");
 
-    return res.json({
+    return res.status(HTTP_STATUS.OK).json({
       status: true,
       stats: {
         totalProducts,
@@ -495,9 +533,9 @@ const getInventoryStats = async (req, res) => {
     });
   } catch (error) {
     console.error("Error getting inventory stats:", error);
-    return res.json({
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       status: false,
-      message: "Failed to retrieve inventory statistics",
+      message: MESSAGES.ERROR.INVENTORY_UPDATE_FAILED,
     });
   }
 };

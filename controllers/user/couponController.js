@@ -1,13 +1,14 @@
-const User = require("../../models/User.js");
 const Coupon = require("../../models/Coupon.js");
 const Order = require("../../models/Order.js");
 const Cart = require("../../models/Cart.js");
+const MESSAGES = require("../../config/messages.js");
+const HTTP_STATUS = require("../../config/statusCodes.js");
 
 //get coupons
 const getMyCoupons = async (req, res) => {
   try {
     if (!req.user) {
-      req.flash("error", "Please login to view your coupons");
+      req.flash("error", MESSAGES.ERROR.AUTHENTICATION_REQUIRED);
       return res.redirect("/");
     }
 
@@ -99,7 +100,7 @@ const getMyCoupons = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching coupons:", error);
-    req.flash("error", "Failed to load coupons. Please try again later.");
+    req.flash("error", MESSAGES.ERROR.SOMETHING_WRONG);
     res.redirect("/coupons");
   }
 };
@@ -108,10 +109,13 @@ const getMyCoupons = async (req, res) => {
 const applyCoupon = async (req, res) => {
   try {
     const { couponName } = req.body;
-    const userId = req.user.userId;
+    const userId = req.user?.userId;
+    
     if (!userId) {
-      req.flash("error", "Please login");
-      return res.redirect("/");
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({
+        success: false,
+        message: MESSAGES.ERROR.AUTHENTICATION_REQUIRED,
+      });
     }
 
     const cart = (await Cart.findOne({ userId: userId })) || {
@@ -121,7 +125,7 @@ const applyCoupon = async (req, res) => {
     cart.items.forEach((item) => (totalPrice += item.totalPrice));
 
     if (!cart.items.length) {
-      return res.json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         message: "Your cart is empty",
       });
@@ -135,14 +139,14 @@ const applyCoupon = async (req, res) => {
     });
 
     if (!coupon) {
-      return res.json({
+      return res.status(HTTP_STATUS.NOT_FOUND).json({
         success: false,
-        message: "Invalid or expired coupon",
+        message: MESSAGES.COUPON.INVALID,
       });
     }
 
     if (totalPrice < coupon.minimumPrice) {
-      return res.json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         message: `Minimum purchase of ₹${coupon.minimumPrice} required to use this coupon`,
       });
@@ -153,10 +157,11 @@ const applyCoupon = async (req, res) => {
       couponApplied: true,
       couponName: couponName,
     });
+    
     if (hasUsed) {
-      return res.json({
+      return res.status(HTTP_STATUS.CONFLICT).json({
         success: false,
-        message: "You have already used this coupon",
+        message: MESSAGES.COUPON.ALREADY_USED,
       });
     }
 
@@ -172,9 +177,9 @@ const applyCoupon = async (req, res) => {
     req.session.cart.discount = discountAmount;
     req.session.cart.finalAmount = cart.totalPrice - discountAmount;
 
-    return res.json({
+    return res.status(HTTP_STATUS.OK).json({
       success: true,
-      message: "coupon applied successfully",
+      message: MESSAGES.COUPON.APPLIED,
       discount: discountAmount,
       finalAmount: finalAmount,
       coupon: {
@@ -183,10 +188,10 @@ const applyCoupon = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error applying coupon", error);
-    return res.json({
+    console.error("Error applying coupon:", error);
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
-      message: "Failed to apply coupon.Please try again",
+      message: MESSAGES.ERROR.SOMETHING_WRONG,
     });
   }
 };
@@ -195,14 +200,14 @@ const applyCoupon = async (req, res) => {
 const removeCoupon = (req, res) => {
   try {
     if (!req.user) {
-      return res.json({
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({
         success: false,
-        message: "please login to continue",
+        message: MESSAGES.ERROR.AUTHENTICATION_REQUIRED,
       });
     }
 
     if (!req.session.cart) {
-      return res.json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         message: "No active cart found",
       });
@@ -213,16 +218,16 @@ const removeCoupon = (req, res) => {
     delete req.session.cart.discount;
     req.session.cart.finalAmount = req.session.cart.totalPrice;
 
-    return res.json({
+    return res.status(HTTP_STATUS.OK).json({
       success: true,
-      message: "coupon remove successfully",
+      message: "Coupon removed successfully",
       totalPrice: req.session.cart.totalPrice,
     });
   } catch (error) {
-    console.error("Error removing coupn:", error);
-    return res.json({
+    console.error("Error removing coupon:", error);
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
-      message: "Failed to remove coupon. Please try again",
+      message: MESSAGES.ERROR.SOMETHING_WRONG,
     });
   }
 };

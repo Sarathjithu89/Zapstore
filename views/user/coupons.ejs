@@ -524,7 +524,7 @@
         </svg>
         Wallet</a
       >
-      <a href="/mycoupons" class="active"
+      <a href="/users/mycoupons" class="active"
         ><svg
           xmlns="http://www.w3.org/2000/svg"
           width="16"
@@ -612,7 +612,7 @@
               >
                 <a
                   class="page-link"
-                  href="/mycoupons?tab=available&page=<%= pagination.page-1 %>"
+                  href="/users/mycoupons?tab=available&page=<%= pagination.page-1 %>"
                   aria-label="Previous"
                 >
                   <span aria-hidden="true">&laquo;</span>
@@ -626,7 +626,7 @@
               >
                 <a
                   class="page-link"
-                  href="/mycoupons?tab=available&page=<%= i %>"
+                  href="/users/mycoupons?tab=available&page=<%= i %>"
                   ><%= i %></a
                 >
               </li>
@@ -638,7 +638,7 @@
               >
                 <a
                   class="page-link"
-                  href="/mycoupons?tab=available&page=<%= pagination.page+1 %>"
+                  href="/users/mycoupons?tab=available&page=<%= pagination.page+1 %>"
                   aria-label="Next"
                 >
                   <span aria-hidden="true">&raquo;</span>
@@ -694,7 +694,7 @@
               >
                 <a
                   class="page-link"
-                  href="/mycoupons?tab=used&page=<%= pagination.page-1 %>"
+                  href="/users/mycoupons?tab=used&page=<%= pagination.page-1 %>"
                   aria-label="Previous"
                 >
                   <span aria-hidden="true">&laquo;</span>
@@ -706,7 +706,7 @@
               <li
                 class="page-item <%= pagination.page === i ? 'active' : '' %>"
               >
-                <a class="page-link" href="/mycoupons?tab=used&page=<%= i %>"
+                <a class="page-link" href="/users/mycoupons?tab=used&page=<%= i %>"
                   ><%= i %></a
                 >
               </li>
@@ -718,7 +718,7 @@
               >
                 <a
                   class="page-link"
-                  href="/mycoupons?tab=used&page=<%= pagination.page+1 %>"
+                  href="users/mycoupons?tab=used&page=<%= pagination.page+1 %>"
                   aria-label="Next"
                 >
                   <span aria-hidden="true">&raquo;</span>
@@ -774,7 +774,7 @@
               >
                 <a
                   class="page-link"
-                  href="/mycoupons?tab=expired&page=<%= pagination.page-1 %>"
+                  href="users/mycoupons?tab=expired&page=<%= pagination.page-1 %>"
                   aria-label="Previous"
                 >
                   <span aria-hidden="true">&laquo;</span>
@@ -786,7 +786,7 @@
               <li
                 class="page-item <%= pagination.page === i ? 'active' : '' %>"
               >
-                <a class="page-link" href="/mycoupons?tab=expired&page=<%= i %>"
+                <a class="page-link" href="/users/mycoupons?tab=expired&page=<%= i %>"
                   ><%= i %></a
                 >
               </li>
@@ -798,7 +798,7 @@
               >
                 <a
                   class="page-link"
-                  href="/mycoupons?tab=expired&page=<%= pagination.page+1 %>"
+                  href="/users/mycoupons?tab=expired&page=<%= pagination.page+1 %>"
                   aria-label="Next"
                 >
                   <span aria-hidden="true">&raquo;</span>
