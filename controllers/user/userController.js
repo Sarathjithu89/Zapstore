@@ -265,6 +265,7 @@ const otpVerification = async (req, res) => {
         const transaction = new Transaction({
           wallet: wallet._id,
           amount: 100,
+          balanceAfter: wallet.balance,
           type: "credit",
           description: MESSAGE.WALLET.REFERRAL_REWARD(saveUser.name),
         });

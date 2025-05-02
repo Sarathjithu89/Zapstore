@@ -13,8 +13,6 @@ const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
-
-// Display wallet page with balance and transactions
 const getWallet = async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -153,6 +151,7 @@ const verifyPayment = async (req, res) => {
         user: userId,
         amount: Number(amount),
         type: "credit",
+        balanceAfter: wallet.balance,
         description: "Added money to wallet",
         paymentId: razorpay_payment_id,
         orderId: razorpay_order_id,
@@ -247,6 +246,7 @@ const withdrawMoney = async (req, res) => {
           ifscCode,
           requestDate: new Date(),
         },
+        balanceAfter: wallet.balance,
       });
 
       await transaction.save({ session });
@@ -335,6 +335,7 @@ const refundToWallet = async (req, res) => {
         type: "credit",
         description: `Refund for order #${order.orderNumber}`,
         orderId: order._id,
+        balanceAfter: wallet.balance,
       });
 
       await transaction.save({ session });

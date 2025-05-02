@@ -87,10 +87,10 @@ const checkStock = async (req, res) => {
     const cart = await Cart.findOne({ userId }).populate("items.productId");
 
     if (!cart || cart.items.length === 0) {
-      return res.status(HTTP_STATUS.OK).json({ 
-        success: true, 
+      return res.status(HTTP_STATUS.OK).json({
+        success: true,
         message: MESSAGES.SUCCESS.DATA_FETCHED,
-        items: [] 
+        items: [],
       });
     }
 
@@ -131,7 +131,7 @@ const checkStock = async (req, res) => {
           requestedQuantity,
           availableQuantity: newQuantity,
           stockChanged: true,
-          message: MESSAGES.PRODUCT.OUT_OF_STOCK
+          message: MESSAGES.PRODUCT.OUT_OF_STOCK,
         });
       } else {
         stockStatus.push({
@@ -146,10 +146,10 @@ const checkStock = async (req, res) => {
 
     await cart.save();
 
-    return res.status(HTTP_STATUS.OK).json({ 
-      success: true, 
+    return res.status(HTTP_STATUS.OK).json({
+      success: true,
       message: MESSAGES.SUCCESS.DATA_FETCHED,
-      items: stockStatus 
+      items: stockStatus,
     });
   } catch (error) {
     console.error("Error checking stock:", error);
@@ -465,6 +465,7 @@ const WalletOrder = async (req, res) => {
       const transaction = new Transaction({
         wallet: wallet._id,
         amount: Number(grandTotal),
+        balanceAfter: wallet.balance,
         type: "debit",
         description: `Payment for order #${newOrder.orderId}`,
         orderId: newOrder._id,
