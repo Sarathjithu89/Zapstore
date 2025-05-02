@@ -61,7 +61,7 @@ const loadDashboard = async (req, res) => {
         message: MESSAGES.INFO.DASHBOARD_ACCESS,
       });
     } catch (error) {
-      console.log(error);
+      console.log("Loading Dashboard Error", error);
       return res
         .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         .redirect("admin/pageerror");

@@ -347,7 +347,6 @@ const resendOtp = async (req, res) => {
     const emailSent = await sendVerificationEmail(emailData);
 
     if (emailSent) {
-      console.log("OTP sent successfully", otp);
       res
         .status(HTTP_STATUS.OK)
         .json({ success: true, message: MESSAGE.SUCCESS.OTP_SENT });
@@ -441,7 +440,6 @@ const forgotPassword = async (req, res) => {
       });
     }
     req.session.user = { email, otp };
-    console.log("OTP is:", req.session.user.otp); //console.log otp in session
     return res.render("forgotpassword.ejs");
   } catch (error) {
     console.log("forgot password error", error);
@@ -524,7 +522,6 @@ const register = async (req, res) => {
       return res.redirect("/register");
     }
     req.session.user = { name, email, otp, password, phone, referral };
-    console.log("OTP is :", req.session.user.otp); //console.log otp in the session
     return res.redirect("/verify-otp");
   } catch (error) {
     console.log("sign up error", error);

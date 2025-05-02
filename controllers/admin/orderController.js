@@ -128,7 +128,7 @@ const getOrderDetails = async (req, res) => {
     return res.status(HTTP_STATUS.OK).json({
       status: true,
       order,
-      message: MESSAGES.SUCCESS.ORDER_DETAILS_FETCHED
+      message: MESSAGES.SUCCESS.ORDER_DETAILS_FETCHED,
     });
   } catch (error) {
     console.error("Error in getOrderDetails:", error);
@@ -188,6 +188,7 @@ const updateOrderStatus = async (req, res) => {
         const transaction = new Transaction({
           wallet: wallet._id,
           amount: order.finalAmount,
+          balanceAfter: wallet.balance,
           type: "credit",
           description: `Refund for cancelled order #${order.orderId}`,
           orderId: order._id,
@@ -263,43 +264,36 @@ const processReturn = async (req, res) => {
       });
     }
 
-    // Start a MongoDB session for transaction
     const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
       if (returnAction === "approve") {
-        // Approve return
         order.status = "Returned";
-
-        // Process refund to wallet
         const user = await User.findById(order.userId).session(session);
 
         if (user) {
-          // Find the user's wallet
           const wallet = await Wallet.findOne({ user: user._id }).session(
             session
           );
 
           if (!wallet) {
-            // Create wallet if it doesn't exist
             const newWallet = new Wallet({
               user: user._id,
               balance: order.finalAmount,
             });
             await newWallet.save({ session });
 
-            // Update user with wallet reference
             user.wallet = newWallet._id;
             await user.save({ session });
 
-            // Create a transaction record
             await Transaction.create(
               [
                 {
                   wallet: newWallet._id,
                   amount: order.finalAmount,
                   type: "credit",
+                  balanceAfter: newWallet.balance,
                   description: `Refund for returned order #${order.orderId}`,
                   orderId: order._id,
                 },
@@ -307,16 +301,15 @@ const processReturn = async (req, res) => {
               { session }
             );
           } else {
-            // Update existing wallet
             wallet.balance += order.finalAmount;
             await wallet.save({ session });
 
-            // Create a transaction record
             await Transaction.create(
               [
                 {
                   wallet: wallet._id,
                   amount: order.finalAmount,
+                  balanceAfter: wallet.balance,
                   type: "credit",
                   description: `Refund for returned order #${order.orderId}`,
                   orderId: order._id,
@@ -327,10 +320,8 @@ const processReturn = async (req, res) => {
           }
         }
 
-        // Update payment status
         order.paymentStatus = "Refunded";
 
-        // Restore inventory
         for (const item of order.orderedItems) {
           await Product.findByIdAndUpdate(
             item.product,
@@ -339,11 +330,9 @@ const processReturn = async (req, res) => {
           );
         }
       } else {
-        // Reject return
-        order.status = "Delivered"; // Revert back to delivered status
+        order.status = "Delivered";
       }
 
-      // Add notes to return processing
       order.returnDetails = {
         ...order.returnDetails,
         processedBy: req.admin.email,
@@ -352,7 +341,6 @@ const processReturn = async (req, res) => {
         approved: returnAction === "approve",
       };
 
-      // Add to status history
       order.statusHistory.push({
         status: order.status,
         updatedBy: req.admin.email,
@@ -364,7 +352,6 @@ const processReturn = async (req, res) => {
 
       await order.save({ session });
 
-      // Commit the transaction
       await session.commitTransaction();
       session.endSession();
 
@@ -373,7 +360,6 @@ const processReturn = async (req, res) => {
         message: MESSAGES.SUCCESS.RETURN_PROCESSED,
       });
     } catch (error) {
-      // Abort transaction on error
       await session.abortTransaction();
       session.endSession();
       throw error;
@@ -517,7 +503,9 @@ const exportOrders = async (req, res) => {
     req.flash("error", MESSAGES.ERROR.ORDERS_EXPORT_FAILED);
     res.redirect(
       "/admin/orders?error=" +
-        encodeURIComponent(MESSAGES.ERROR.ORDERS_EXPORT_FAILED + ": " + error.message)
+        encodeURIComponent(
+          MESSAGES.ERROR.ORDERS_EXPORT_FAILED + ": " + error.message
+        )
     );
   }
 };

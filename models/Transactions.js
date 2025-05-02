@@ -20,7 +20,6 @@ const walletTransactionSchema = new mongoose.Schema(
     },
     balanceAfter: {
       type: Number,
-      required: true,
     },
     referenceType: {
       type: String,

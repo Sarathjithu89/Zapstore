@@ -24,7 +24,6 @@ const getSalesReport = async (req, res) => {
       startDate,
       endDate
     );
-    console.log(start, end);
 
     const query = {
       createdAt: { $gte: start, $lte: end },
@@ -563,7 +562,6 @@ async function exportToExcel(res, orders, summary) {
 
     // Write to response
     await workbook.xlsx.write(res);
-    console.log(`Excel report exported successfully for ${summary.dateRange}`);
   } catch (error) {
     console.error("Error generating Excel export:", error);
     throw new Error("Failed to generate Excel export");
@@ -711,7 +709,6 @@ async function exportToPdf(res, orders, summary) {
 
     // Finalize the PDF and end the stream
     doc.end();
-    console.log(`PDF report exported successfully for ${summary.dateRange}`);
   } catch (error) {
     console.error("Error generating PDF export:", error);
     throw new Error("Failed to generate PDF export");

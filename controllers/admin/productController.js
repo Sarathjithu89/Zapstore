@@ -178,9 +178,9 @@ const addProductOffer = async (req, res) => {
       await findProduct.save();
     }
 
-    return res.status(HTTP_STATUS.OK).json({ 
+    return res.status(HTTP_STATUS.OK).json({
       status: true,
-      message: MESSAGES.SUCCESS.PRODUCT_OFFER_ADDED 
+      message: MESSAGES.SUCCESS.PRODUCT_OFFER_ADDED,
     });
   } catch (error) {
     console.error("Error in addProductOffer:", error);
@@ -221,9 +221,9 @@ const removeProductOffer = async (req, res) => {
     }
 
     await findProduct.save();
-    return res.status(HTTP_STATUS.OK).json({ 
+    return res.status(HTTP_STATUS.OK).json({
       status: true,
-      message: MESSAGES.SUCCESS.PRODUCT_OFFER_REMOVED 
+      message: MESSAGES.SUCCESS.PRODUCT_OFFER_REMOVED,
     });
   } catch (error) {
     console.error("Error in removeProductOffer:", error);
@@ -246,10 +246,7 @@ const toggleProductBlock = async (req, res) => {
     product.isBlocked = !product.isBlocked;
     await product.save();
 
-    req.flash(
-      "success",
-      MESSAGES.SUCCESS.PRODUCT_STATUS_TOGGLED
-    );
+    req.flash("success", MESSAGES.SUCCESS.PRODUCT_STATUS_TOGGLED);
     res.redirect("/admin/products");
   } catch (error) {
     console.error("Error toggling product block:", error);
@@ -264,12 +261,12 @@ const getEditProduct = async (req, res) => {
     const admin = req.admin;
     const id = req.params.id;
     const product = await Product.findOne({ _id: id, isDeleted: false });
-    
+
     if (!product) {
       req.flash("error", MESSAGES.ERROR.PRODUCT_NOT_FOUND);
       return res.redirect("/admin/products");
     }
-    
+
     const category = await Category.find({});
     const brand = await Brand.find({});
 
@@ -357,7 +354,6 @@ const updateProduct = async (req, res) => {
         try {
           if (fs.existsSync(imagePath)) {
             fs.unlinkSync(imagePath);
-            console.log("Image deleted:", image);
           } else {
             console.warn("Image not found, skipping:", imagePath);
           }

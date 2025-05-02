@@ -36,7 +36,7 @@ async function sendVerificationEmail(emailData) {
     console.log("Email rejected by server", info.rejected);
     return false;
   } catch (error) {
-    console.log(error);
+    console.log("Server Error", error);
     return false;
   }
 }

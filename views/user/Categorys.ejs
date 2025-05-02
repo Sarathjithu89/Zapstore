@@ -1079,7 +1079,6 @@
 
     //add to wish list
     function addtowishlist(productId) {
-      console.log("wishlist");
       fetch("/user/wishlist", {
         method: "POST",
         headers: { "Content-type": "application/json" },

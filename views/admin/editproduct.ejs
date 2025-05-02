@@ -395,8 +395,6 @@ function validateForm() {
     const salePriceError = document.getElementById('salePrice-error');
     
     if (salePrice > regularPrice) {
-      console.log(salePrice)
-      console.log(regularPrice);
         salePriceError.textContent = 'Sale price must be less than regular price.';
         isValid = false;
     }
