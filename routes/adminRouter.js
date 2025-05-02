@@ -1,7 +1,8 @@
 const express = require("express");
 const adminRouter = express.Router();
-const adminController = require("../controllers/admin/adminController.js");
 const { adminAuth } = require("../middleware/adminAuth.js");
+const { BrandUploads, ProductUploads } = require("../uility/multer.js");
+const adminController = require("../controllers/admin/adminController.js");
 const customerContorller = require("../controllers/admin/customerContorller.js");
 const categoryController = require("../controllers/admin/categoryController.js");
 const brandController = require("../controllers/admin/brandController.js");
@@ -11,8 +12,6 @@ const inventoryController = require("../controllers/admin/inventoryController.js
 const couponController = require("../controllers/admin/couponController.js");
 const dashboardController = require("../controllers/admin/dashboardController.js");
 const walletController = require("../controllers/admin/walletController.js");
-
-const { BrandUploads, ProductUploads } = require("../uility/multer.js");
 
 //admin login routes
 adminRouter.get("/", adminAuth, adminController.loadLogin);
