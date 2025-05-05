@@ -12,7 +12,7 @@ const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
 
 connectDb(); //connect db function
-const PORT = 3000 || process.env.PORT;
+const PORT = process.env.PORT || 3000;
 
 //view engin ,static files
 app.set("view engine", "ejs");
