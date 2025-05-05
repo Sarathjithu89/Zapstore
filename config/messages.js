@@ -58,6 +58,9 @@ const MESSAGES = {
     SOMETHING_WRONG: "Something went wrong",
     VALIDATION_ERROR: "Validation error. Please check your input",
     INVALID_REQUEST: "Invalid request",
+
+    //address
+    INVALID_ADDRESS: "Please provide a valid Address",
   },
 
   INFO: {

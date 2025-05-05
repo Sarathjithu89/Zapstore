@@ -1167,7 +1167,7 @@
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ amount: amount }), // in paise
+      body: JSON.stringify({ amount: amount, addressId }), // in paise
     })
       .then((response) => response.json())
       .then((data) => {

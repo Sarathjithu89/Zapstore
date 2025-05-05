@@ -169,7 +169,7 @@ const removecategoryOffer = async (req, res) => {
     category.categoryOffer = 0;
     await category.save();
 
-    res.status(HTTP_STATUS.OK).json({
+    return res.status(HTTP_STATUS.OK).json({
       success: true,
       message: MESSAGES.SUCCESS.CATEGORY_OFFER_REMOVED,
     });

@@ -169,7 +169,7 @@ const placeOrder = async (req, res) => {
     if (!addressId) {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
-        message: MESSAGES.ERROR.INVALID_REQUEST,
+        message: MESSAGES.ERROR.INVALID_ADDRESS,
       });
     }
 
@@ -332,8 +332,14 @@ const WalletOrder = async (req, res) => {
   try {
     const { addressId, amount } = req.body;
     const userId = req.user.userId;
+    if (!addressId) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        success: false,
+        message: MESSAGES.ERROR.INVALID_ADDRESS,
+      });
+    }
 
-    if (!addressId || !amount || amount <= 0) {
+    if (!amount || amount <= 0) {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         message: MESSAGES.ERROR.INVALID_REQUEST,
@@ -527,7 +533,15 @@ const WalletOrder = async (req, res) => {
 //razropay payment
 const razorpayPayment = async (req, res) => {
   try {
-    const { amount } = req.body;
+    const { amount, addressId } = req.body;
+
+    if (!addressId) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        success: false,
+        message: MESSAGES.ERROR.INVALID_ADDRESS,
+      });
+    }
+
     if (!amount) {
       return res
         .status(HTTP_STATUS.BAD_REQUEST)

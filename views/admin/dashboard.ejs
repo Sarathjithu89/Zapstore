@@ -5,10 +5,19 @@
   rel="stylesheet"
   href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"
 />
+<!-- SweetAlert2 CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.12/dist/sweetalert2.min.css">
 <style>
   .table-th th {
     text-align: center;
     color: white;
+  }
+  /* Custom styles for SweetAlert2 */
+  .swal2-styled.swal2-confirm {
+    background-color: #0d6efd;
+  }
+  .swal2-popup {
+    border-radius: 10px;
   }
 </style>
 
@@ -32,6 +41,11 @@
   <!-- / Breadcrumbs-->
 
   <div class="container-fluid py-4">
+    <!-- Success message alert -->
+    <% if (typeof message !== 'undefined' && message) { %>
+      <div id="successMessage" data-message="<%= message %>" class="d-none"></div>
+    <% } %>
+    
     <!-- Stats Overview -->
     <div class="row mb-4">
       <div class="col-md-3 mb-3">
@@ -143,18 +157,18 @@
           
           <div class="col-12">
             <div class="d-flex gap-2">
-              <button type="submit" class="btn btn-primary">
+              <button type="button" id="generateReportBtn" class="btn btn-primary">
                 <i class="bi bi-search"></i> Generate Report
               </button>
-              <button type="button" class="btn btn-success" onclick="exportReport('excel')">
+              <button type="button" class="btn btn-success" onclick="exportReportWithConfirm('excel')">
                 <i class="bi bi-file-earmark-excel"></i> Export Excel
               </button>
-              <button type="button" class="btn btn-danger" onclick="exportReport('pdf')">
+              <button type="button" class="btn btn-danger" onclick="exportReportWithConfirm('pdf')">
                 <i class="bi bi-file-earmark-pdf"></i> Export PDF
               </button>
-              <a href="/admin/sales-report" class="btn btn-outline-secondary">
+              <button type="button" id="clearFiltersBtn" class="btn btn-outline-secondary">
                 <i class="bi bi-x-circle"></i> Clear Filters
-              </a>
+              </button>
             </div>
           </div>
         </form>
@@ -353,9 +367,23 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<!-- SweetAlert2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.12/dist/sweetalert2.all.min.js"></script>
 
 <script>
-  // Toggle date inputs based on report type
+  // SweetAlert2 Toast Configuration
+  const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+    didOpen: (toast) => {
+      toast.addEventListener('mouseenter', Swal.stopTimer)
+      toast.addEventListener('mouseleave', Swal.resumeTimer)
+    }
+  });
+
   function toggleDateFilter() {
     const reportType = document.getElementById('reportType').value;
     const singleDateContainer = document.getElementById('dateInputContainer');
@@ -376,11 +404,54 @@
   document.addEventListener('DOMContentLoaded', function () {
     toggleDateFilter();
     initializeCharts();
+    showSuccessMessage();
 
-   
+    // Form submission with SweetAlert2
+    document.getElementById('generateReportBtn').addEventListener('click', function() {
+      // Show loading state
+      Swal.fire({
+        title: 'Generating Report',
+        html: 'Please wait while we process your request...',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+      
+      // Submit the form
+      document.getElementById('reportForm').submit();
+    });
+
+    // Clear filters with confirmation
+    document.getElementById('clearFiltersBtn').addEventListener('click', function() {
+      Swal.fire({
+        title: 'Clear All Filters?',
+        text: "This will reset all your selected filters",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#0d6efd',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Yes, clear all'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          window.location.href = '/admin/sales-report';
+        }
+      });
+    });
   });
 
-  // Chart
+  // Display success message if exists
+  function showSuccessMessage() {
+    const successMsgElement = document.getElementById('successMessage');
+    if (successMsgElement && successMsgElement.dataset.message) {
+      Toast.fire({
+        icon: 'success',
+        title: successMsgElement.dataset.message
+      });
+    }
+  }
+
+  // Chart initialization
   function initializeCharts() {
     const chartData = <%- JSON.stringify(chartData) %>;
     // Sales trend
@@ -516,80 +587,118 @@
 
     //Top category chart
     const categoryCtx = document.getElementById('topCategoriesChart').getContext('2d');
-new Chart(categoryCtx, {
-  type: 'pie',
-  data: {
-    labels: <%- JSON.stringify(topCategories.map(cat => cat.name)) %>,
-    datasets: [{
-      data: <%- JSON.stringify(topCategories.map(cat => cat.revenue)) %>,
-      backgroundColor: [
-        '#0d6efd', '#20c997', '#fd7e14', '#6f42c1', '#dc3545',
-        '#0dcaf0', '#ffc107', '#6c757d', '#198754', '#d63384'
-      ]
-    }]
-  },
-  options:{
-    responsive:true,
-    plugins:{
-      legend:{
-        position:'right',
-        labels:{
-          boxWidth:12
-        }
+    new Chart(categoryCtx, {
+      type: 'pie',
+      data: {
+        labels: <%- JSON.stringify(topCategories.map(cat => cat.name)) %>,
+        datasets: [{
+          data: <%- JSON.stringify(topCategories.map(cat => cat.revenue)) %>,
+          backgroundColor: [
+            '#0d6efd', '#20c997', '#fd7e14', '#6f42c1', '#dc3545',
+            '#0dcaf0', '#ffc107', '#6c757d', '#198754', '#d63384'
+          ]
+        }]
       },
-      tooltip:{
-        callbacks:{
-          label:function(context){
-            const label=context.label||'';
-            const value=context.raw||0;
-            return `${label}: ₹${value.toLocaleString()}`;
+      options:{
+        responsive:true,
+        plugins:{
+          legend:{
+            position:'right',
+            labels:{
+              boxWidth:12
+            }
+          },
+          tooltip:{
+            callbacks:{
+              label:function(context){
+                const label=context.label||'';
+                const value=context.raw||0;
+                return `${label}: ₹${value.toLocaleString()}`;
+              }
+            }
           }
         }
       }
-    }
-  }
-});
+    });
 
     //top brands chart
     const brandCtx = document.getElementById('topBrandsChart').getContext('2d');
-new Chart(brandCtx, {
-  type: 'doughnut',
-  data: {
-    labels: <%- JSON.stringify(topBrands.map(brand => brand.name)) %>,
-    datasets: [{
-      data: <%- JSON.stringify(topBrands.map(brand => brand.revenue)) %>,
-      backgroundColor: [
-        '#198754', '#0dcaf0', '#ffc107', '#dc3545', '#6c757d',
-        '#0d6efd', '#d63384', '#6f42c1', '#fd7e14', '#20c997'
-      ]
-    }]
-  },
-  options:{
-    responsive:true,
-    plugins:{
-      legend:{
-        position:'right',
-        labels:{
-          boxWidth:12
-        }
+    new Chart(brandCtx, {
+      type: 'doughnut',
+      data: {
+        labels: <%- JSON.stringify(topBrands.map(brand => brand.name)) %>,
+        datasets: [{
+          data: <%- JSON.stringify(topBrands.map(brand => brand.revenue)) %>,
+          backgroundColor: [
+            '#198754', '#0dcaf0', '#ffc107', '#dc3545', '#6c757d',
+            '#0d6efd', '#d63384', '#6f42c1', '#fd7e14', '#20c997'
+          ]
+        }]
       },
-      tooltip:{
-        callbacks:{
-          label:function(context){
-            const label=context.label || '';
-            const value=context.raw ||0;
-            return `${label}: ₹${value.toLocaleString()}`;
+      options:{
+        responsive:true,
+        plugins:{
+          legend:{
+            position:'right',
+            labels:{
+              boxWidth:12
+            }
+          },
+          tooltip:{
+            callbacks:{
+              label:function(context){
+                const label=context.label || '';
+                const value=context.raw ||0;
+                return `${label}: ₹${value.toLocaleString()}`;
+              }
+            }
           }
         }
       }
-    }
-  }
-});
-
-
+    });
   }
 
-  // Export functions
+  // Export functions with SweetAlert2 confirmation
+  function exportReportWithConfirm(type) {
+    const reportType = document.getElementById('reportType').value;
+    const formatName = type === 'excel' ? 'Excel' : 'PDF';
+    const formatIcon = type === 'excel' ? 'success' : 'error';
+    const formatColor = type === 'excel' ? '#198754' : '#dc3545';
+    
+    Swal.fire({
+      title: `Export as ${formatName}?`,
+      text: `This will download your sales report in ${formatName} format`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: formatColor,
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: `Yes, export as ${formatName}`
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Show loading state
+        Swal.fire({
+          title: `Generating ${formatName}`,
+          html: 'Please wait while we prepare your download...',
+          allowOutsideClick: false,
+          didOpen: () => {
+            Swal.showLoading();
+            setTimeout(() => {
+              exportReport(type);
+              // Show success toast
+              setTimeout(() => {
+                Toast.fire({
+                  icon: formatIcon,
+                  title: `Sales report successfully exported as ${formatName}`
+                });
+              }, 1000);
+            }, 1500);
+          }
+        });
+      }
+    });
+  }
+
+  // Original export function
   function exportReport(type) {
     const form = document.getElementById('reportForm');
     const formData = new FormData(form);
@@ -603,7 +712,24 @@ new Chart(brandCtx, {
     window.location.href = url;
   }
 
-  // Client-side PDF generation (as fallback if server-side fails)
+  // Handle error cases
+  function handleExportError(type) {
+    Swal.fire({
+      icon: 'error', 
+      title: 'Export Failed',
+      text: `Unable to export the report as ${type}. Please try again later.`,
+      confirmButtonColor: '#0d6efd'
+    }).then(() => {
+      // Fallback to client-side generation if needed
+      if (type === 'pdf') {
+        generatePDF();
+      } else if (type === 'excel') {
+        generateExcel();
+      }
+    });
+  }
+
+  
   function generatePDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
@@ -637,16 +763,137 @@ new Chart(brandCtx, {
     doc.text(`Total Discounts: ₹<%= totalDiscounts.toLocaleString() %>`, 14, 66);
     doc.text(`Average Order Value: ₹<%= averageOrderValue.toLocaleString() %>`, 14, 74);
 
+    // Add table headers
+    doc.setFontSize(12);
+    doc.text("Order ID", 20, 90);
+    doc.text("Date", 60, 90);
+    doc.text("Customer", 100, 90);
+    doc.text("Status", 140, 90);
+    doc.text("Amount", 180, 90);
+
+    // Add line under headers
+    doc.line(14, 95, 196, 95);
+
+    // Add table data
+    doc.setFontSize(10);
+    let yPos = 105;
+    <% if(orders && orders.length > 0) { %>
+      <% orders.slice(0, 20).forEach((order, index) => { %>
+        doc.text("<%= order.orderId %>", 20, yPos);
+        doc.text("<%= new Date(order.createdAt).toLocaleDateString() %>", 60, yPos);
+        doc.text("<%= order.userId.name %>", 100, yPos);
+        doc.text("<%= order.status %>", 140, yPos);
+        doc.text("₹<%= order.finalAmount.toLocaleString() %>", 180, yPos);
+        yPos += 10;
+        
+        // Add new page if needed
+        if (yPos > 280 && index < <%= orders.length %> - 1) {
+          doc.addPage();
+          yPos = 20;
+          
+          // Add headers on new page
+          doc.setFontSize(12);
+          doc.text("Order ID", 20, yPos);
+          doc.text("Date", 60, yPos);
+          doc.text("Customer", 100, yPos);
+          doc.text("Status", 140, yPos);
+          doc.text("Amount", 180, yPos);
+          
+          // Add line under headers
+          doc.line(14, yPos + 5, 196, yPos + 5);
+          yPos += 15;
+          doc.setFontSize(10);
+        }
+      <% }); %>
+    <% } %>
+
+    // Add footer
+    doc.setFontSize(10);
+    doc.text("Generated on: " + new Date().toLocaleString(), 14, 285);
+    doc.text("Page 1", 180, 285);
+
     // Save the PDF
-    doc.save(`sales-report-${Date.now()}.pdf`);
+    doc.save('sales-report.pdf');
   }
 
-  // Client-side Excel generation (as fallback if server-side fails)
+  
   function generateExcel() {
-    const table = document.getElementById('salesTable');
-    const wb = XLSX.utils.table_to_book(table, {sheet: "Sales Report"});
-    XLSX.writeFile(wb, `sales-report-${Date.now()}.xlsx`);
+    const wb = XLSX.utils.book_new();
+    wb.Props = {
+      Title: "Sales Report",
+      Subject: "Sales Data",
+      Author: "Admin Dashboard",
+      CreatedDate: new Date()
+    };
+    
+    const metaData = [
+      ["Sales Report"],
+      ["Generated on:", new Date().toLocaleString()],
+      [""],
+      ["Report Summary"],
+      ["Total Orders:", <%= totalOrders %>],
+      ["Total Revenue:", <%= totalRevenue %>],
+      ["Total Discounts:", <%= totalDiscounts %>],
+      ["Average Order Value:", <%= averageOrderValue %>],
+      [""]
+    ];
+    
+    const metaWS = XLSX.utils.aoa_to_sheet(metaData);
+    XLSX.utils.book_append_sheet(wb, metaWS, "Summary");
+  
+    const ordersData = [
+      ["Date", "Order ID", "Customer", "Payment Method", "Items", "Subtotal", "Discount", "Final Amount", "Status"]
+    ];
+    
+    <% if(orders && orders.length > 0) { %>
+      <% orders.forEach(order => { %>
+        ordersData.push([
+          "<%= new Date(order.createdAt).toLocaleDateString() %>",
+          "<%= order.orderId %>",
+          "<%= order.userId.name %>",
+          "<%= order.paymentMethod %>",
+          <%= order.orderedItems.reduce((sum, item) => sum + item.quantity, 0) %>,
+          <%= order.totalPrice %>,
+          <%= order.discount %>,
+          <%= order.finalAmount %>,
+          "<%= order.status %>"
+        ]);
+      <% }); %>
+    <% } %>
+    
+ 
+    ordersData.push([
+      "TOTALS", "", "", "", "", 
+      <%= totalSubtotal %>, 
+      <%= totalDiscounts %>, 
+      <%= totalRevenue %>, 
+      ""
+    ]);
+    
+    const ordersWS = XLSX.utils.aoa_to_sheet(ordersData);
+    XLSX.utils.book_append_sheet(wb, ordersWS, "Orders");
+ 
+    const productsData = [
+      ["Product", "Units Sold", "Revenue"]
+    ];
+    
+    <% if(topProducts && topProducts.length > 0) { %>
+      <% topProducts.forEach(product => { %>
+        productsData.push([
+          "<%= product.name %>",
+          <%= product.quantity %>,
+          <%= product.revenue %>
+        ]);
+      <% }); %>
+    <% } %>
+    
+    const productsWS = XLSX.utils.aoa_to_sheet(productsData);
+    XLSX.utils.book_append_sheet(wb, productsWS, "Top Products");
+
+    XLSX.writeFile(wb, "sales-report.xlsx");
   }
+
+  
 </script>
 
 <%- include('../partials2/footer.ejs') %>

@@ -541,7 +541,7 @@
 
         const data = await response.json();
 
-        if (data.status === true) {
+        if (data.success === true) {
           Swal.fire("Offer Added", "The offer has been added", "success").then(
             () => {
               location.reload();
@@ -572,7 +572,7 @@
           }),
         });
         const data = await response.json();
-        if (response.ok && data.status === true) {
+        if (response.ok && data.success === true) {
           Swal.fire(
             "Offer Removed",
             "The Offer has been removed",
