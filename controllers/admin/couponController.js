@@ -78,7 +78,6 @@ const addCoupon = async (req, res) => {
 const editCoupon = async (req, res) => {
   try {
     const { couponId, name, offerPrice, minimumPrice, expireOn } = req.body;
-    s;
     const coupon = await Coupon.findById(couponId);
     if (!coupon) {
       req.flash("error", MESSAGES.ERROR.COUPON_NOT_FOUND);
