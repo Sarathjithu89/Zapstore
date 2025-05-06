@@ -186,14 +186,14 @@ const applyCoupon = async (req, res) => {
 
     // try {
     //   await sessionUpdate(req.sessionID, (session) => {
-    if (!session.cart) {
-      session.cart = {};
+    if (!req.session.cart) {
+      req.session.cart = {};
     }
 
-    session.cart.couponApplied = true;
-    session.cart.couponName = couponName;
-    session.cart.discount = discountAmount;
-    session.cart.finalAmount = cart.totalPrice - discountAmount;
+    req.session.cart.couponApplied = true;
+    req.session.cart.couponName = couponName;
+    req.session.cart.discount = discountAmount;
+    req.session.cart.finalAmount = cart.totalPrice - discountAmount;
     // });
 
     return res.status(HTTP_STATUS.OK).json({
@@ -239,12 +239,12 @@ const removeCoupon = async (req, res) => {
     }
 
     try {
-      await sessionUpdate(req.sessionID, (session) => {
-        session.cart.couponApplied = false;
-        delete session.cart.couponName;
-        delete session.cart.discount;
-        session.cart.finalAmount = session.cart.totalPrice;
-      });
+      // await sessionUpdate(req.sessionID, (session) => {
+      req.session.cart.couponApplied = false;
+      delete req.session.cart.couponName;
+      delete req.session.cart.discount;
+      req.session.cart.finalAmount = req.session.cart.totalPrice;
+      // });
 
       return res.status(HTTP_STATUS.OK).json({
         success: true,
