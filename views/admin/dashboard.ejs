@@ -662,7 +662,6 @@
   function exportReportWithConfirm(type) {
     const reportType = document.getElementById('reportType').value;
     const formatName = type === 'excel' ? 'Excel' : 'PDF';
-    const formatIcon = type === 'excel'|| type === 'PDF' ? 'success' : 'error';
     const formatColor = type === 'excel' ? '#198754' : '#dc3545';
     
     Swal.fire({
@@ -687,7 +686,7 @@
               // Show success toast
               setTimeout(() => {
                 Toast.fire({
-                  icon: formatIcon,
+                  icon: 'success',
                   title: `Sales report successfully exported as ${formatName}`
                 });
               }, 1000);
