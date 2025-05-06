@@ -11,6 +11,25 @@ const adminRouter = require("./routes/adminRouter.js");
 const cookieParser = require("cookie-parser");
 const bodyParser = require("body-parser");
 
+let sessionStore;
+try {
+  const { RedisStore } = require("connect-redis");
+  const { createClient } = require("redis");
+
+  let redisClient = createClient({
+    url: process.env.REDIS_URL || "redis://127.0.0.1:6379",
+    legacyMode: true,
+  });
+  redisClient.connect().catch(console.error);
+
+  sessionStore = new RedisStore({
+    client: redisClient,
+  });
+} catch (error) {
+  console.log("Falling back to memory session store:", error.message);
+  sessionStore = new session.MemoryStore();
+}
+
 connectDb(); //connect db function
 const PORT = process.env.PORT || 3000;
 
@@ -27,9 +46,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(
   session({
+    store: sessionStore,
     secret: process.env.SESSION_SECRET,
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false,
     cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000, httpOnly: true },
   })
 );

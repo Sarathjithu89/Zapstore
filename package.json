@@ -26,6 +26,7 @@
   "dependencies": {
     "bcryptjs": "^3.0.2",
     "body-parser": "^1.20.3",
+    "connect-redis": "^8.0.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "csv-writer": "^1.6.0",
@@ -44,6 +45,7 @@
     "passport-google-oauth20": "^2.0.0",
     "pdfkit": "^0.16.0",
     "razorpay": "^2.9.6",
+    "redis": "^5.0.1",
     "sharp": "^0.33.5",
     "sweetalert2": "^11.6.13",
     "uuid": "^11.1.0"
