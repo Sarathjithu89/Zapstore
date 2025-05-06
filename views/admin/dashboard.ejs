@@ -662,7 +662,7 @@
   function exportReportWithConfirm(type) {
     const reportType = document.getElementById('reportType').value;
     const formatName = type === 'excel' ? 'Excel' : 'PDF';
-    const formatIcon = type === 'excel' ? 'success' : 'error';
+    const formatIcon = type === 'excel'|| type === 'PDF' ? 'success' : 'error';
     const formatColor = type === 'excel' ? '#198754' : '#dc3545';
     
     Swal.fire({
