@@ -24,6 +24,7 @@ try {
 
   sessionStore = new RedisStore({
     client: redisClient,
+    prefix: "Zapstore:sess:",
   });
 } catch (error) {
   console.log("Falling back to memory session store:", error.message);
@@ -48,9 +49,10 @@ app.use(
   session({
     store: sessionStore,
     secret: process.env.SESSION_SECRET,
+    name: "Zapstore.sid",
     resave: false,
     saveUninitialized: false,
-    cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000, httpOnly: true },
+    cookie: { secure: true, maxAge: 24 * 60 * 60 * 1000, httpOnly: true },
   })
 );
 app.use(bodyParser.json());
