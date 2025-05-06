@@ -17,7 +17,6 @@ const redisClient = createClient({
 (async () => {
   try {
     await redisClient.connect();
-    console.log("Redis client connected successfully");
   } catch (error) {
     console.error("Redis connection error:", error);
   }
@@ -185,35 +184,35 @@ const applyCoupon = async (req, res) => {
     const discountAmount = coupon.offerPrice;
     const finalAmount = cart.totalPrice - discountAmount;
 
-    try {
-      await sessionUpdate(req.sessionID, (session) => {
-        if (!session.cart) {
-          session.cart = {};
-        }
-
-        session.cart.couponApplied = true;
-        session.cart.couponName = couponName;
-        session.cart.discount = discountAmount;
-        session.cart.finalAmount = cart.totalPrice - discountAmount;
-      });
-
-      return res.status(HTTP_STATUS.OK).json({
-        success: true,
-        message: MESSAGES.COUPON.APPLIED,
-        discount: discountAmount,
-        finalAmount,
-        coupon: {
-          name: couponName,
-          offerPrice: discountAmount,
-        },
-      });
-    } catch (sessionError) {
-      console.error("Session update error:", sessionError);
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: "Failed to apply coupon. Please try again.",
-      });
+    // try {
+    //   await sessionUpdate(req.sessionID, (session) => {
+    if (!session.cart) {
+      session.cart = {};
     }
+
+    session.cart.couponApplied = true;
+    session.cart.couponName = couponName;
+    session.cart.discount = discountAmount;
+    session.cart.finalAmount = cart.totalPrice - discountAmount;
+    // });
+
+    return res.status(HTTP_STATUS.OK).json({
+      success: true,
+      message: MESSAGES.COUPON.APPLIED,
+      discount: discountAmount,
+      finalAmount,
+      coupon: {
+        name: couponName,
+        offerPrice: discountAmount,
+      },
+    });
+    // } catch (sessionError) {
+    //   console.error("Session update error:", sessionError);
+    //   return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+    //     success: false,
+    //     message: "Failed to apply coupon. Please try again.",
+    //   });
+    // }
   } catch (error) {
     console.error("Error applying coupon:", error);
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
