@@ -18,6 +18,11 @@ userRouter.get("/", authToken, userController.loadHomepage);
 userRouter.get("/login", authToken, userController.loadLogin);
 userRouter.post("/login", authToken, userController.login);
 
+//about
+userRouter.get("/about", userController.getAboutUspage);
+//contact
+userRouter.get("/contact", userController.getContactpage);
+
 //register routes
 userRouter.get("/register", userController.loadRegister);
 userRouter.post("/register", userController.register);
@@ -169,7 +174,11 @@ userRouter.delete(
 
 //coupons
 userRouter.get("/users/mycoupons", authToken, couponController.getMyCoupons);
-userRouter.post("/apply-coupon", authToken, couponController.applyCoupon);
+userRouter.post(
+  "/checkout/applycoupon",
+  authToken,
+  couponController.applyCoupon
+);
 userRouter.delete("/checkout/coupon", authToken, couponController.removeCoupon);
 
 module.exports = userRouter;

@@ -1,0 +1,345 @@
+<%- include('../partials/header.ejs') %>
+
+<!-- Contact Page Styling -->
+<style>
+  .contact-page {
+    padding: 60px 0;
+    background-color: #f6f6f6;
+  }
+  .contact-form-area {
+    background: #fff;
+    border-radius: 5px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    padding: 30px;
+    margin-bottom: 30px;
+  }
+  .contact-address {
+    background: #fff;
+    border-radius: 5px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    padding: 30px;
+  }
+  .contact-form-wrapper label {
+    font-weight: 500;
+    margin-bottom: 8px;
+    display: block;
+  }
+  .form-control {
+    height: auto;
+    padding: 12px 15px;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    margin-bottom: 20px;
+  }
+  .form-control:focus {
+    box-shadow: none;
+    border-color: #0098da;
+  }
+  textarea.form-control {
+    min-height: 150px;
+  }
+  .contact-title {
+    margin-bottom: 40px;
+    text-align: center;
+  }
+  .contact-title h2 {
+    font-size: 36px;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+  .contact-title p {
+    color: #777;
+  }
+  .single-contact-block {
+    margin-bottom: 30px;
+    display: flex;
+    align-items: flex-start;
+  }
+  .contact-icon {
+    margin-right: 15px;
+    min-width: 40px;
+    height: 40px;
+    line-height: 40px;
+    text-align: center;
+    background: #0098da;
+    color: #fff;
+    border-radius: 50%;
+  }
+  .contact-icon i {
+    font-size: 18px;
+    line-height: 40px;
+  }
+  .contact-info {
+    flex: 1;
+  }
+  .contact-info h4 {
+    font-size: 18px;
+    margin-bottom: 5px;
+  }
+  .contact-info p {
+    margin-bottom: 0;
+    color: #777;
+  }
+  .contact-submit-btn {
+    background-color: #0098da;
+    color: #fff;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 4px;
+    font-weight: 500;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+  .contact-submit-btn:hover {
+    background-color: #0077a8;
+  }
+  .map-wrapper {
+    height: 300px;
+    margin-top: 40px;
+    border-radius: 5px;
+    overflow: hidden;
+  }
+  .breadcrumb-area {
+    background-color: #f6f6f6;
+    padding: 30px 0;
+  }
+  .breadcrumb-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .breadcrumb-content h2 {
+    color: #333;
+    font-size: 24px;
+    margin-bottom: 0;
+  }
+  .breadcrumb {
+    background: transparent;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
+  }
+  .breadcrumb li {
+    font-size: 14px;
+    color: #777;
+    display: inline-block;
+  }
+  .breadcrumb li a {
+    color: #333;
+  }
+  .breadcrumb li.active {
+    color: #0098da;
+  }
+  .breadcrumb-item + .breadcrumb-item::before {
+    content: ">";
+    color: #777;
+  }
+</style>
+
+<!-- Begin Body Wrapper -->
+<div class="body-wrapper">
+  <!-- Header Area included in the header.ejs -->
+
+  <!-- Breadcrumb Area Start -->
+  <div class="breadcrumb-area">
+    <div class="container">
+      <div class="breadcrumb-container">
+        <div class="breadcrumb-content">
+          <h2>Contact Us</h2>
+        </div>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item active" aria-current="page">
+              Contact Us
+            </li>
+          </ol>
+        </nav>
+      </div>
+    </div>
+  </div>
+  <!-- Breadcrumb Area End -->
+
+  <!-- Contact Area Start -->
+  <div class="contact-page">
+    <div class="container">
+      <div class="contact-title">
+        <h2>Get In Touch With Us</h2>
+        <p>
+          Have questions about our products, orders, or services? We're here to
+          help!
+        </p>
+      </div>
+
+      <div class="row">
+        <!-- Contact Form Start -->
+        <div class="col-lg-8 col-md-7">
+          <div class="contact-form-area">
+            <h3 class="mb-4">Send Us A Message</h3>
+
+            <div class="contact-form-wrapper">
+              <form id="contact-form" action="/contact/submit" method="POST">
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="form-group">
+                      <label for="name"
+                        >Your Name <span class="text-danger">*</span></label
+                      >
+                      <input
+                        type="text"
+                        class="form-control"
+                        id="name"
+                        name="name"
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="form-group">
+                      <label for="email"
+                        >Your Email <span class="text-danger">*</span></label
+                      >
+                      <input
+                        type="email"
+                        class="form-control"
+                        id="email"
+                        name="email"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="subject">Subject</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="subject"
+                    name="subject"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="message"
+                    >Your Message <span class="text-danger">*</span></label
+                  >
+                  <textarea
+                    class="form-control"
+                    id="message"
+                    name="message"
+                    required
+                  ></textarea>
+                </div>
+
+                <div class="form-group">
+                  <button type="submit" class="contact-submit-btn">
+                    Send Message
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        <!-- Contact Form End -->
+
+        <!-- Contact Address Start -->
+        <div class="col-lg-4 col-md-5">
+          <div class="contact-address">
+            <h3 class="mb-4">Contact Details</h3>
+
+            <div class="single-contact-block">
+              <div class="contact-icon">
+                <i class="fa fa-map-marker"></i>
+              </div>
+              <div class="contact-info">
+                <h4>Our Location</h4>
+                <p>123 Commerce Street, Tech Park</p>
+                <p>Bangalore, Karnataka 560001</p>
+              </div>
+            </div>
+
+            <div class="single-contact-block">
+              <div class="contact-icon">
+                <i class="fa fa-phone"></i>
+              </div>
+              <div class="contact-info">
+                <h4>Phone Number</h4>
+                <p><a href="tel:+919856423714">+91 9856423714</a></p>
+                <p><a href="tel:+918044556677">+91 80 4455 6677</a></p>
+              </div>
+            </div>
+
+            <div class="single-contact-block">
+              <div class="contact-icon">
+                <i class="fa fa-envelope-o"></i>
+              </div>
+              <div class="contact-info">
+                <h4>Email Address</h4>
+                <p>
+                  <a href="mailto:support@zapstore.com">support@zapstore.com</a>
+                </p>
+                <p><a href="mailto:info@zapstore.com">info@zapstore.com</a></p>
+              </div>
+            </div>
+
+            <div class="single-contact-block">
+              <div class="contact-icon">
+                <i class="fa fa-clock-o"></i>
+              </div>
+              <div class="contact-info">
+                <h4>Working Hours</h4>
+                <p>Monday - Friday: 9:00 AM - 6:00 PM</p>
+                <p>Saturday: 10:00 AM - 4:00 PM</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Contact Address End -->
+      </div>
+
+      <!-- Google Map Start -->
+      <div class="map-wrapper">
+        <iframe
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d497698.66001048134!2d77.3507154770041!3d12.954458235679903!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bae1670c9b44e6d%3A0xf8dfc3e8517e4fe0!2sBengaluru%2C%20Karnataka!5e0!3m2!1sen!2sin!4v1651845054472!5m2!1sen!2sin"
+          width="100%"
+          height="100%"
+          style="border: 0"
+          allowfullscreen=""
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+        ></iframe>
+      </div>
+      <!-- Google Map End -->
+    </div>
+  </div>
+  <!-- Contact Area End -->
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  // Form submission handling with SweetAlert
+  document
+    .getElementById("contact-form")
+    .addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      // You would normally submit the form data via AJAX here
+      // For demonstration purposes, we're just showing a success message
+
+      Swal.fire({
+        icon: "success",
+        title: "Message Sent!",
+        text: "Thank you for contacting us. We will get back to you soon.",
+        confirmButtonColor: "#0098da",
+      }).then(() => {
+        // Reset the form
+        document.getElementById("contact-form").reset();
+      });
+    });
+</script>
+
+<%- include('../partials/alerts.ejs') %> <%- include('../partials/footer.ejs')
+%>

@@ -571,8 +571,8 @@ async function exportToExcel(res, orders, summary) {
 //Export to PDF
 async function exportToPdf(res, orders, summary) {
   try {
-    // Create a new PDF document
-    const doc = new PDFDocument({ margin: 50 });
+    // Create a new PDF document (explicitly set to portrait)
+    const doc = new PDFDocument({ margin: 50, layout: "portrait" });
 
     const fontPath = path.join(
       "public",
@@ -616,20 +616,26 @@ async function exportToPdf(res, orders, summary) {
     doc.moveDown(2);
 
     // Add orders table
-    doc
-      .fontSize(14)
-      .font("Helvetica-Bold")
-      .text("Order Details", { underline: true });
+    doc.fontSize(14).font("Unicode").text("Order Details", { underline: true });
     doc.moveDown();
 
-    // Define table columns
+    // Define table columns - UPDATED to include Payment Method and Discount
     const tableTop = doc.y;
-    const tableColumns = ["Order ID", "Date", "Customer", "Status", "Total"];
-    const columnWidths = [100, 100, 120, 80, 80];
+    const tableColumns = [
+      "Order ID",
+      "Date",
+      "Customer",
+      "Payment Method",
+      "Status",
+      "Discount",
+      "Total",
+    ];
+    // Adjusted column widths to fit payment method and discount while maintaining portrait layout
+    const columnWidths = [70, 70, 80, 75, 60, 60, 65];
     let currentLeft = 50; // starting from left margin
 
     // Draw table header
-    doc.fontSize(10).font("Unicode");
+    doc.fontSize(9).font("Unicode");
     tableColumns.forEach((column, i) => {
       doc.text(column, currentLeft, tableTop, {
         width: columnWidths[i],
@@ -657,14 +663,37 @@ async function exportToPdf(res, orders, summary) {
 
     // Draw table rows
     let rowTop = tableTop + headerHeight + 5;
-    doc.fontSize(9).font("Unicode");
+    doc.fontSize(8).font("Unicode");
 
     // Function to check if we need a new page
     const checkNewPage = (y, height = 20) => {
       if (y + height > doc.page.height - 50) {
         doc.addPage();
-        rowTop = 50;
-        return 50;
+
+        // Add column headers to new page
+        doc.fontSize(9).font("Unicode");
+        let headerLeft = 50;
+        tableColumns.forEach((column, i) => {
+          doc.text(column, headerLeft, 50, {
+            width: columnWidths[i],
+            align: "left",
+          });
+          headerLeft += columnWidths[i];
+        });
+
+        // Add header line
+        doc
+          .moveTo(50, 45)
+          .lineTo(50 + columnWidths.reduce((sum, width) => sum + width, 0), 45)
+          .stroke();
+
+        doc
+          .moveTo(50, 70)
+          .lineTo(50 + columnWidths.reduce((sum, width) => sum + width, 0), 70)
+          .stroke();
+
+        doc.fontSize(8).font("Unicode");
+        return 75; // Start content after header
       }
       return y;
     };
@@ -677,18 +706,24 @@ async function exportToPdf(res, orders, summary) {
       // Format date
       const orderDate = new Date(order.createdAt).toLocaleDateString();
 
-      // Draw row
+      // Draw row - UPDATED to include payment method and discount
       currentLeft = 50;
       [
-        order._id.toString().substring(0, 8) + "...",
+        order._id.toString().substring(0, 6) + "...",
         orderDate,
-        order.userId ? order.userId.name : "Guest",
+        order.userId
+          ? order.userId.name.length > 10
+            ? order.userId.name.substring(0, 10) + "..."
+            : order.userId.name
+          : "Guest",
+        order.paymentMethod,
         order.status,
+        `₹${order.discount.toFixed(2)}`,
         `₹${order.finalAmount.toFixed(2)}`,
       ].forEach((text, i) => {
         doc.text(text, currentLeft, rowTop, {
           width: columnWidths[i],
-          align: "left",
+          align: i >= 5 ? "right" : "left", // Right align monetary values
         });
         currentLeft += columnWidths[i];
       });
@@ -706,6 +741,45 @@ async function exportToPdf(res, orders, summary) {
       // Move down for the next row
       rowTop += 5;
     });
+
+    // Add footer with totals
+    rowTop = checkNewPage(rowTop + 10);
+
+    const totalsStartX =
+      50 +
+      columnWidths[0] +
+      columnWidths[1] +
+      columnWidths[2] +
+      columnWidths[3] +
+      columnWidths[4];
+
+    doc.fontSize(9).font("Unicode");
+    doc.text("Total Orders:", totalsStartX - 100, rowTop);
+    doc.text(`${summary.totalOrders}`, totalsStartX, rowTop);
+
+    rowTop += 15;
+    doc.text("Total Subtotal:", totalsStartX - 100, rowTop);
+    doc.text(`₹${summary.totalSubtotal.toFixed(2)}`, totalsStartX, rowTop);
+
+    rowTop += 15;
+    doc.text("Total Discounts:", totalsStartX - 100, rowTop);
+    doc.text(`₹${summary.totalDiscounts.toFixed(2)}`, totalsStartX, rowTop);
+
+    rowTop += 15;
+    doc.fontSize(10).font("Unicode");
+    doc.text("Total Revenue:", totalsStartX - 100, rowTop);
+    doc.text(`₹${summary.totalRevenue.toFixed(2)}`, totalsStartX, rowTop);
+
+    // Add generation timestamp
+    doc
+      .fontSize(8)
+      .font("Unicode")
+      .text(
+        `Generated on ${new Date().toLocaleString()}`,
+        50,
+        doc.page.height - 30,
+        { align: "center" }
+      );
 
     // Finalize the PDF and end the stream
     doc.end();
@@ -896,7 +970,16 @@ async function exportOrderToExcel(res, order) {
 
 //export to pdf
 async function exportOrderToPdf(res, order) {
-  const doc = new PDFDocument({ margin: 50 });
+  const doc = new PDFDocument({ margin: 50, layout: "portrait" });
+
+  const fontPath = path.join(
+    "public",
+    "assets",
+    "fonts",
+    "NotoSans-Regular.ttf"
+  );
+  doc.registerFont("Unicode", fontPath);
+  doc.font("Unicode");
 
   res.setHeader("Content-Type", "application/pdf");
   res.setHeader(
@@ -908,56 +991,75 @@ async function exportOrderToPdf(res, order) {
 
   doc
     .fontSize(18)
-    .font("Helvetica-Bold")
+    .font("Unicode")
     .text(`Order Details - ${order._id}`, { align: "center" });
   doc.moveDown();
 
-  doc.fontSize(12).font("Helvetica");
+  // Create info section with two columns
+  doc.fontSize(12).font("Unicode");
+  const leftColumnX = 50;
+  const rightColumnX = 300;
+  let yPosition = doc.y;
 
-  const addKeyValue = (key, value) => {
-    doc.font("Helvetica-Bold").text(key, { continued: true });
-    doc.font("Helvetica").text(`: ${value}`);
+  // Left column - Order info
+  doc.font("Unicode").text("Order Information", leftColumnX, yPosition);
+  doc.moveDown(0.5);
+
+  const addLeftColumnInfo = (key, value) => {
+    doc.font("Unicode").text(key, leftColumnX, doc.y, { continued: true });
+    doc.font("Unicode").text(`: ${value}`);
   };
 
-  addKeyValue("Order ID", order._id.toString());
-  addKeyValue("Date", new Date(order.createdAt).toLocaleString());
-  addKeyValue("Customer", order.userId ? order.userId.name : "Guest");
-  addKeyValue(
+  addLeftColumnInfo("Order ID", order._id.toString());
+  addLeftColumnInfo("Date", new Date(order.createdAt).toLocaleString());
+  addLeftColumnInfo("Payment Method", order.paymentMethod);
+  addLeftColumnInfo("Status", order.status);
+
+  // Right column - Customer info
+  doc.font("Unicode").text("Customer Information", rightColumnX, yPosition);
+  const rightColumnY = doc.y - (doc.y - yPosition); // Reset Y to match left column
+  doc.y = rightColumnY + doc.currentLineHeight(true);
+
+  const addRightColumnInfo = (key, value) => {
+    doc.font("Unicode").text(key, rightColumnX, doc.y, { continued: true });
+    doc.font("Unicode").text(`: ${value}`);
+  };
+
+  addRightColumnInfo("Customer", order.userId ? order.userId.name : "Guest");
+  addRightColumnInfo(
     "Email",
     order.userId ? order.userId.email : order.guestEmail || ""
   );
 
   if (order.shippingAddress) {
-    addKeyValue(
-      "Shipping Address",
-      `${order.shippingAddress.street}, ${order.shippingAddress.city}, ${order.shippingAddress.state} ${order.shippingAddress.zipCode}`
-    );
+    const address = `${order.shippingAddress.street}, ${order.shippingAddress.city}, ${order.shippingAddress.state} ${order.shippingAddress.zipCode}`;
+    addRightColumnInfo("Shipping Address", address);
   }
 
-  addKeyValue("Payment Method", order.paymentMethod);
-  addKeyValue("Status", order.status);
-
+  // Make sure we use the position of the column that extends furthest down
   doc.moveDown(2);
 
-  // Add items section title
+  // Add items section title with horizontal line
+  const itemsSectionY = doc.y;
   doc
-    .fontSize(14)
-    .font("Helvetica-Bold")
-    .text("Order Items", { align: "center" });
+    .moveTo(50, itemsSectionY - 10)
+    .lineTo(550, itemsSectionY - 10)
+    .stroke();
+  doc.fontSize(14).font("Unicode").text("Order Items", { align: "center" });
   doc.moveDown();
 
   // Define table columns
   const tableTop = doc.y;
-  const tableColumns = ["Product", "Price", "Qty", "Total"];
-  const columnWidths = [220, 100, 50, 100];
+  const tableColumns = ["Product", "Price", "Qty", "Discount", "Total"];
+  const columnWidths = [220, 80, 50, 80, 80];
   let currentLeft = 50;
 
   // Draw table header
-  doc.fontSize(10).font("Helvetica-Bold");
+  doc.fontSize(10).font("Unicode");
   tableColumns.forEach((column, i) => {
     doc.text(column, currentLeft, tableTop, {
       width: columnWidths[i],
-      align: "left",
+      align: i >= 3 ? "right" : "left",
     });
     currentLeft += columnWidths[i];
   });
@@ -981,26 +1083,82 @@ async function exportOrderToPdf(res, order) {
 
   // table rows
   let rowTop = tableTop + headerHeight + 5;
-  doc.fontSize(9).font("Helvetica");
+  doc.fontSize(9).font("Unicode");
   order.items.forEach((item) => {
     const productName = item.productId
       ? item.productId.name
       : item.productName || "Unknown Product";
-    const total = item.price * item.quantity - (item.discount || 0);
+    const itemDiscount = item.discount || 0;
+    const total = item.price * item.quantity - itemDiscount;
+
+    // Check if we need a new page
+    if (rowTop + 20 > doc.page.height - 100) {
+      doc.addPage();
+      rowTop = 50;
+
+      // Add column headers to new page
+      doc.fontSize(10).font("Unicode");
+      let headerLeft = 50;
+      tableColumns.forEach((column, i) => {
+        doc.text(column, headerLeft, rowTop, {
+          width: columnWidths[i],
+          align: i >= 3 ? "right" : "left",
+        });
+        headerLeft += columnWidths[i];
+      });
+
+      rowTop += headerHeight;
+      doc
+        .moveTo(50, rowTop)
+        .lineTo(
+          50 + columnWidths.reduce((sum, width) => sum + width, 0),
+          rowTop
+        )
+        .stroke();
+
+      rowTop += 5;
+      doc.fontSize(9).font("Unicode");
+    }
 
     // Draw row
-    currentLeft = 50;
-    [
-      productName,
-      `₹${item.price.toFixed(2)}`,
-      item.quantity,
-      `₹${total.toFixed(2)}`,
-    ].forEach((text, i) => {
-      doc.text(text, currentLeft, rowTop, {
-        width: columnWidths[i],
-        align: "left",
-      });
-      currentLeft += columnWidths[i];
+    let cellX = 50;
+
+    // Product name (truncate if too long)
+    const displayName =
+      productName.length > 40
+        ? productName.substring(0, 37) + "..."
+        : productName;
+    doc.text(displayName, cellX, rowTop, {
+      width: columnWidths[0],
+      align: "left",
+    });
+    cellX += columnWidths[0];
+
+    // Price
+    doc.text(`₹${item.price.toFixed(2)}`, cellX, rowTop, {
+      width: columnWidths[1],
+      align: "right",
+    });
+    cellX += columnWidths[1];
+
+    // Quantity
+    doc.text(item.quantity.toString(), cellX, rowTop, {
+      width: columnWidths[2],
+      align: "center",
+    });
+    cellX += columnWidths[2];
+
+    // Discount
+    doc.text(`₹${itemDiscount.toFixed(2)}`, cellX, rowTop, {
+      width: columnWidths[3],
+      align: "right",
+    });
+    cellX += columnWidths[3];
+
+    // Total
+    doc.text(`₹${total.toFixed(2)}`, cellX, rowTop, {
+      width: columnWidths[4],
+      align: "right",
     });
 
     rowTop += 20;
@@ -1013,44 +1171,93 @@ async function exportOrderToPdf(res, order) {
   });
 
   rowTop += 10;
-  const totalsX = 50 + columnWidths[0] + columnWidths[1] + columnWidths[2];
+
+  // Calculate width of all columns except the last one
+  const sumOfPrecedingWidths = columnWidths
+    .slice(0, -1)
+    .reduce((sum, width) => sum + width, 0);
+  const totalsX = 50 + sumOfPrecedingWidths;
   const labelsX = totalsX - 100;
 
-  doc.fontSize(10).font("Helvetica-Bold").text("Subtotal:", labelsX, rowTop);
+  doc.fontSize(10).font("Unicode").text("Subtotal:", labelsX, rowTop);
   doc
     .fontSize(10)
-    .font("Helvetica")
-    .text(`₹${order.totalPrice.toFixed(2)}`, totalsX, rowTop);
+    .font("Unicode")
+    .text(`₹${order.totalPrice.toFixed(2)}`, totalsX, rowTop, {
+      align: "right",
+      width: columnWidths[4],
+    });
 
   rowTop += 20;
-  doc.fontSize(10).font("Helvetica-Bold").text("Discount:", labelsX, rowTop);
+  doc.fontSize(10).font("Unicode").text("Discount:", labelsX, rowTop);
   doc
     .fontSize(10)
-    .font("Helvetica")
-    .text(`₹${order.discount.toFixed(2)}`, totalsX, rowTop);
+    .font("Unicode")
+    .text(`₹${order.discount.toFixed(2)}`, totalsX, rowTop, {
+      align: "right",
+      width: columnWidths[4],
+    });
 
   rowTop += 20;
-  doc.fontSize(10).font("Helvetica-Bold").text("Shipping:", labelsX, rowTop);
+  doc.fontSize(10).font("Unicode").text("Shipping:", labelsX, rowTop);
   doc
     .fontSize(10)
-    .font("Helvetica")
-    .text(`₹${(order.shippingCost || 0).toFixed(2)}`, totalsX, rowTop);
+    .font("Unicode")
+    .text(`₹${(order.shippingCost || 0).toFixed(2)}`, totalsX, rowTop, {
+      align: "right",
+      width: columnWidths[4],
+    });
 
   rowTop += 20;
-  doc.fontSize(12).font("Helvetica-Bold").text("Total:", labelsX, rowTop);
+  doc.fontSize(12).font("Unicode").text("Total:", labelsX, rowTop);
   doc
     .fontSize(12)
-    .font("Helvetica-Bold")
-    .text(`₹${order.finalAmount.toFixed(2)}`, totalsX, rowTop);
+    .font("Unicode")
+    .text(`₹${order.finalAmount.toFixed(2)}`, totalsX, rowTop, {
+      align: "right",
+      width: columnWidths[4],
+    });
+
+  // Add horizontal line
+  rowTop += 30;
+  doc.moveTo(50, rowTop).lineTo(550, rowTop).stroke();
+
+  // Payment information section
+  rowTop += 15;
+  doc.fontSize(10).font("Unicode").text("Payment Information", 50, rowTop);
+  rowTop += 15;
+  doc
+    .fontSize(9)
+    .font("Unicode")
+    .text("Method:", 50, rowTop, { continued: true });
+  doc.font("Unicode").text(` ${order.paymentMethod}`);
+
+  if (order.paymentStatus) {
+    rowTop += 15;
+    doc
+      .fontSize(9)
+      .font("Unicode")
+      .text("Status:", 50, rowTop, { continued: true });
+    doc.font("Unicode").text(` ${order.paymentStatus}`);
+  }
+
+  if (order.transactionId) {
+    rowTop += 15;
+    doc
+      .fontSize(9)
+      .font("Unicode")
+      .text("Transaction ID:", 50, rowTop, { continued: true });
+    doc.font("Unicode").text(` ${order.transactionId}`);
+  }
 
   // Add footer
   doc
     .fontSize(8)
-    .font("Helvetica")
+    .font("Unicode")
     .text(
       `Generated on ${new Date().toLocaleString()}`,
       50,
-      doc.page.height - 50,
+      doc.page.height - 30,
       { align: "center" }
     );
 

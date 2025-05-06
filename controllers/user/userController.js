@@ -690,6 +690,28 @@ const getCategoryPage = async (req, res, next) => {
   }
 };
 
+const getAboutUspage = async (req, res) => {
+  try {
+    return res.render("user/aboutus.ejs");
+  } catch (error) {
+    console.error("About page error:", error);
+    res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .send(MESSAGE.ERROR.SERVER_ERROR);
+  }
+};
+
+const getContactpage = async (req, res) => {
+  try {
+    return res.render("user/contact.ejs");
+  } catch (error) {
+    console.error("contact page error:", error);
+    res
+      .status(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      .send(MESSAGE.ERROR.SERVER_ERROR);
+  }
+};
+
 /*-----------------------------------functions-------------------------------------------*/
 
 //Hashing password function
@@ -758,4 +780,6 @@ module.exports = {
   getCategoryPage,
   getAddPassword,
   addPassword,
+  getAboutUspage,
+  getContactpage,
 };

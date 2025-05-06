@@ -3,6 +3,7 @@ const Order = require("../../models/Order.js");
 const Cart = require("../../models/Cart.js");
 const MESSAGES = require("../../config/messages.js");
 const HTTP_STATUS = require("../../config/statusCodes.js");
+const { name } = require("ejs");
 
 //get coupons
 const getMyCoupons = async (req, res) => {
@@ -110,7 +111,7 @@ const applyCoupon = async (req, res) => {
   try {
     const { couponName } = req.body;
     const userId = req.user?.userId;
-    
+
     if (!userId) {
       return res.status(HTTP_STATUS.UNAUTHORIZED).json({
         success: false,
@@ -133,10 +134,10 @@ const applyCoupon = async (req, res) => {
 
     const coupon = await Coupon.findOne({
       name: couponName,
-      $or: [{ UserId: userId }, { UserId: { $size: 0 } }],
       expireOn: { $gt: new Date() },
       isListed: true,
     });
+    console.log(coupon);
 
     if (!coupon) {
       return res.status(HTTP_STATUS.NOT_FOUND).json({
@@ -157,7 +158,7 @@ const applyCoupon = async (req, res) => {
       couponApplied: true,
       couponName: couponName,
     });
-    
+
     if (hasUsed) {
       return res.status(HTTP_STATUS.CONFLICT).json({
         success: false,

@@ -862,7 +862,20 @@
   function applyCoupon() {
     const couponName = document.getElementById("couponCode").value;
 
-    fetch("/apply-coupon", {
+    if (!couponName || couponName.trim() === "") {
+      const messageElement = document.getElementById("couponMessage");
+      messageElement.textContent = "Please enter a coupon code";
+      messageElement.style.color = "red";
+      messageElement.style.display = "block";
+      return;
+    }
+    const applyButton = document.querySelector(".coupon-btn");
+    const originalButtonText = applyButton.innerHTML;
+    applyButton.innerHTML =
+      '<i class="fas fa-spinner fa-spin"></i> Applying...';
+    applyButton.disabled = true;
+
+    fetch("/checkout/applycoupon", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -894,11 +907,15 @@
           "An error occurred while applying the coupon",
           "error"
         );
+      })
+      .finally(() => {
+        applyButton.innerHTML = originalButtonText;
+        applyButton.disabled = false;
       });
   }
 
   async function removeCoupon() {
-    await fetch("checkout/coupon", {
+    await fetch("/checkout/coupon", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
     });
