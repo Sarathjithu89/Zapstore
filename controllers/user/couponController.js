@@ -3,25 +3,9 @@ const Order = require("../../models/Order.js");
 const Cart = require("../../models/Cart.js");
 const MESSAGES = require("../../config/messages.js");
 const HTTP_STATUS = require("../../config/statusCodes.js");
-const { createClient } = require("redis");
+const { name } = require("ejs");
 
-const PAGINATION_LIMIT = 4;
-
-// Redis client initialization
-const redisClient = createClient({
-  url: process.env.REDIS_URL || "redis://127.0.0.1:6379",
-  legacyMode: true,
-});
-
-// Connect to Redis
-(async () => {
-  try {
-    await redisClient.connect();
-  } catch (error) {
-    console.error("Redis connection error:", error);
-  }
-})();
-
+//get coupons
 const getMyCoupons = async (req, res) => {
   try {
     if (!req.user) {
@@ -31,9 +15,9 @@ const getMyCoupons = async (req, res) => {
 
     const userId = req.user.userId;
     const currentDate = new Date();
+
     const page = parseInt(req.query.page) || 1;
-    const limit = PAGINATION_LIMIT;
-    const activeTab = req.query.tab || "available";
+    const limit = 4;
 
     const allCoupons = await Coupon.find({
       $or: [
@@ -47,7 +31,8 @@ const getMyCoupons = async (req, res) => {
       isListed: true,
     });
 
-    // Get user's orders with applied coupons
+    const referralCoupons = allCoupons.filter((c) => c.isReferralCoupon);
+
     const userOrders = await Order.find({
       userId: userId,
       couponApplied: true,
@@ -56,7 +41,6 @@ const getMyCoupons = async (req, res) => {
 
     const usedCouponNames = userOrders.map((order) => order.couponName);
 
-    // Categorize coupons
     const categorizedCoupons = {
       available: [],
       used: [],
@@ -64,7 +48,6 @@ const getMyCoupons = async (req, res) => {
     };
 
     allCoupons.forEach((coupon) => {
-      // Skip referral coupons that aren't for this user
       if (
         coupon.isReferralCoupon &&
         coupon.isusedFor.toString() !== userId.toString()
@@ -90,9 +73,11 @@ const getMyCoupons = async (req, res) => {
       }
     });
 
-    // Apply pagination
+    const activeTab = req.query.tab || "available";
+
     const totalCoupons = categorizedCoupons[activeTab].length;
     const totalPages = Math.ceil(totalCoupons / limit);
+
     const startIndex = (page - 1) * limit;
     const endIndex = page * limit;
 
@@ -121,12 +106,12 @@ const getMyCoupons = async (req, res) => {
   }
 };
 
+//apply coupon
 const applyCoupon = async (req, res) => {
   try {
     const { couponName } = req.body;
     const userId = req.user?.userId;
 
-    // Check authentication
     if (!userId) {
       return res.status(HTTP_STATUS.UNAUTHORIZED).json({
         success: false,
@@ -134,26 +119,24 @@ const applyCoupon = async (req, res) => {
       });
     }
 
-    // Get user's cart
-    const cart = await Cart.findOne({ userId });
+    const cart = (await Cart.findOne({ userId: userId })) || {
+      items: [],
+    };
+    let totalPrice = 0;
+    cart.items.forEach((item) => (totalPrice += item.totalPrice));
 
-    // Validate cart
-    if (!cart || !cart.items.length) {
+    if (!cart.items.length) {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
         message: "Your cart is empty",
       });
     }
 
-    let totalPrice = 0;
-    cart.items.forEach((item) => (totalPrice += item.totalPrice));
-
     const coupon = await Coupon.findOne({
       name: couponName,
       expireOn: { $gt: new Date() },
       isListed: true,
     });
-
     if (!coupon) {
       return res.status(HTTP_STATUS.NOT_FOUND).json({
         success: false,
@@ -169,9 +152,9 @@ const applyCoupon = async (req, res) => {
     }
 
     const hasUsed = await Order.findOne({
-      userId,
+      userId: userId,
       couponApplied: true,
-      couponName,
+      couponName: couponName,
     });
 
     if (hasUsed) {
@@ -181,11 +164,9 @@ const applyCoupon = async (req, res) => {
       });
     }
 
-    const discountAmount = coupon.offerPrice;
-    const finalAmount = cart.totalPrice - discountAmount;
+    let discountAmount = coupon.offerPrice;
+    let finalAmount = cart.totalPrice - discountAmount;
 
-    // try {
-    //   await sessionUpdate(req.sessionID, (session) => {
     if (!req.session.cart) {
       req.session.cart = {};
     }
@@ -194,25 +175,17 @@ const applyCoupon = async (req, res) => {
     req.session.cart.couponName = couponName;
     req.session.cart.discount = discountAmount;
     req.session.cart.finalAmount = cart.totalPrice - discountAmount;
-    // });
 
     return res.status(HTTP_STATUS.OK).json({
       success: true,
       message: MESSAGES.COUPON.APPLIED,
       discount: discountAmount,
-      finalAmount,
+      finalAmount: finalAmount,
       coupon: {
         name: couponName,
         offerPrice: discountAmount,
       },
     });
-    // } catch (sessionError) {
-    //   console.error("Session update error:", sessionError);
-    //   return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-    //     success: false,
-    //     message: "Failed to apply coupon. Please try again.",
-    //   });
-    // }
   } catch (error) {
     console.error("Error applying coupon:", error);
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
@@ -222,7 +195,8 @@ const applyCoupon = async (req, res) => {
   }
 };
 
-const removeCoupon = async (req, res) => {
+//remove coupon
+const removeCoupon = (req, res) => {
   try {
     if (!req.user) {
       return res.status(HTTP_STATUS.UNAUTHORIZED).json({
@@ -238,26 +212,16 @@ const removeCoupon = async (req, res) => {
       });
     }
 
-    try {
-      // await sessionUpdate(req.sessionID, (session) => {
-      req.session.cart.couponApplied = false;
-      delete req.session.cart.couponName;
-      delete req.session.cart.discount;
-      req.session.cart.finalAmount = req.session.cart.totalPrice;
-      // });
+    req.session.cart.couponApplied = false;
+    delete req.session.cart.couponName;
+    delete req.session.cart.discount;
+    req.session.cart.finalAmount = req.session.cart.totalPrice;
 
-      return res.status(HTTP_STATUS.OK).json({
-        success: true,
-        message: "Coupon removed successfully",
-        totalPrice: req.session.cart.totalPrice,
-      });
-    } catch (sessionError) {
-      console.error("Session update error:", sessionError);
-      return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: "Failed to remove coupon. Please try again.",
-      });
-    }
+    return res.status(HTTP_STATUS.OK).json({
+      success: true,
+      message: "Coupon removed successfully",
+      totalPrice: req.session.cart.totalPrice,
+    });
   } catch (error) {
     console.error("Error removing coupon:", error);
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
@@ -266,40 +230,6 @@ const removeCoupon = async (req, res) => {
     });
   }
 };
-
-async function sessionUpdate(sessionID, updateFunction) {
-  const sessionKey = `sess:${sessionID}`;
-
-  try {
-    const sessionData = await new Promise((resolve, reject) => {
-      redisClient.get(sessionKey, (err, data) => {
-        if (err) reject(err);
-        else resolve(data);
-      });
-    });
-
-    if (!sessionData) {
-      throw new Error("Session not found");
-    }
-
-    const session = JSON.parse(sessionData);
-    updateFunction(session);
-
-    return new Promise((resolve, reject) => {
-      const multi = redisClient.multi();
-      multi.set(sessionKey, JSON.stringify(session));
-      multi.expire(sessionKey, 86400); // Reset
-
-      multi.exec((err, results) => {
-        if (err) reject(err);
-        else resolve(results);
-      });
-    });
-  } catch (error) {
-    console.error("Session update error:", error);
-    throw error;
-  }
-}
 
 module.exports = {
   getMyCoupons,
