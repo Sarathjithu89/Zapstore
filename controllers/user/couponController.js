@@ -5,7 +5,6 @@ const MESSAGES = require("../../config/messages.js");
 const HTTP_STATUS = require("../../config/statusCodes.js");
 const { createClient } = require("redis");
 
-// Configuration constants
 const PAGINATION_LIMIT = 4;
 
 // Redis client initialization
@@ -24,9 +23,6 @@ const redisClient = createClient({
   }
 })();
 
-/**
- * Get user's coupons with categorization and pagination
- */
 const getMyCoupons = async (req, res) => {
   try {
     if (!req.user) {
@@ -40,7 +36,6 @@ const getMyCoupons = async (req, res) => {
     const limit = PAGINATION_LIMIT;
     const activeTab = req.query.tab || "available";
 
-    // Fetch all relevant coupons
     const allCoupons = await Coupon.find({
       $or: [
         { UserId: userId },
@@ -127,9 +122,6 @@ const getMyCoupons = async (req, res) => {
   }
 };
 
-/**
- * Apply coupon to cart
- */
 const applyCoupon = async (req, res) => {
   try {
     const { couponName } = req.body;
@@ -154,11 +146,9 @@ const applyCoupon = async (req, res) => {
       });
     }
 
-    // Calculate total price from cart items
     let totalPrice = 0;
     cart.items.forEach((item) => (totalPrice += item.totalPrice));
 
-    // Find valid coupon
     const coupon = await Coupon.findOne({
       name: couponName,
       expireOn: { $gt: new Date() },
@@ -172,7 +162,6 @@ const applyCoupon = async (req, res) => {
       });
     }
 
-    // Check minimum purchase requirement
     if (totalPrice < coupon.minimumPrice) {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
@@ -180,7 +169,6 @@ const applyCoupon = async (req, res) => {
       });
     }
 
-    // Check if coupon has been used before
     const hasUsed = await Order.findOne({
       userId,
       couponApplied: true,
@@ -194,11 +182,9 @@ const applyCoupon = async (req, res) => {
       });
     }
 
-    // Calculate discount
     const discountAmount = coupon.offerPrice;
     const finalAmount = cart.totalPrice - discountAmount;
 
-    // Update session with coupon data
     try {
       await sessionUpdate(req.sessionID, (session) => {
         if (!session.cart) {
@@ -211,7 +197,6 @@ const applyCoupon = async (req, res) => {
         session.cart.finalAmount = cart.totalPrice - discountAmount;
       });
 
-      // Send success response
       return res.status(HTTP_STATUS.OK).json({
         success: true,
         message: MESSAGES.COUPON.APPLIED,
@@ -238,12 +223,8 @@ const applyCoupon = async (req, res) => {
   }
 };
 
-/**
- * Remove applied coupon
- */
 const removeCoupon = async (req, res) => {
   try {
-    // Check authentication
     if (!req.user) {
       return res.status(HTTP_STATUS.UNAUTHORIZED).json({
         success: false,
@@ -251,7 +232,6 @@ const removeCoupon = async (req, res) => {
       });
     }
 
-    // Validate cart exists in session
     if (!req.session.cart) {
       return res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
@@ -259,7 +239,6 @@ const removeCoupon = async (req, res) => {
       });
     }
 
-    // Update session to remove coupon
     try {
       await sessionUpdate(req.sessionID, (session) => {
         session.cart.couponApplied = false;
@@ -289,17 +268,10 @@ const removeCoupon = async (req, res) => {
   }
 };
 
-/**
- * Update Redis session data safely
- * @param {string} sessionID - The session ID
- * @param {Function} updateFunction - Function to update session object
- * @returns {Promise} - Result of Redis operations
- */
 async function sessionUpdate(sessionID, updateFunction) {
   const sessionKey = `sess:${sessionID}`;
 
   try {
-    // Get current session data
     const sessionData = await new Promise((resolve, reject) => {
       redisClient.get(sessionKey, (err, data) => {
         if (err) reject(err);
@@ -311,15 +283,13 @@ async function sessionUpdate(sessionID, updateFunction) {
       throw new Error("Session not found");
     }
 
-    // Parse and update session
     const session = JSON.parse(sessionData);
     updateFunction(session);
 
-    // Save updated session
     return new Promise((resolve, reject) => {
       const multi = redisClient.multi();
       multi.set(sessionKey, JSON.stringify(session));
-      multi.expire(sessionKey, 86400); // Reset expiration (24 hours)
+      multi.expire(sessionKey, 86400); // Reset
 
       multi.exec((err, results) => {
         if (err) reject(err);
