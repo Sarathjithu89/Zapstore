@@ -46,7 +46,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(
   session({
-    store: sessionStore,
+    store: sessionStore ? sessionStore : null,
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
